@@ -5,6 +5,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
   onCursorPos: (callback) =>
     ipcRenderer.on("cursor-pos", (_evt, data) => callback(data)),
+  windowCapabilities: () => ipcRenderer.invoke("window-capabilities"),
+  setWindowShape: (rects) => ipcRenderer.send("set-window-shape", rects),
+  onNativeWindowDragState: (callback) =>
+    ipcRenderer.on("native-window-drag-state", (_evt, active) => callback(active)),
   onKeyPressed: (callback) =>
     ipcRenderer.on("key-pressed", () => callback()),
   onMouseWheel: (callback) =>

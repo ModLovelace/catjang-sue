@@ -17,6 +17,16 @@ const I18N = {
     activated: "Activated. Starting Catjang.",
     genericError: "We could not activate this license key.",
   },
+  es: {
+    language: "Idioma",
+    intro: "Introduce una clave del prototipo para activar Catjang. Las claves predeterminadas aparecen en el README del proyecto.",
+    licenseKey: "Clave de licencia",
+    activate: "Activar",
+    missingKey: "Introduce una clave de licencia.",
+    activating: "Activando...",
+    activated: "Activado. Iniciando Catjang.",
+    genericError: "No se pudo activar esta clave de licencia.",
+  },
   ko: {
     language: "언어",
     intro: "프로토타입 키를 입력해 Catjang을 활성화하세요. 기본 키는 프로젝트 README에 적혀 있어요.",
@@ -39,14 +49,14 @@ const I18N = {
   },
 };
 
-let currentLanguage = "en";
+let currentLanguage = "es";
 
 function t(key) {
   return (I18N[currentLanguage] && I18N[currentLanguage][key]) || I18N.en[key] || key;
 }
 
 function applyLanguage(language) {
-  currentLanguage = I18N[language] ? language : "en";
+  currentLanguage = I18N[language] ? language : "es";
   document.documentElement.lang = currentLanguage;
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.textContent = t(el.dataset.i18n);

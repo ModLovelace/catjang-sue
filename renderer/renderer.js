@@ -67,7 +67,9 @@ let editingReminderId = null;
 let currentFixedMessage = "";
 let aiTaskStaleTimer = null;
 let mouseEventsEnabled = true;
-let currentLanguage = "en";
+let currentLanguage = "es";
+let windowBackend = "x11";
+let windowShapeSupported = false;
 let currentPomodoroState = null;
 let updateCtaState = null;
 const completionMeow = new Audio("../workspace/assets/sound/meow.m4a");
@@ -126,6 +128,49 @@ const I18N = {
     sharePermissionFailedWindows: "Could not record the screen. Please check Windows privacy or security settings for screen capture.",
     shareConversionFailed: "Could not convert the share video to MP4.",
     shareRecordingFailed: "Could not make the share video.",
+  },
+  es: {
+    agentComplete: "¡Tarea completada!",
+    needsAttention: (name) => `${name || "Humano"}, ¡necesito tu atención!`,
+    focusLabel: "Concentración",
+    restLabel: "Descanso",
+    startBreak: (name) => `${name || "Humano"}, ¡tómate un descanso!`,
+    startFocus: (name) => `${name || "Humano"}, ¡volvamos a concentrarnos!`,
+    updateChecking: "Buscando...",
+    updateAvailable: "Actualizar",
+    updateNone: "No hay actualizaciones",
+    updateDownloading: (percent) => percent === null ? "Actualizando..." : `Actualizando ${percent}%`,
+    updateRestarting: "Reiniciando...",
+    userNameGuide: "Dile tu nombre a Catjang para que pueda llamarte en los recordatorios y otros momentos.",
+    userNamePlaceholder: "Introduce tu nombre",
+    userGreeting: (name) => `¡Hola, ${name}!`,
+    pomodoroPause: "Pausar",
+    pomodoroResume: "Reanudar",
+    pomodoroReset: "Restablecer",
+    reminderOnce: "Una vez",
+    reminderCustomDays: "Elegir días",
+    reminderDaily: "Todos los días",
+    reminderWeekdays: "Días laborables",
+    reminderWeekends: "Fines de semana",
+    reminderDaysShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    reminderOpen: "Abrir recordatorios",
+    reminderTitle: "Recordatorios",
+    reminderPanelLabel: "Recordatorios",
+    reminderRepeatGroupLabel: "Repetición",
+    reminderDayPickerLabel: "Elegir días",
+    reminderMessagePlaceholder: "¿Qué debe recordarte Catjang?",
+    reminderAdd: "Añadir",
+    reminderCancel: "Cancelar",
+    reminderSave: "Guardar",
+    reminderUpdate: "Actualizar",
+    reminderClose: "Cerrar",
+    reminderEmpty: "Añade un recordatorio y Catjang te avisará a tiempo.",
+    reminderEdit: "Editar",
+    reminderDelete: "Eliminar",
+    sharePermissionFailed: "No se pudo grabar la pantalla. Comprueba el permiso de grabación de pantalla de macOS.",
+    sharePermissionFailedWindows: "No se pudo grabar la pantalla. Comprueba los permisos de captura en la configuración de privacidad o seguridad de Windows.",
+    shareConversionFailed: "No se pudo convertir el vídeo a MP4.",
+    shareRecordingFailed: "No se pudo crear el vídeo.",
   },
   ko: {
     agentComplete: "작업 완료냥!",
@@ -217,7 +262,7 @@ const I18N = {
 
 function normalizeLanguage(language) {
   const lang = String(language || "").toLowerCase().split("-")[0];
-  return I18N[lang] ? lang : "en";
+  return I18N[lang] ? lang : "es";
 }
 
 function tr(key, ...args) {
@@ -986,6 +1031,7 @@ function updateShakeDetection(dx, dy) {
 }
 
 window.electronAPI.onCursorPos(({ dx, dy }) => {
+  updatePolledMouseEventPassthrough(dx, dy);
   // 스트레칭 중에는 마우스 추적 정지 — layers가 자연스럽게 0으로 수렴
   if (isStretching()) {
     targetDx = 0;
@@ -2016,6 +2062,7 @@ window.electronAPI.onShareCaptureCancel(() => {
 // ── Drag (좌클릭) + Context menu (우클릭) ──
 
 const dragHandle = document.getElementById("drag-handle");
+const pettingHandle = document.getElementById("petting-handle");
 const stretchEndObj = document.getElementById("stretch-svg-end");
 let dragging = false;
 let lastX = 0;
@@ -2049,8 +2096,93 @@ const SHAKE_ENERGY_DECAY = 0.82;
 const HUNTING_DURATION_MS = 1100;
 const HUNTING_RETURN_DURATION_MS = 420;
 
+let nativeShapeRaf = null;
+let nativeShapeObserversStarted = false;
+let nativeDragStateActive = false;
+
+function scheduleNativeWindowShapeUpdate() {
+  if (!windowShapeSupported || nativeShapeRaf !== null) return;
+  nativeShapeRaf = requestAnimationFrame(() => {
+    nativeShapeRaf = null;
+    const selectors = [
+      "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
+      "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
+      "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
+      "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
+      "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
+    ];
+    const rects = [];
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (!element) continue;
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      const rect = element.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const padding = selector === "#purr-hearts" || selector === "#heat-steam" ? 40 : 8;
+      rects.push({
+        x: Math.floor(rect.left - padding),
+        y: Math.floor(rect.top - padding),
+        width: Math.ceil(rect.width + padding * 2),
+        height: Math.ceil(rect.height + padding * 2),
+      });
+    }
+    window.electronAPI.setWindowShape(rects);
+  });
+}
+
+function startNativeWindowShapeObservers() {
+  if (nativeShapeObserversStarted) return;
+  nativeShapeObserversStarted = true;
+  new MutationObserver(scheduleNativeWindowShapeUpdate).observe(document.body, {
+    attributes: true,
+    childList: true,
+    subtree: true,
+  });
+  const resizeObserver = new ResizeObserver(scheduleNativeWindowShapeUpdate);
+  resizeObserver.observe(document.documentElement);
+  for (const element of document.body.children) resizeObserver.observe(element);
+  scheduleNativeWindowShapeUpdate();
+}
+
+window.electronAPI.windowCapabilities().then((capabilities) => {
+  windowBackend = capabilities && capabilities.backend === "wayland" ? "wayland" : "x11";
+  windowShapeSupported = !!(capabilities && capabilities.supportsWindowShape);
+  document.body.dataset.windowBackend = windowBackend;
+  if (windowShapeSupported) {
+    setPetMouseEventsEnabled(true);
+    startNativeWindowShapeObservers();
+  } else if (windowBackend === "wayland") {
+    setPetMouseEventsEnabled(true);
+  } else {
+    requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+  }
+}).catch(() => {
+  windowBackend = "x11";
+  windowShapeSupported = false;
+  document.body.dataset.windowBackend = windowBackend;
+  requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+});
+
+window.electronAPI.onNativeWindowDragState((active) => {
+  if (windowBackend !== "wayland") return;
+  const next = !!active;
+  document.body.classList.toggle("native-dragging", next);
+  if (next === nativeDragStateActive) return;
+  nativeDragStateActive = next;
+  if (next) {
+    clearPendingDrag();
+    beginDragStretch(
+      { screenX: 0, screenY: 0 },
+      { screenX: 0, screenY: 0 },
+    );
+  } else {
+    finishDragStretch(false);
+  }
+});
+
 function setPetMouseEventsEnabled(enabled) {
-  const next = !!enabled;
+  const next = windowShapeSupported ? true : !!enabled;
   if (mouseEventsEnabled === next) return;
   mouseEventsEnabled = next;
   window.electronAPI.setMouseEventsEnabled(next);
@@ -2297,7 +2429,14 @@ function updateMouseEventPassthrough(event) {
   setPetMouseEventsEnabled(shouldReceiveMouseAt(event.clientX, event.clientY));
 }
 
-requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+function updatePolledMouseEventPassthrough(dx, dy) {
+  if (windowBackend !== "x11" || dragging) return;
+  const clientX = Number(dx) + window.innerWidth / 2;
+  const clientY = Number(dy) + window.innerHeight / 2;
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+  setPetMouseEventsEnabled(shouldReceiveMouseAt(clientX, clientY));
+  updatePurringAtPoint(clientX, clientY, true);
+}
 
 // ── stretch-svg 자동 segment 분할 + 체인 wrapper 구축 ──
 const dxState = new Array(N_SEG).fill(0);
@@ -2377,6 +2516,7 @@ fetch("../svg/stretch-start.svg")
       endData = setupStretchChain(pendingEndDoc);
       pendingEndDoc = null;
       applyStretchChain();
+      if (dragging || releasing) startChain();
     }
   })
   .catch((err) => console.error("Failed to load stretch-start.svg:", err));
@@ -2391,6 +2531,7 @@ stretchEndObj.addEventListener("load", () => {
   }
   endData = setupStretchChain(doc);
   applyStretchChain();
+  if (dragging || releasing) startChain();
 });
 
 function setupStretchChain(svgDoc) {
@@ -2680,7 +2821,10 @@ const WIGGLE_MAX_DX = 2.5;     // hard clamp on per-segment lateral offset (svg 
 
 function chainTick() {
   if (!endData) {
-    chainRafId = null;
+    // The object starts with display:none, so Chromium may defer loading its
+    // SVG until the first drag makes it visible. Keep waiting during that
+    // short window instead of permanently cancelling the animation loop.
+    chainRafId = (dragging || releasing) ? requestAnimationFrame(chainTick) : null;
     return;
   }
 
@@ -2697,6 +2841,16 @@ function chainTick() {
       ? 4 * holdT * holdT * holdT
       : 1 - Math.pow(-2 * holdT + 2, 3) / 2;
     stretchT = Math.min(0.32, stretchT);
+  }
+
+  // Native Wayland owns the pointer drag, so Chromium cannot provide its
+  // per-frame deltas. Keep the full hanging animation alive with a restrained
+  // lateral sway while the compositor reports that the window is moving.
+  if (nativeDragStateActive && dragging) {
+    const sway = Math.sin(performance.now() / 92) * 0.42;
+    pendulumVelAngle += sway;
+    lastWiggleDx = Math.sin(performance.now() / 58) * (WIGGLE_MIN_SPEED + 1.4);
+    lastDragMoveAt = Date.now();
   }
 
   // spring release: stretchT oscillates toward 0 with overshoot
@@ -2794,6 +2948,26 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
   startChain();
 }
 
+function finishDragStretch(notifyMain = true) {
+  if (!dragging) return;
+  dragging = false;
+  if (notifyMain) window.electronAPI.dragWindowEnded();
+  // Kill wiggle instantly; the pendulum carries on during the release.
+  lastWiggleDx = 0;
+  for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
+  if (stretchT > 0.01) {
+    releasing = true;
+    stretchTVel = -stretchT * 0.55;
+    prevDragDx = 0;
+    startChain();
+  } else {
+    stretchT = 0;
+    stretchTVel = 0;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
+  }
+}
+
 function clearPendingDrag() {
   pendingDrag = null;
 }
@@ -2819,6 +2993,22 @@ dragHandle.addEventListener("mousedown", (e) => {
   }
 });
 
+if (pettingHandle) {
+  pettingHandle.addEventListener("mousedown", (event) => {
+    // Do not let the no-drag Wayland petting island create a renderer drag
+    // that the compositor cannot follow.
+    if (windowBackend === "wayland") event.stopPropagation();
+  });
+}
+
+function updatePurringAtPoint(clientX, clientY, continuous = false) {
+  if (isIdleHeadPoint(clientX, clientY)) {
+    startPurring(clientX, clientY);
+  } else if (!pendingDrag && (!continuous || !purrStopTimer)) {
+    scheduleStopPurring(PURR_LEAVE_GRACE_MS);
+  }
+}
+
 window.addEventListener("mousemove", updateMouseEventPassthrough, { passive: true });
 
 window.addEventListener("mousemove", (e) => {
@@ -2835,11 +3025,7 @@ window.addEventListener("mousemove", (e) => {
       clearPendingDrag();
     }
   }
-  if (isIdleHeadPoint(e.clientX, e.clientY)) {
-    startPurring(e.clientX, e.clientY);
-  } else if (!pendingDrag) {
-    scheduleStopPurring(PURR_LEAVE_GRACE_MS);
-  }
+  updatePurringAtPoint(e.clientX, e.clientY);
   if (!dragging) return;
   const dx = e.screenX - lastX;
   const dy = e.screenY - lastY;
@@ -2860,22 +3046,7 @@ window.addEventListener("mousemove", (e) => {
 window.addEventListener("mouseup", (e) => {
   clearPendingDrag();
   if (dragging) {
-    dragging = false;
-    window.electronAPI.dragWindowEnded();
-    // kill wiggle instantly — pendulum carries on, segments snap to clean curve
-    lastWiggleDx = 0;
-    for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
-    if (stretchT > 0.01) {
-      releasing = true;
-      stretchTVel = -stretchT * 0.55;
-      prevDragDx = 0;
-      startChain();
-    } else {
-      stretchT = 0;
-      stretchTVel = 0;
-      document.body.classList.remove("dragging");
-      window.electronAPI.setStretchMode(false);
-    }
+    finishDragStretch(true);
   } else {
     dragging = false;
   }
