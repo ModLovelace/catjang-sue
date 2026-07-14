@@ -13,9 +13,9 @@ La ejecucion normal deja desactivadas estas funciones:
 - modificacion de `~/.cursor/hooks.json`;
 - lectura de sesiones de Codex, Cursor o Kiro.
 
-Ademas, `uiohook-napi` se trata como dependencia opcional. En este equipo no
-esta instalado `libxt-dev`; si el modulo nativo no se puede compilar, npm lo
-omite y la aplicacion conserva el resto de sus funciones.
+Ademas, `uiohook-napi` se trata como dependencia opcional y el empaquetador no
+fuerza su recompilacion. Si el modulo nativo no se puede instalar o cargar, la
+aplicacion conserva el resto de sus funciones.
 
 En sesiones Wayland se desactivan la aceleracion por hardware y Vulkan para
 evitar el error de superficie GPU observado con Electron 43 en Ubuntu 26.04.

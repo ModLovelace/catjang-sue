@@ -51,6 +51,10 @@ Global input monitoring and editor/agent integrations must remain opt-in. Avoid
 adding writes outside the isolated runtime unless the user explicitly enables
 the relevant integration.
 
+Keep `uiohook-napi` optional. Do not reintroduce an unconditional native-module
+rebuild in `postinstall`: it makes `npm ci` fail on Linux systems without X11
+development headers even though the application can run without the hook.
+
 Do not publish the currently produced AppImage as a general-purpose binary. On
 the validated Ubuntu 26.04/AppArmor setup, electron-builder's AppImage launcher
 falls back to `--no-sandbox`, which disables Chromium's renderer sandbox. A
