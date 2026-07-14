@@ -124,10 +124,12 @@ Tested on Ubuntu 26.04 LTS, GNOME Wayland, x86-64:
 | Drag animation activates | Pass | Pass, compositor driven |
 | Saved global position | Pass | Not available by protocol |
 
-The final locally validated AppImage was 127475712 bytes with SHA-256:
+The final locally validated AppImage was built from source revision
+`0c1cdcb669a41072e12a27dbb9dfe76c942da9d5`, was 127824100 bytes, and had
+SHA-256:
 
 ```text
-4a530795947f13e93b66e69334bbdd895672bcca301b85243a24d6c0b6f7d0c7
+c501e4c643f0cabcf7b9c07d1dbf15d20b492b0db17b6e5aca5efb052734c759
 ```
 
 Generated binaries are reproducibility aids, not source-controlled files. Do
