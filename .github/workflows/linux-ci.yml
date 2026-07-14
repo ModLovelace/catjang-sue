@@ -1,0 +1,43 @@
+name: Linux checks
+
+on:
+  push:
+    branches:
+      - main
+      - community/linux-wayland
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --omit=optional
+
+      - name: Check JavaScript and launcher syntax
+        run: |
+          node --check main.js
+          node --check preload.js
+          node --check renderer/renderer.js
+          node --check editor/editor.js
+          bash -n run-linux.sh
+
+      - name: Smoke-test Electron under Xvfb
+        run: xvfb-run --auto-servernum npm run smoke -- --no-sandbox --ozone-platform=x11
