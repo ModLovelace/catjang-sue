@@ -21,6 +21,13 @@ features are developed in the corresponding `community/*` branch, so Windows
 and Linux/Wayland can evolve independently. See the platform branches for their
 specific setup, validation, and release notes.
 
+### Reference branch
+
+`main` is kept as a historical mirror of the original upstream state. It has no
+fork-specific changes and currently points to the same commit as
+`community/base`. Do not develop directly on `main`; use `community/base` for
+shared changes and the appropriate platform branch for platform work.
+
 ## Roadmap
 
 - Keep platform compatibility work independent while sharing the protected base.
