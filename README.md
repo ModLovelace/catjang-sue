@@ -2,6 +2,18 @@
 
 ![Catjang](assets/screenshot.png)
 
+> **Community compatibility fork:** This repository is an experimental,
+> non-commercial community adaptation of the archived
+> [`cloud9209/catjang-sue`](https://github.com/cloud9209/catjang-sue)
+> prototype. It is not an official Comnyang release and is not endorsed by the
+> original author. See [NOTICE.md](NOTICE.md) for attribution and the change
+> notice.
+
+> **Windows work:** the active Windows compatibility branch is
+> [`feature/windows-compatibility`](https://github.com/ModLovelace/catjang-sue/tree/feature/windows-compatibility).
+> Its scope, validation status, Node.js policy, and release requirements are in
+> [WINDOWS-COMPATIBILITY-PLAN.md](WINDOWS-COMPATIBILITY-PLAN.md).
+
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
 > **Note:** This is a prototype build. The license flow uses a local prototype endpoint with hardcoded keys (see [Prototype license keys](#prototype-license-keys) below) and is not connected to a real payment backend.
@@ -26,7 +38,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 ## Quick start
 
 ```bash
-git clone https://github.com/jandev-png/catjang.git catjang
+git clone https://github.com/ModLovelace/catjang-sue.git catjang
 cd catjang
 npm install
 npm start
@@ -114,3 +126,27 @@ Hook scripts POST events to the local agent-state server bound to `127.0.0.1:234
 ## License
 
 CC BY-NC 4.0 — free to use and modify, no commercial use, credit **jan (nerfspeed on Discord)**. See [`License.md`](./License.md).
+CC BY-NC 4.0 — free to use and modify, no commercial use, credit
+**jan (nerfspeed on Discord)**, link the license, and identify modifications.
+See [`License.md`](./License.md) and the community change notice in
+[`NOTICE.md`](./NOTICE.md).
+
+### License and Windows signing status
+
+The source is publicly available, but the current **CC BY-NC 4.0** license has
+a non-commercial restriction. It is therefore not an OSI-approved Open Source
+license and this community fork must not be described as OSI Open Source.
+Changing the license of the inherited code requires permission from its
+copyright holder.
+
+The Windows installer is currently unsigned. Signing proves the publisher and
+integrity of a binary; it does not change the source license. A self-signed
+certificate is not trusted by Windows and does not avoid SmartScreen warnings.
+If the complete project is later relicensed by the rights holder under an
+OSI-approved license, the project may apply to SignPath Foundation's free OSS
+signing program, subject to its eligibility and release-policy requirements.
+The selected distribution path is a **free, unsigned GitHub Release**. Each
+release must state that it is unsigned, warn that Windows may show SmartScreen,
+and publish the source commit plus the SHA-256 of the installer. Users do not
+need Node.js or a repository clone to install the `.exe`, but they should only
+download it from the project's official GitHub Release page.
