@@ -9,6 +9,20 @@
 > original author. See [NOTICE.md](NOTICE.md) for attribution and the change
 > notice.
 
+## Community branch model
+
+```text
+community/base
+├─ community/linux-wayland
+└─ community/windows
+```
+
+This branch contains Linux/Wayland-specific work. `community/base` is the
+protected shared foundation, while `community/windows` evolves independently.
+`main` is retained only as a historical mirror of the original upstream state:
+it has no fork-specific changes and currently matches `community/base`. Do not
+develop directly on `main`.
+
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
 > **Note:** This is a prototype build. The license flow uses a local prototype endpoint with hardcoded keys (see [Prototype license keys](#prototype-license-keys) below) and is not connected to a real payment backend.
