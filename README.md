@@ -1,6 +1,6 @@
 # Catjang
 
-![Catjang](assets/screenshot.png)
+![Catjang Windows Preview](assets/screenshot-windows-preview.png)
 
 > **Community compatibility fork:** This repository is an experimental,
 > non-commercial community adaptation of the archived
@@ -10,9 +10,45 @@
 > notice.
 
 > **Windows work:** the active Windows compatibility branch is
-> [`feature/windows-compatibility`](https://github.com/ModLovelace/catjang-sue/tree/feature/windows-compatibility).
+> [`community/windows`](https://github.com/ModLovelace/catjang-sue/tree/community/windows).
 > Its scope, validation status, Node.js policy, and release requirements are in
 > [WINDOWS-COMPATIBILITY-PLAN.md](WINDOWS-COMPATIBILITY-PLAN.md).
+
+## Community branch model
+
+This fork uses a shared, protected base and independent platform branches:
+
+```text
+community/base
+├─ community/linux-wayland
+└─ community/windows
+```
+
+`community/base` preserves the common project state. Platform work belongs in
+its corresponding `community/*` branch; future features are integrated into the
+relevant platform branch instead of making Windows depend on Linux/Wayland or
+vice versa.
+
+## Windows Preview
+
+Windows 10/11 support is developed in `community/windows`. The current public
+[Windows Preview 1](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.38-windows.1)
+is free and unsigned; Windows SmartScreen may warn before installation. Download
+only from GitHub Releases and verify the included SHA-256 file. This preview
+predates the independent-branch rebase; the next preview will be built directly
+from `community/windows` after its current CI validation.
+
+For development, install NVM for Windows, select Node `24.18.0` with
+`nvm use 24.18.0`, then run `npm ci` and `npm start`. End users do not need
+Node.js or a repository clone: they install the `.exe` from a release.
+
+## Roadmap
+
+- Maintain separate Windows and Linux/Wayland compatibility branches from the
+  shared base.
+- Investigate Apple Silicon support for M1-class Macs (macOS).
+- Evaluate an iOS/iPadOS port separately; M1 iPads do not run macOS desktop
+  applications directly and require their own platform adaptation.
 
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 

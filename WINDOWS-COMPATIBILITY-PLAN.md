@@ -8,7 +8,8 @@ proyectos Node.js del equipo.
 
 ## Rama, licencia y firma
 
-- La rama activa para este trabajo es `feature/windows-compatibility`.
+- La rama activa para este trabajo es `community/windows`, creada de forma
+  independiente desde `community/base`.
 - El código heredado conserva **CC BY-NC 4.0**. Es código públicamente
   disponible con una restricción no comercial, no una licencia Open Source
   aprobada por OSI.

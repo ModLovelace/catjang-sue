@@ -10,7 +10,7 @@ which was itself published as a fork of `jandev-png/catjang`.
 
 ## Windows compatibility branch
 
-The `feature/windows-compatibility` branch provides Windows 10/11 support:
+The `community/windows` branch provides Windows 10/11 support:
 NVM for Windows Node.js policy, x64 NSIS packaging, Windows CI, an application
 icon, and Windows-scoped global input behavior. Its validation record is in
 [`WINDOWS-COMPATIBILITY-PLAN.md`](WINDOWS-COMPATIBILITY-PLAN.md).
