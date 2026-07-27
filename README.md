@@ -29,6 +29,10 @@ its corresponding `community/*` branch; future features are integrated into the
 relevant platform branch instead of making Windows depend on Linux/Wayland or
 vice versa.
 
+`main` is retained only as a historical mirror of the original upstream state.
+It has no fork-specific changes and currently matches `community/base`; shared
+work belongs in `community/base` and Windows work belongs in `community/windows`.
+
 ## Windows Preview
 
 Windows 10/11 support is developed in `community/windows`. The current public
