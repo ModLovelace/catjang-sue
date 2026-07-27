@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install bundled FFmpeg binary
+        run: node .\node_modules\ffmpeg-static\install.js
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --omit=optional
 
