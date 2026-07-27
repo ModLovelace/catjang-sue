@@ -2,6 +2,32 @@
 
 ![Catjang](assets/screenshot.png)
 
+> **Community compatibility fork:** this repository continues the archived
+> [`cloud9209/catjang-sue`](https://github.com/cloud9209/catjang-sue)
+> prototype. It remains a non-commercial community adaptation, is not an
+> official Comnyang release, and preserves the original attribution and
+> CC BY-NC 4.0 license.
+
+## Community branch model
+
+```text
+community/base
+├─ community/linux-wayland
+└─ community/windows
+```
+
+`community/base` is the protected shared foundation. Platform work and future
+features are developed in the corresponding `community/*` branch, so Windows
+and Linux/Wayland can evolve independently. See the platform branches for their
+specific setup, validation, and release notes.
+
+## Roadmap
+
+- Keep platform compatibility work independent while sharing the protected base.
+- Investigate Apple Silicon support for M1-class Macs (macOS).
+- Evaluate an iOS/iPadOS port separately; it requires a dedicated platform
+  adaptation rather than the macOS desktop build.
+
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
 > **Note:** This is a prototype build. The license flow uses a local prototype endpoint with hardcoded keys (see [Prototype license keys](#prototype-license-keys) below) and is not connected to a real payment backend.
@@ -26,7 +52,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 ## Quick start
 
 ```bash
-git clone https://github.com/jandev-png/catjang.git catjang
+git clone https://github.com/ModLovelace/catjang-sue.git catjang
 cd catjang
 npm install
 npm start
