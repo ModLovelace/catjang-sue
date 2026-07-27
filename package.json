@@ -43,6 +43,7 @@
     "productName": "Catjang",
     "copyright": "Copyright © 2026",
     "publish": null,
+    "npmRebuild": false,
     "files": [
       "main.js",
       "preload.js",
