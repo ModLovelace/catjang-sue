@@ -28,6 +28,18 @@ contribution. The modifications include:
 These changes do not imply endorsement by the original author or the archived
 fork owner. This is not an official Comnyang or Catjang release.
 
+## Windows compatibility branch
+
+The `feature/windows-compatibility` branch adds reproducible Windows x64
+development and packaging support, including an NVM for Windows Node.js policy,
+Windows CI, NSIS packaging, the Windows application icon, and platform-scoped
+global input behavior. Its full scope and validation record are maintained in
+[`WINDOWS-COMPATIBILITY-PLAN.md`](WINDOWS-COMPATIBILITY-PLAN.md).
+
+This work preserves the same CC BY-NC 4.0 attribution and non-commercial
+conditions. It does not relicense the inherited source code or represent the
+project as an OSI Open Source project.
+
 Redistribution must remain non-commercial, preserve attribution, link the
 license, retain an indication that the material was modified, and avoid adding
 legal or technological restrictions that conflict with CC BY-NC 4.0. See

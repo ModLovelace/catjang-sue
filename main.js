@@ -31,7 +31,12 @@ const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().t
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
 const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
 const ENABLE_AGENT_INTEGRATIONS = process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS === "1";
-const ENABLE_GLOBAL_INPUT_HOOK = process.env.CATJANG_ENABLE_GLOBAL_INPUT === "1";
+// Windows supports the global hook used by the original desktop companion.
+// Linux keeps explicit opt-in because its native input support differs between
+// desktop sessions. Set CATJANG_ENABLE_GLOBAL_INPUT=0 to disable it on Windows.
+const ENABLE_GLOBAL_INPUT_HOOK = IS_WINDOWS
+  ? process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0"
+  : process.env.CATJANG_ENABLE_GLOBAL_INPUT === "1";
 
 if (IS_LINUX_WAYLAND_SESSION) {
   app.disableHardwareAcceleration();
@@ -105,7 +110,7 @@ let nativeMoveEndTimer = null;
 let keyHookStarted = false;
 let keyHookListenersAttached = false;
 let keyHookRetryTimer = null;
-const APP_ICON_PATH = path.join(__dirname, "assets", "catjang-logo.png");
+const APP_ICON_PATH = path.join(__dirname, "assets", IS_WINDOWS ? "catjang-logo.ico" : "catjang-logo.png");
 const AGENT_STATE_PORT = 23456;
 const AGENT_ACTIVE_TTL_MS = 10 * 60 * 1000;
 let agentStateServer = null;
