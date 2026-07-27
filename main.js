@@ -25,6 +25,7 @@ const bundledFfmpegPath = require("ffmpeg-static");
 const IS_MAC = process.platform === "darwin";
 const IS_WINDOWS = process.platform === "win32";
 const IS_SMOKE_TEST = process.argv.includes("--catjang-smoke-test");
+const ENABLE_GLOBAL_INPUT_HOOK = !IS_WINDOWS || process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
 
 if (IS_WINDOWS && !process.env.PREBUILDS_ONLY) {
   process.env.PREBUILDS_ONLY = "1";
@@ -92,7 +93,7 @@ let cursorPollTimer = null;
 let keyHookStarted = false;
 let keyHookListenersAttached = false;
 let keyHookRetryTimer = null;
-const APP_ICON_PATH = path.join(__dirname, "assets", "catjang-logo.png");
+const APP_ICON_PATH = path.join(__dirname, "assets", IS_WINDOWS ? "catjang-logo.ico" : "catjang-logo.png");
 const AGENT_STATE_PORT = 23456;
 const AGENT_ACTIVE_TTL_MS = 10 * 60 * 1000;
 let agentStateServer = null;
@@ -1308,7 +1309,7 @@ function createLicenseWindow(initialReason = "") {
 
 function startLicensedApp() {
   createPetWindow();
-  startKeyHook();
+  if (ENABLE_GLOBAL_INPUT_HOOK) startKeyHook();
   startAgentIntegrations();
   startStretchTimer();
   startReminderTimer();
