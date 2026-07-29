@@ -31,7 +31,10 @@ const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().t
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
 const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
 const ENABLE_AGENT_INTEGRATIONS = process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS === "1";
-const ENABLE_GLOBAL_INPUT_HOOK = process.env.CATJANG_ENABLE_GLOBAL_INPUT === "1";
+// Typing and wheel gestures are core pet interactions. Keep them enabled when
+// uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
+// for installations that do not want a global input hook.
+const ENABLE_GLOBAL_INPUT_HOOK = process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
 
 if (IS_LINUX_WAYLAND_SESSION) {
   app.disableHardwareAcceleration();
@@ -1426,12 +1429,13 @@ function createLicenseWindow(initialReason = "") {
   });
 }
 
-function startLicensedApp() {
+function startLicensedApp(options = {}) {
+  const closeLicenseWindow = options.closeLicenseWindow !== false;
   createPetWindow();
   if (ENABLE_GLOBAL_INPUT_HOOK) {
     startKeyHook();
   } else {
-    logInfo("[Catjang] global input hook disabled; set CATJANG_ENABLE_GLOBAL_INPUT=1 to enable it");
+    logInfo("[Catjang] global input hook disabled by CATJANG_ENABLE_GLOBAL_INPUT=0");
   }
   if (ENABLE_AGENT_INTEGRATIONS) {
     startAgentIntegrations();
@@ -1440,7 +1444,7 @@ function startLicensedApp() {
   }
   startStretchTimer();
   startReminderTimer();
-  if (licenseWin && !licenseWin.isDestroyed()) {
+  if (closeLicenseWindow && licenseWin && !licenseWin.isDestroyed()) {
     licenseWin.close();
   }
 }
@@ -2163,12 +2167,19 @@ ipcMain.handle("share-video-save", async (_evt, payload) => {
 
 ipcMain.handle("license-activate", async (_evt, licenseKey) => {
   const license = await activateLicenseKey(licenseKey);
-  startLicensedApp();
   return {
     ok: true,
     productName: license.productName || null,
     customerEmail: license.customerEmail || null,
   };
+});
+
+ipcMain.handle("license-start", async () => {
+  const state = await validateSavedLicense();
+  if (!state.ok) throw new Error(String(state.reason || t("licenseActivateFailed")));
+  // The renderer paints the activation confirmation before this hand-off.
+  startLicensedApp();
+  return { ok: true };
 });
 
 ipcMain.handle("license-current", () => {

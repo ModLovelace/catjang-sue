@@ -1030,7 +1030,7 @@ function updateShakeDetection(dx, dy) {
   lastCursorSample = { dx, dy, vx, vy, t: now };
 }
 
-window.electronAPI.onCursorPos(({ dx, dy }) => {
+function updateCursorTracking({ dx, dy }) {
   updatePolledMouseEventPassthrough(dx, dy);
   // 스트레칭 중에는 마우스 추적 정지 — layers가 자연스럽게 0으로 수렴
   if (isStretching()) {
@@ -1050,7 +1050,8 @@ window.electronAPI.onCursorPos(({ dx, dy }) => {
   const clamped = Math.min(dist, MAX_RAW_DIST_PX) / MAX_RAW_DIST_PX;
   targetDx = (dx / dist) * clamped;
   targetDy = (dy / dist) * clamped;
-});
+}
+window.electronAPI.onCursorPos(updateCursorTracking);
 
 function tick() {
   if (!layers) return;
@@ -3009,6 +3010,18 @@ function updatePurringAtPoint(clientX, clientY, continuous = false) {
   }
 }
 
+function updateWaylandEyeTracking(event) {
+  if (windowBackend !== "wayland") return;
+  const pose = currentPoseElement();
+  if (!pose) return;
+  const rect = pose.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+  updateCursorTracking({
+    dx: event.clientX - (rect.left + rect.width / 2),
+    dy: event.clientY - (rect.top + rect.height / 2),
+  });
+}
+
 window.addEventListener("mousemove", updateMouseEventPassthrough, { passive: true });
 
 window.addEventListener("mousemove", (e) => {
@@ -3026,6 +3039,7 @@ window.addEventListener("mousemove", (e) => {
     }
   }
   updatePurringAtPoint(e.clientX, e.clientY);
+  updateWaylandEyeTracking(e);
   if (!dragging) return;
   const dx = e.screenX - lastX;
   const dy = e.screenY - lastY;
@@ -3057,6 +3071,7 @@ window.addEventListener("mouseleave", () => {
   if (!dragging) setPetMouseEventsEnabled(false);
   clearPendingDrag();
   stopPurring();
+  if (windowBackend === "wayland") updateCursorTracking({ dx: 0, dy: 0 });
 });
 
 function cancelDragStretchState() {
@@ -3486,7 +3501,7 @@ const TYPING_TRIGGER_COUNT = 5;
 const TYPING_WINDOW_MS = 2000;
 let recentKeyTimestamps = [];
 
-window.electronAPI.onKeyPressed(() => {
+function handleKeyPress() {
   if (isStretching()) return;
   const now = Date.now();
 
@@ -3511,6 +3526,14 @@ window.electronAPI.onKeyPressed(() => {
   // heat colour tracking always runs regardless of threshold
   keyTimestamps.push(now);
   if (heatRafId === null) heatRafId = requestAnimationFrame(heatTick);
+}
+
+window.electronAPI.onKeyPressed(handleKeyPress);
+window.addEventListener("keydown", (event) => {
+  if (windowBackend !== "wayland" || event.defaultPrevented) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest("input, textarea, select, [contenteditable='true']")) return;
+  handleKeyPress();
 });
 
 window.electronAPI.onPomodoroFocusStart(() => {
@@ -3538,7 +3561,7 @@ window.electronAPI.onPomodoroFocusStart(() => {
   }, 110);
 });
 
-window.electronAPI.onMouseWheel(() => {
+function handleScrollGesture() {
   if (isStretching() || dragging || document.body.dataset.press || document.body.dataset.jump) return;
   if (!document.body.dataset.scroll) restartScrollSvgAnimation();
   ensureSvgObjectReady("scroll-unroll");
@@ -3547,4 +3570,9 @@ window.electronAPI.onMouseWheel(() => {
   scrollReleaseTimer = setTimeout(() => {
     stopScrollAnimation();
   }, SCROLL_RELEASE_MS);
-});
+}
+
+window.electronAPI.onMouseWheel(handleScrollGesture);
+window.addEventListener("wheel", () => {
+  if (windowBackend === "wayland") handleScrollGesture();
+}, { passive: true });

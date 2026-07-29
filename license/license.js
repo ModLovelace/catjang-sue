@@ -97,6 +97,20 @@ form.addEventListener("submit", async (event) => {
   try {
     await window.electronAPI.licenseActivate(licenseKey);
     setStatus(t("activated"), true);
+    document.body.classList.add("is-launching");
+    // Previously the main process closed this window before the success state
+    // could be painted. Keep the license theme visible during the hand-off.
+    setTimeout(async () => {
+      try {
+        await window.electronAPI.licenseStart();
+      } catch (error) {
+        document.body.classList.remove("is-launching");
+        setStatus(normalizeError(error));
+        button.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }, 420);
   } catch (error) {
     setStatus(normalizeError(error));
     button.disabled = false;
