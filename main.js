@@ -2931,6 +2931,11 @@ function handleAgentStateEvent(event) {
   const sessionId = event.sessionId || agentId;
   const sessionKey = `${agentId}:${sessionId}`;
   const task = typeof event.task === "string" ? event.task : "";
+  const conversationName = typeof event.conversationName === "string" ? event.conversationName.trim() :
+    (typeof event.conversationTitle === "string" ? event.conversationTitle.trim() :
+    (typeof event.conversation === "string" ? event.conversation.trim() :
+    (typeof event.topic === "string" ? event.topic.trim() :
+    (typeof event.title === "string" ? event.title.trim() : ""))));
   const text = typeof event.text === "string" ? event.text : (typeof event.message === "string" ? event.message : "");
   const now = Date.now();
   for (const [key, active] of activeAgentSessions) {
@@ -2948,6 +2953,7 @@ function handleAgentStateEvent(event) {
       agentId,
       agentName,
       sessionId,
+      conversationName,
       event: event.event || "",
       state,
       task,
@@ -2960,6 +2966,7 @@ function handleAgentStateEvent(event) {
         agentId,
         agentName,
         sessionId,
+        conversationName,
         event: event.event || "",
         task,
         text,
@@ -2971,6 +2978,7 @@ function handleAgentStateEvent(event) {
         agentId,
         agentName,
         sessionId,
+        conversationName,
         event: event.event || "",
         task,
         text,

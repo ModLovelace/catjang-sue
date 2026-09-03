@@ -69,11 +69,12 @@ Uso de notify-catjang:
   }
 
   try {
-    let agentId = "cli";
-    let agentName = "";
+    let agentName = "Agente IA";
+    let agentId = "agent";
     let task = "";
+    let conversationName = "";
 
-    // Parse options --agent and --task if provided
+    // Parse options --agent, --task, and --conversation if provided
     for (let i = 0; i < args.length; i++) {
       if (args[i] === "--agent" && args[i + 1]) {
         agentName = args[i + 1];
@@ -82,6 +83,10 @@ Uso de notify-catjang:
         i--;
       } else if (args[i] === "--task" && args[i + 1]) {
         task = args[i + 1];
+        args.splice(i, 2);
+        i--;
+      } else if ((args[i] === "--conversation" || args[i] === "-c" || args[i] === "--topic") && args[i + 1]) {
+        conversationName = args[i + 1];
         args.splice(i, 2);
         i--;
       }
@@ -94,6 +99,7 @@ Uso de notify-catjang:
         agentName,
         state: "working",
         task,
+        conversationName,
         text,
       });
       console.log("Catjang: agente en estado de trabajo.", res);
@@ -104,6 +110,7 @@ Uso de notify-catjang:
         agentName,
         state: "complete",
         task,
+        conversationName,
         text: text || "",
       });
       console.log("Catjang: tarea completada enviada.", res);
@@ -114,6 +121,7 @@ Uso de notify-catjang:
         agentName,
         state: "notification",
         task,
+        conversationName,
         text,
       });
       console.log("Catjang: alerta enviada.", res);

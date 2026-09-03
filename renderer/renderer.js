@@ -1797,7 +1797,7 @@ function clearSpeech() {
 }
 
 function showSpeech(text, { duration = 1800, kind = "notice" } = {}) {
-  if (activeSpeechKind === "reminder" && kind !== "reminder") return;
+  if (activeSpeechKind === "reminder" && kind !== "reminder" && kind !== "complete") return;
   if (speechTimer) clearTimeout(speechTimer);
   activeSpeechKind = kind;
   delete document.body.dataset.speech;
@@ -2048,6 +2048,53 @@ function triggerAlertAnimation() {
   }, 4000);
 }
 
+function formatAgentDisplayName(agentId, agentName) {
+  if (agentName && typeof agentName === "string" && agentName.trim()) {
+    return agentName.trim();
+  }
+  const id = (agentId || "").toLowerCase();
+  if (id.includes("gemini") || id.includes("antigravity")) return "Gemini";
+  if (id.includes("codex")) return "Codex";
+  if (id.includes("claude")) return "Claude Code";
+  if (id.includes("cursor")) return "Cursor";
+  if (id && id !== "agent" && id !== "cli" && id !== "test") {
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  }
+  return "Agente IA";
+}
+
+function formatAiCompleteText(event) {
+  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
+  let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+  let task = (event && typeof event.task === "string" && event.task.trim()) || "";
+  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
+
+  if (conversation.length > 30) {
+    conversation = conversation.slice(0, 27) + "...";
+  }
+  if (task.length > 38) {
+    task = task.slice(0, 35) + "...";
+  }
+
+  const prefix = conversation ? `${agent} [${conversation}]` : agent;
+
+  if (customText) {
+    if (customText.toLowerCase().includes(agent.toLowerCase()) || customText.includes(":")) {
+      return customText;
+    }
+    return `${prefix}: ${customText}`;
+  }
+
+  if (task) {
+    if (conversation && task.toLowerCase() === conversation.toLowerCase()) {
+      return `${prefix}: ${tr("agentComplete") || "¡Tarea completada!"}`;
+    }
+    return `${prefix}: Terminó "${task}"`;
+  }
+
+  return `${prefix}: ${tr("agentComplete") || "¡Tarea completada!"}`;
+}
+
 function playAiComplete(event) {
   setThinkingDotsVisible(false);
   playCompletionJump();
@@ -2065,7 +2112,14 @@ function playAiNotification(event) {
   setThinkingDotsVisible(false);
   playReminderAlertOnce();
   triggerAlertAnimation();
-  const text = (event && typeof event.text === "string" && event.text.trim()) || tr("needsAttention", currentUserName);
+  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
+  let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+  if (conversation.length > 30) conversation = conversation.slice(0, 27) + "...";
+  const prefix = conversation ? `${agent} [${conversation}]` : agent;
+  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
+  const text = customText
+    ? (customText.includes(":") ? customText : `${prefix}: ${customText}`)
+    : `${prefix}: ${tr("needsAttention", currentUserName)}`;
   showSpeech(text, { duration: 5200, kind: "reminder" });
 }
 

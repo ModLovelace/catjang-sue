@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
+const path = require("path");
 const { postAgentState } = require("./server-config");
 
 const EVENT_TO_STATE = {
@@ -37,12 +38,14 @@ async function main() {
   const state = EVENT_TO_STATE[event];
   if (!state) process.exit(0);
   const task = (payload.prompt || payload.user_prompt || payload.message || payload.task || "").slice(0, 55);
+  const conversationName = payload.conversation_title || payload.conversation_name || payload.title || payload.topic || (payload.cwd ? path.basename(payload.cwd) : "");
   postAgentState({
     agentId: "claude-code",
     agentName: "Claude Code",
     event,
     state,
     task,
+    conversationName,
     sessionId: payload.session_id || "claude-code",
     cwd: payload.cwd || "",
   }, () => process.exit(0));
