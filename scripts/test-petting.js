@@ -262,6 +262,87 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 6: Chisi petting stopped cleanly, hearts hidden, audio stopped.");
 
+  // 4. Test Milo Petting
+  const miloPetState = await win.webContents.executeJavaScript(`
+    (async () => {
+      document.body.dataset.mascot = "milo";
+      currentMascot = "milo";
+      const milo = document.getElementById("milo");
+      if (!milo.contentDocument || !milo.contentDocument.querySelector("svg")) {
+        await new Promise(r => {
+          milo.addEventListener("load", r, { once: true });
+          setTimeout(r, 600);
+        });
+      }
+      await new Promise(r => setTimeout(r, 200));
+      const rect = milo.getBoundingClientRect();
+      const headX = rect.left + rect.width * 0.50;
+      const headY = rect.top + rect.height * 0.35;
+
+      startPurring(headX, headY);
+
+      const hearts = document.getElementById("purr-hearts");
+      const miloDoc = milo.contentDocument;
+      const miloRoot = miloDoc && miloDoc.documentElement;
+      const isPurringClass = miloRoot ? miloRoot.classList.contains("purring") : false;
+
+      const tongue = miloDoc ? miloDoc.getElementById("dog-tongue") : null;
+      let tongueDisplay = "none";
+      if (tongue) {
+        tongueDisplay = miloDoc.defaultView ? miloDoc.defaultView.getComputedStyle(tongue).display : window.getComputedStyle(tongue).display;
+      }
+
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        miloHasPurringClass: isPurringClass,
+        tongueDisplay: tongueDisplay,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Milo Petting State:", miloPetState);
+
+  if (miloPetState.purringDataset !== "1" || miloPetState.heartsDisplay === "none" || !miloPetState.miloHasPurringClass) {
+    console.error("FAIL: Milo petting did not trigger properly!");
+    app.exit(1);
+    return;
+  }
+  if (miloPetState.tongueDisplay === "none") {
+    console.error("FAIL: Milo tongue is not displayed while petting!");
+    app.exit(1);
+    return;
+  }
+  if (!miloPetState.dogPettingNodesActive) {
+    console.error("FAIL: Milo petting audio nodes were not activated!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 7: Milo petting active, hearts visible, .purring applied, tongue shown, dog audio active.");
+
+  // Stop Milo Petting
+  const miloStopState = await win.webContents.executeJavaScript(`
+    (() => {
+      stopPurring();
+      const hearts = document.getElementById("purr-hearts");
+      const milo = document.getElementById("milo");
+      const miloRoot = milo.contentDocument && milo.contentDocument.documentElement;
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        miloHasPurringClass: miloRoot ? miloRoot.classList.contains("purring") : false,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Milo Stop Petting State:", miloStopState);
+  if (miloStopState.purringDataset || miloStopState.heartsDisplay !== "none" || miloStopState.miloHasPurringClass || miloStopState.dogPettingNodesActive) {
+    console.error("FAIL: Milo petting did not stop cleanly!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 8: Milo petting stopped cleanly, hearts hidden, audio stopped.");
+
   console.log("=== ALL PETTING ANIMATIONS AND SOUND TESTS PASSED! ===");
   app.exit(0);
 });

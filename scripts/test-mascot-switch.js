@@ -391,6 +391,123 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
   console.log("PASS 4: All Chisi animations and state transitions passed cleanly!");
 
+  // 5. Switch to Milo
+  const state5 = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.mascot = "milo";
+      const cat = document.getElementById("cat");
+      const schnauzer = document.getElementById("schnauzer");
+      const chisi = document.getElementById("chisi");
+      const milo = document.getElementById("milo");
+      const rect = milo.getBoundingClientRect();
+      return {
+        mascot: document.body.dataset.mascot,
+        catDisplay: window.getComputedStyle(cat).display,
+        schnauzerDisplay: window.getComputedStyle(schnauzer).display,
+        chisiDisplay: window.getComputedStyle(chisi).display,
+        miloDisplay: window.getComputedStyle(milo).display,
+        miloWidth: rect.width,
+        miloHeight: rect.height,
+      };
+    })()
+  `);
+  console.log("STATE 5 (Switched to Milo):", state5);
+  if (state5.miloDisplay !== "block" || state5.catDisplay !== "none" || state5.schnauzerDisplay !== "none" || state5.chisiDisplay !== "none") {
+    console.error("FAIL: Milo is not visible or other mascots are not hidden!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 5: Milo is visible and Cat/Schnauzer/Chisi are hidden.");
+
+  // 5.1 Test Milo typing
+  const stateMiloPress = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.press = "left";
+      const milo = document.getElementById("milo");
+      const miloPress = document.getElementById("milo-press-left");
+      return {
+        miloIdle: window.getComputedStyle(milo).display,
+        miloPress: window.getComputedStyle(miloPress).display,
+      };
+    })()
+  `);
+  console.log("STATE 5.1 (Milo Typing Left):", stateMiloPress);
+  if (stateMiloPress.miloIdle !== "none" || stateMiloPress.miloPress !== "block") {
+    console.error("FAIL: Milo typing display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.press`);
+
+  // 5.2 Test Milo scrolling
+  const stateMiloScroll = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.scroll = "unroll";
+      const milo = document.getElementById("milo");
+      const miloScroll = document.getElementById("milo-scroll-unroll");
+      return {
+        miloIdle: window.getComputedStyle(milo).display,
+        miloScroll: window.getComputedStyle(miloScroll).display,
+      };
+    })()
+  `);
+  console.log("STATE 5.2 (Milo Scrolling):", stateMiloScroll);
+  if (stateMiloScroll.miloIdle !== "none" || stateMiloScroll.miloScroll !== "block") {
+    console.error("FAIL: Milo scrolling display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
+
+  // 5.3 Test Milo dragging
+  const stateMiloDrag = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.classList.add("dragging");
+      const milo = document.getElementById("milo");
+      const miloDrag = document.getElementById("milo-drag");
+      const chisiDrag = document.getElementById("chisi-drag");
+      const schnauzerDrag = document.getElementById("schnauzer-drag");
+      return {
+        miloIdle: window.getComputedStyle(milo).display,
+        miloDrag: window.getComputedStyle(miloDrag).display,
+        chisiDrag: window.getComputedStyle(chisiDrag).display,
+        schnauzerDrag: window.getComputedStyle(schnauzerDrag).display,
+      };
+    })()
+  `);
+  console.log("STATE 5.3 (Milo Dragging):", stateMiloDrag);
+  if (stateMiloDrag.miloIdle !== "none" || stateMiloDrag.miloDrag !== "block" || stateMiloDrag.chisiDrag !== "none" || stateMiloDrag.schnauzerDrag !== "none") {
+    console.error("FAIL: Milo dragging display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
+
+  // 5.4 Test Milo stretching
+  const stateMiloStretch = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.stretching = "ing";
+      const milo = document.getElementById("milo");
+      const miloStretch = document.getElementById("milo-stretch");
+      const chisiStretch = document.getElementById("chisi-stretch");
+      const schnauzerStretch = document.getElementById("schnauzer-stretch");
+      return {
+        miloIdle: window.getComputedStyle(milo).display,
+        miloStretch: window.getComputedStyle(miloStretch).display,
+        chisiStretch: window.getComputedStyle(chisiStretch).display,
+        schnauzerStretch: window.getComputedStyle(schnauzerStretch).display,
+      };
+    })()
+  `);
+  console.log("STATE 5.4 (Milo Stretching):", stateMiloStretch);
+  if (stateMiloStretch.miloIdle !== "none" || stateMiloStretch.miloStretch !== "block" || stateMiloStretch.chisiStretch !== "none" || stateMiloStretch.schnauzerStretch !== "none") {
+    console.error("FAIL: Milo stretching display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
+  console.log("PASS 5: All Milo animations and state transitions passed cleanly!");
+
   console.log("=== ALL LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
   app.exit(0);
 });

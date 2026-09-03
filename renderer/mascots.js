@@ -90,6 +90,34 @@ const MASCOTS = {
       stretch: "svg/chisi/stretch.svg",
     },
   },
+  milo: {
+    id: "milo",
+    defaultName: "Milo",
+    label: "Milo (Milongas) 🐕",
+    soundType: "bark",
+    folder: "svg/milo",
+    petting: { cx: 0.50, cy: 0.34, rx: 0.28, ry: 0.26 },
+    elements: {
+      idle: "milo",
+      pressLeft: "milo-press-left",
+      pressRight: "milo-press-right",
+      scroll: "milo-scroll-unroll",
+      jumpStart: "milo-jump-start",
+      jumpIng: "milo-jump-ing",
+      drag: "milo-drag",
+      stretch: "milo-stretch",
+    },
+    svgFiles: {
+      idle: "svg/milo/idle.svg",
+      pressLeft: "svg/milo/press-left.svg",
+      pressRight: "svg/milo/press-right.svg",
+      scroll: "svg/milo/scroll.svg",
+      jumpStart: "svg/milo/jump-start.svg",
+      jumpIng: "svg/milo/jump-ing.svg",
+      drag: "svg/milo/drag.svg",
+      stretch: "svg/milo/stretch.svg",
+    },
+  },
 };
 
 function getMascot(id) {
