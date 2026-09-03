@@ -1524,6 +1524,8 @@ function openAgentConnectWindow() {
     resizable: false,
     maximizable: false,
     fullscreenable: false,
+    center: true,
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -1533,6 +1535,11 @@ function openAgentConnectWindow() {
   agentConnectWin.setMenu(null);
   attachWindowDiagnostics(agentConnectWin, "agent-connect");
   agentConnectWin.loadFile(path.join(__dirname, "agents-setup", "index.html"));
+  agentConnectWin.once("ready-to-show", () => {
+    if (!agentConnectWin || agentConnectWin.isDestroyed()) return;
+    agentConnectWin.show();
+    agentConnectWin.focus();
+  });
   agentConnectWin.on("closed", () => { agentConnectWin = null; });
 }
 
