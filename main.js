@@ -1034,6 +1034,9 @@ function setLanguage(language) {
   if (mappingWin && !mappingWin.isDestroyed()) {
     mappingWin.setTitle(t("mappingEditorTitle"));
   }
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.setTitle(t("aiAgentsSetupTitle"));
+  }
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("language-changed", currentLanguage);
   }
@@ -1570,6 +1573,11 @@ function openPatternEditor() {
 }
 
 function openMappingEditor() {
+  const mappingHtml = path.join(__dirname, "mapping-editor", "index.html");
+  if (!fs.existsSync(mappingHtml)) {
+    logWarn("[Catjang] mapping editor HTML not found, skipping");
+    return;
+  }
   if (mappingWin && !mappingWin.isDestroyed()) {
     mappingWin.focus();
     return;
@@ -2577,7 +2585,7 @@ function showPetContextMenu() {
       label: t("patternEditor"),
       click: () => openPatternEditor(),
     },
-    ...(!releaseBuildExcludesDevOptions() ? [{
+    ...(fs.existsSync(path.join(__dirname, "mapping-editor", "index.html")) && !releaseBuildExcludesDevOptions() ? [{
       label: t("mappingEditor"),
       click: () => openMappingEditor(),
     }] : []),
