@@ -17,6 +17,8 @@ const TRACKING_LAYERS = {
 const MAX_RAW_DIST_PX = 400;
 
 const obj = document.getElementById("cat");
+const dogObj = document.getElementById("schnauzer");
+let currentMascot = "cat";
 const shareNameBadge = document.getElementById("share-name-badge");
 const catSpeechBubble = document.getElementById("cat-speech-bubble");
 const catThinkingDots = document.getElementById("cat-thinking-dots");
@@ -970,10 +972,15 @@ function startBlinkLoop() {
   if (blinkTimer) clearTimeout(blinkTimer);
   function schedule() {
     blinkTimer = setTimeout(() => {
-      const root = svgDoc && svgDoc.documentElement;
-      if (root && !root.classList.contains("purring")) {
-        root.classList.add("blinking");
-        setTimeout(() => root && root.classList.remove("blinking"), 220);
+      const roots = [
+        svgDoc && svgDoc.documentElement,
+        dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
+      ];
+      for (const root of roots) {
+        if (root && !root.classList.contains("purring") && !root.classList.contains("sleeping")) {
+          root.classList.add("blinking");
+          setTimeout(() => root && root.classList.remove("blinking"), 220);
+        }
       }
       schedule();
     }, 2200 + Math.random() * 3800);
@@ -983,11 +990,38 @@ function startBlinkLoop() {
 
 function wrapElement(el) {
   const ns = "http://www.w3.org/2000/svg";
-  const wrapper = svgDoc.createElementNS(ns, "g");
+  const doc = el.ownerDocument || svgDoc;
+  const wrapper = doc.createElementNS(ns, "g");
   wrapper.setAttribute("data-tracking-wrapper", "1");
   el.parentNode.insertBefore(wrapper, el);
   wrapper.appendChild(el);
   return wrapper;
+}
+
+function initDogTracking() {
+  if (!dogObj || !dogObj.contentDocument) return;
+  const dogDoc = dogObj.contentDocument;
+  if (trackingInitializedDocs.has(dogDoc)) return;
+  trackingInitializedDocs.add(dogDoc);
+
+  if (!layers) layers = {};
+  for (const [name, cfg] of Object.entries(TRACKING_LAYERS)) {
+    if (!layers[name]) {
+      layers[name] = {
+        wrappers: [],
+        maxOffset: cfg.maxOffset,
+        ease: cfg.ease,
+        stretchAxis: cfg.stretchAxis,
+        x: 0,
+        y: 0,
+      };
+    }
+    for (const id of cfg.ids) {
+      const el = dogDoc.getElementById(id);
+      if (!el) continue;
+      layers[name].wrappers.push(wrapElement(el));
+    }
+  }
 }
 
 function isStretching() {
@@ -1854,10 +1888,97 @@ function formatAiCompleteText(event) {
   return `${agent}: ${tr("agentComplete") || "¡Tarea completada!"}`;
 }
 
+let puppyAudioCtx = null;
+function playPuppyBark() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
+    if (puppyAudioCtx.state === "suspended") {
+      puppyAudioCtx.resume().catch(() => {});
+    }
+    const ctx = puppyAudioCtx;
+    const now = ctx.currentTime;
+
+    function bark(t, pitch = 1.0) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(380 * pitch, t);
+      osc.frequency.exponentialRampToValueAtTime(140 * pitch, t + 0.13);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1200, t);
+
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.14);
+    }
+
+    bark(now, 1.0);
+    bark(now + 0.15, 1.18);
+  } catch {}
+}
+
+function triggerCompletionConfetti() {
+  const container = document.getElementById("completion-confetti");
+  if (!container) return;
+  container.innerHTML = "";
+  document.body.dataset.confetti = "1";
+
+  const colors = ["#ff3366", "#33ccff", "#ffcc00", "#33ff99", "#ff9933", "#cc66ff", "#ffffff"];
+  const count = 28;
+
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+    const dist = 28 + Math.random() * 40;
+    const x = Math.cos(angle) * dist;
+    const y = Math.sin(angle) * dist - 12;
+    const rot = (Math.random() * 720 - 360) + "deg";
+    const color = colors[i % colors.length];
+
+    piece.style.setProperty("--cf-x", `${x}px`);
+    piece.style.setProperty("--cf-y", `${y}px`);
+    piece.style.setProperty("--cf-rot", rot);
+    piece.style.backgroundColor = color;
+    piece.style.left = "calc(50% - 2px)";
+    piece.style.top = "calc(50% - 2px)";
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => {
+    delete document.body.dataset.confetti;
+    container.innerHTML = "";
+  }, 2000);
+}
+
+function triggerAlertAnimation() {
+  document.body.dataset.alert = "1";
+  setTimeout(() => {
+    delete document.body.dataset.alert;
+  }, 4000);
+}
+
 function playAiComplete(event) {
   setThinkingDotsVisible(false);
   playCompletionJump();
-  playCompletionMeow();
+  if (currentMascot === "schnauzer") {
+    playPuppyBark();
+  } else {
+    playCompletionMeow();
+  }
+  triggerCompletionConfetti();
   const text = formatAiCompleteText(event);
   showSpeech(text, { duration: 5000, kind: "complete" });
 }
@@ -1865,6 +1986,7 @@ function playAiComplete(event) {
 function playAiNotification(event) {
   setThinkingDotsVisible(false);
   playReminderAlertOnce();
+  triggerAlertAnimation();
   const text = (event && typeof event.text === "string" && event.text.trim()) || tr("needsAttention", currentUserName);
   showSpeech(text, { duration: 5200, kind: "reminder" });
 }
@@ -3347,8 +3469,11 @@ function registerSvgObjectWhenReady(id) {
   requestAnimationFrame(register);
 }
 
-// press / wheel / stretch-pose SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
-for (const id of ["press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing"]) {
+// press / wheel / stretch-pose / schnauzer SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
+for (const id of [
+  "press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing",
+  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-jump-start", "schnauzer-jump-ing"
+]) {
   registerSvgObjectWhenReady(id);
 }
 
@@ -3538,6 +3663,7 @@ let recentKeyTimestamps = [];
 function handleKeyPress() {
   if (isStretching()) return;
   const now = Date.now();
+  registerUserActivity();
 
   // sliding window: only react visually once typing reaches 5 keys / 2 seconds
   recentKeyTimestamps.push(now);
@@ -3597,6 +3723,7 @@ window.electronAPI.onPomodoroFocusStart(() => {
 
 function handleScrollGesture() {
   if (isStretching() || dragging || document.body.dataset.press || document.body.dataset.jump) return;
+  registerUserActivity();
   if (!document.body.dataset.scroll) restartScrollSvgAnimation();
   ensureSvgObjectReady("scroll-unroll");
   document.body.dataset.scroll = "unroll";
@@ -3610,3 +3737,74 @@ window.electronAPI.onMouseWheel(handleScrollGesture);
 window.addEventListener("wheel", () => {
   if (windowBackend === "wayland") handleScrollGesture();
 }, { passive: true });
+
+// ── SLEEP / NAP ANIMATION ──
+let lastUserActivity = Date.now();
+let isPetSleeping = false;
+const SLEEP_IDLE_TIMEOUT_MS = 60000; // 1 minute of inactivity triggers sleep
+
+function registerUserActivity() {
+  lastUserActivity = Date.now();
+  if (isPetSleeping) {
+    wakePet();
+  }
+}
+
+function wakePet() {
+  isPetSleeping = false;
+  delete document.body.dataset.sleeping;
+  const roots = [
+    obj && obj.contentDocument && obj.contentDocument.documentElement,
+    dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
+  ];
+  for (const root of roots) {
+    if (root) root.classList.remove("sleeping");
+  }
+}
+
+function putPetToSleep() {
+  if (isPetSleeping) return;
+  if (document.body.dataset.press || document.body.dataset.jump || document.body.dataset.stretching) return;
+  isPetSleeping = true;
+  document.body.dataset.sleeping = "1";
+  const roots = [
+    obj && obj.contentDocument && obj.contentDocument.documentElement,
+    dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
+  ];
+  for (const root of roots) {
+    if (root) root.classList.add("sleeping");
+  }
+}
+
+setInterval(() => {
+  if (!isPetSleeping && Date.now() - lastUserActivity > SLEEP_IDLE_TIMEOUT_MS) {
+    putPetToSleep();
+  }
+}, 5000);
+
+window.addEventListener("mousemove", registerUserActivity, { passive: true });
+window.addEventListener("mousedown", registerUserActivity, { passive: true });
+window.addEventListener("keydown", registerUserActivity, { passive: true });
+
+// ── MASCOT SWITCHING ──
+function applyMascot(mascot) {
+  currentMascot = mascot === "schnauzer" ? "schnauzer" : "cat";
+  document.body.dataset.mascot = currentMascot;
+  if (currentMascot === "schnauzer") {
+    if (dogObj && dogObj.contentDocument) initDogTracking();
+  }
+}
+
+if (window.electronAPI && window.electronAPI.mascotGet) {
+  window.electronAPI.mascotGet().then(applyMascot).catch(() => {});
+  window.electronAPI.onMascotChanged((mascot) => applyMascot(mascot));
+}
+
+if (dogObj) {
+  dogObj.addEventListener("load", () => {
+    initDogTracking();
+  });
+  requestAnimationFrame(() => {
+    if (dogObj && dogObj.contentDocument) initDogTracking();
+  });
+}

@@ -135,6 +135,7 @@ const SHARE_VIDEO_CROP_GUARD_BOTTOM_PX = 48;
 const SHARE_VIDEO_KEYFRAME_INTERVAL_SEC = 1 / 30;
 const REGULAR_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 let currentLanguage = "es";
+let currentMascot = "cat";
 
 function resolveFfmpegPath() {
   if (!bundledFfmpegPath) return null;
@@ -227,6 +228,9 @@ const I18N = {
     fullResetTitle: "Catjang Full Reset",
     fullResetConfirm: "Are you sure you want to completely reset Catjang?\n\nAll settings will be deleted, and you will need to re-enter your activation key / token.",
     confirmReset: "Yes, Reset All",
+    mascot: "Mascot",
+    mascotCat: "Cat (Catjang) 🐱",
+    mascotSchnauzer: "Puppy (Schnauzer) 🐶",
   },
   es: {
     licenseMissingKey: "Introduce tu clave de licencia.",
@@ -310,6 +314,9 @@ const I18N = {
     fullResetTitle: "Reinicio Total de Catjang",
     fullResetConfirm: "¿Estás seguro de que deseas restablecer Catjang por completo?\n\nSe borrará toda la configuración y deberás ingresar nuevamente tu token de activación.",
     confirmReset: "Sí, reiniciar todo",
+    mascot: "Mascota",
+    mascotCat: "Gatito (Catjang) 🐱",
+    mascotSchnauzer: "Perrito (Schnauzer) 🐶",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -393,6 +400,9 @@ const I18N = {
     fullResetTitle: "Catjang 완전 초기화",
     fullResetConfirm: "Catjang을 완전히 초기화하시겠습니까?\n\n모든 설정이 삭제되며 활성화 토큰을 다시 입력해야 합니다.",
     confirmReset: "예, 모두 초기화",
+    mascot: "반려동물",
+    mascotCat: "고양이 (캣짱) 🐱",
+    mascotSchnauzer: "강아지 (슈나우저) 🐶",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -476,6 +486,9 @@ const I18N = {
     fullResetTitle: "Catjang 完全リセット",
     fullResetConfirm: "Catjang を完全にリセットしますか？\n\nすべての設定が削除され、アクティベーショントークンを再入力する必要があります。",
     confirmReset: "はい、すべてリセット",
+    mascot: "ペット",
+    mascotCat: "子猫 (Catjang) 🐱",
+    mascotSchnauzer: "子犬 (シュナウザー) 🐶",
   },
 };
 
@@ -784,6 +797,9 @@ function loadSettings() {
       if (typeof data.agentOnboardingShown === "boolean") {
         agentOnboardingShown = data.agentOnboardingShown;
       }
+      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer")) {
+        currentMascot = data.mascot;
+      }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
       }
@@ -810,6 +826,7 @@ function saveSettings() {
       stretchIntervalMin,
       reminders,
       language: currentLanguage,
+      mascot: currentMascot,
       catName,
       userName,
       showCatName,
@@ -824,6 +841,15 @@ function saveSettings() {
       pomodoroRestSec,
     }, null, 2));
   } catch {}
+}
+
+function setMascot(mascot) {
+  if (mascot !== "cat" && mascot !== "schnauzer") return;
+  currentMascot = mascot;
+  saveSettings();
+  if (petWin && !petWin.isDestroyed()) {
+    petWin.webContents.send("mascot-changed", currentMascot);
+  }
 }
 
 function startStretchTimer() {
@@ -1585,6 +1611,7 @@ function confirmAndPerformFullReset() {
   } catch {}
 
   catName = "Catjang";
+  currentMascot = "cat";
   userName = "";
   showCatName = true;
   fixedMessage = "";
@@ -2370,6 +2397,9 @@ ipcMain.handle("window-capabilities", () => ({
   supportsWindowShape: IS_LINUX && !!petWin && typeof petWin.setShape === "function",
 }));
 
+ipcMain.handle("mascot-get", () => currentMascot);
+ipcMain.on("mascot-set", (_evt, mascot) => setMascot(mascot));
+
 ipcMain.on("set-window-shape", (_evt, requestedRects) => {
   if (!IS_LINUX || !petWin || petWin.isDestroyed() || typeof petWin.setShape !== "function") return;
   const [windowWidth, windowHeight] = petWin.getSize();
@@ -2672,6 +2702,14 @@ function showPetContextMenu() {
       label: t("aiAgentsSetup"),
       click: () => openAgentConnectWindow(),
     },
+    {
+      label: t("mascot"),
+      submenu: [
+        { label: t("mascotCat"), type: "radio", checked: currentMascot === "cat", click: () => setMascot("cat") },
+        { label: t("mascotSchnauzer"), type: "radio", checked: currentMascot === "schnauzer", click: () => setMascot("schnauzer") },
+      ],
+    },
+    { type: "separator" },
     {
       label: t("patternEditor"),
       click: () => openPatternEditor(),

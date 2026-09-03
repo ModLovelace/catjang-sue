@@ -128,4 +128,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   agentHooksInstall: () => ipcRenderer.invoke("agent-hooks-install"),
   agentTestNotify: (payload) => ipcRenderer.invoke("agent-test-notify", payload),
   agentOnboardingComplete: () => ipcRenderer.invoke("agent-onboarding-complete"),
+  mascotGet: () => ipcRenderer.invoke("mascot-get"),
+  mascotSet: (mascot) => ipcRenderer.send("mascot-set", mascot),
+  onMascotChanged: (callback) =>
+    ipcRenderer.on("mascot-changed", (_evt, mascot) => callback(mascot)),
 });
