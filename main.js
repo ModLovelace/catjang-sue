@@ -223,6 +223,10 @@ const I18N = {
     clear: "Clear",
     delete: "Delete",
     later: "Later",
+    fullReset: "Full Reset (Factory Reset)",
+    fullResetTitle: "Catjang Full Reset",
+    fullResetConfirm: "Are you sure you want to completely reset Catjang?\n\nAll settings will be deleted, and you will need to re-enter your activation key / token.",
+    confirmReset: "Yes, Reset All",
   },
   es: {
     licenseMissingKey: "Introduce tu clave de licencia.",
@@ -302,6 +306,10 @@ const I18N = {
     clear: "Limpiar",
     delete: "Eliminar",
     later: "Más tarde",
+    fullReset: "Reinicio total (Restablecer)",
+    fullResetTitle: "Reinicio Total de Catjang",
+    fullResetConfirm: "¿Estás seguro de que deseas restablecer Catjang por completo?\n\nSe borrará toda la configuración y deberás ingresar nuevamente tu token de activación.",
+    confirmReset: "Sí, reiniciar todo",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -381,6 +389,10 @@ const I18N = {
     clear: "지우기",
     delete: "삭제",
     later: "나중에",
+    fullReset: "완전 초기화 (공장 초기화)",
+    fullResetTitle: "Catjang 완전 초기화",
+    fullResetConfirm: "Catjang을 완전히 초기화하시겠습니까?\n\n모든 설정이 삭제되며 활성화 토큰을 다시 입력해야 합니다.",
+    confirmReset: "예, 모두 초기화",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -460,6 +472,10 @@ const I18N = {
     clear: "クリア",
     delete: "削除",
     later: "後で",
+    fullReset: "完全リセット (初期化)",
+    fullResetTitle: "Catjang 完全リセット",
+    fullResetConfirm: "Catjang を完全にリセットしますか？\n\nすべての設定が削除され、アクティベーショントークンを再入力する必要があります。",
+    confirmReset: "はい、すべてリセット",
   },
 };
 
@@ -1424,12 +1440,19 @@ function createLicenseWindow(initialReason = "") {
     resizable: false,
     maximizable: false,
     fullscreenable: false,
+    center: true,
+    alwaysOnTop: true,
     backgroundColor: "#f7f4ef",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+  licenseWin.once("ready-to-show", () => {
+    if (!licenseWin || licenseWin.isDestroyed()) return;
+    licenseWin.show();
+    licenseWin.focus();
   });
   licenseWin.setMenu(null);
   attachWindowDiagnostics(licenseWin, "license");
@@ -1511,6 +1534,74 @@ function returnToLicenseWindow(reason = "invalid") {
   if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
   if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
   if (petWin && !petWin.isDestroyed()) petWin.close();
+}
+
+function confirmAndPerformFullReset() {
+  const choice = dialog.showMessageBoxSync(petWin || null, {
+    type: "warning",
+    buttons: [t("confirmReset") || "Sí, reiniciar todo", t("cancel") || "Cancelar"],
+    defaultId: 1,
+    cancelId: 1,
+    title: t("fullResetTitle") || "Reinicio Total de Catjang",
+    message: t("fullResetConfirm") || "¿Estás seguro de que deseas restablecer Catjang por completo?\n\nSe borrará toda la configuración y deberás ingresar nuevamente tu token de activación.",
+  });
+
+  if (choice !== 0) return;
+
+  logInfo("[Catjang] Performing full factory reset...");
+
+  stopKeyHook();
+  stopAgentIntegrations();
+  if (stretchTimer) {
+    clearInterval(stretchTimer);
+    stretchTimer = null;
+  }
+  stopReminderTimer();
+  stopPomodoroTimer();
+  hideShareCaptureOverlay();
+
+  removeLicense();
+  try {
+    const lic = licensePath();
+    if (fs.existsSync(lic)) fs.unlinkSync(lic);
+  } catch (err) {
+    logWarn("[Catjang] Failed to delete license file:", err && err.message);
+  }
+
+  try {
+    const st = settingsPath();
+    if (fs.existsSync(st)) fs.unlinkSync(st);
+  } catch (err) {
+    logWarn("[Catjang] Failed to delete settings file:", err && err.message);
+  }
+
+  try {
+    const pt = patternPath();
+    if (fs.existsSync(pt)) fs.unlinkSync(pt);
+  } catch {}
+  try {
+    const cp = customPresetsPath();
+    if (fs.existsSync(cp)) fs.unlinkSync(cp);
+  } catch {}
+
+  catName = "Catjang";
+  userName = "";
+  showCatName = true;
+  fixedMessage = "";
+  catNamePromptShown = false;
+  agentOnboardingShown = false;
+  reminders = [];
+  stretchIntervalMin = 30;
+  currentPetSize = DEFAULT_SIZE;
+  currentPetPosition = null;
+  taskCompleteSoundVolume = DEFAULT_TASK_COMPLETE_SOUND_VOLUME;
+
+  if (patternWin && !patternWin.isDestroyed()) patternWin.close();
+  if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
+  if (petWin && !petWin.isDestroyed()) petWin.close();
+
+  createLicenseWindow("");
 }
 
 function openAgentConnectWindow() {
@@ -2632,6 +2723,11 @@ function showPetContextMenu() {
         { label: t("korean"), type: "radio", checked: currentLanguage === "ko", click: () => setLanguage("ko") },
         { label: t("japanese"), type: "radio", checked: currentLanguage === "ja", click: () => setLanguage("ja") },
       ],
+    },
+    { type: "separator" },
+    {
+      label: t("fullReset"),
+      click: () => confirmAndPerformFullReset(),
     },
     { type: "separator" },
     {
