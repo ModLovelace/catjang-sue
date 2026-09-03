@@ -63,9 +63,10 @@ if (allElementsInHtml) console.log("PASS: All mascot DOM objects exist in render
 // 3. Check renderer/styles.css has isolation rules
 const css = fs.readFileSync(path.join(__dirname, "..", "renderer", "styles.css"), "utf8");
 if (!css.includes('body[data-mascot="schnauzer"].dragging #schnauzer-drag') ||
-    !css.includes('body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch') ||
-    !css.includes('body[data-mascot="schnauzer"][data-scroll] #schnauzer-scroll-unroll')) {
-  console.error("FAIL: styles.css missing complete animation equivalence rules for schnauzer");
+    !css.includes('body[data-mascot="chisi"].dragging #chisi-drag') ||
+    !css.includes('body[data-mascot="chisi"][data-stretching] #chisi-stretch') ||
+    !css.includes('body[data-mascot="chisi"][data-scroll] #chisi-scroll-unroll')) {
+  console.error("FAIL: styles.css missing complete animation equivalence rules for mascots");
 } else {
   console.log("PASS: styles.css contains complete drag, stretch, scroll and press rules per mascot.");
 }

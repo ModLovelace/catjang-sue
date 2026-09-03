@@ -181,6 +181,87 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 4: Schnauzer petting stopped cleanly, hearts hidden, audio stopped.");
 
+  // 3. Test Chisi Petting
+  const chisiPetState = await win.webContents.executeJavaScript(`
+    (async () => {
+      document.body.dataset.mascot = "chisi";
+      currentMascot = "chisi";
+      const chisi = document.getElementById("chisi");
+      if (!chisi.contentDocument || !chisi.contentDocument.querySelector("svg")) {
+        await new Promise(r => {
+          chisi.addEventListener("load", r, { once: true });
+          setTimeout(r, 600);
+        });
+      }
+      await new Promise(r => setTimeout(r, 200));
+      const rect = chisi.getBoundingClientRect();
+      const headX = rect.left + rect.width * 0.50;
+      const headY = rect.top + rect.height * 0.35;
+
+      startPurring(headX, headY);
+
+      const hearts = document.getElementById("purr-hearts");
+      const chisiDoc = chisi.contentDocument;
+      const chisiRoot = chisiDoc && chisiDoc.documentElement;
+      const isPurringClass = chisiRoot ? chisiRoot.classList.contains("purring") : false;
+
+      const tongue = chisiDoc ? chisiDoc.getElementById("dog-tongue") : null;
+      let tongueDisplay = "none";
+      if (tongue) {
+        tongueDisplay = chisiDoc.defaultView ? chisiDoc.defaultView.getComputedStyle(tongue).display : window.getComputedStyle(tongue).display;
+      }
+
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        chisiHasPurringClass: isPurringClass,
+        tongueDisplay: tongueDisplay,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Chisi Petting State:", chisiPetState);
+
+  if (chisiPetState.purringDataset !== "1" || chisiPetState.heartsDisplay === "none" || !chisiPetState.chisiHasPurringClass) {
+    console.error("FAIL: Chisi petting did not trigger properly!");
+    app.exit(1);
+    return;
+  }
+  if (chisiPetState.tongueDisplay === "none") {
+    console.error("FAIL: Chisi tongue is not displayed while petting!");
+    app.exit(1);
+    return;
+  }
+  if (!chisiPetState.dogPettingNodesActive) {
+    console.error("FAIL: Chisi petting audio nodes were not activated!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 5: Chisi petting active, hearts visible, .purring applied, tongue shown, dog audio active.");
+
+  // Stop Chisi Petting
+  const chisiStopState = await win.webContents.executeJavaScript(`
+    (() => {
+      stopPurring();
+      const hearts = document.getElementById("purr-hearts");
+      const chisi = document.getElementById("chisi");
+      const chisiRoot = chisi.contentDocument && chisi.contentDocument.documentElement;
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        chisiHasPurringClass: chisiRoot ? chisiRoot.classList.contains("purring") : false,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Chisi Stop Petting State:", chisiStopState);
+  if (chisiStopState.purringDataset || chisiStopState.heartsDisplay !== "none" || chisiStopState.chisiHasPurringClass || chisiStopState.dogPettingNodesActive) {
+    console.error("FAIL: Chisi petting did not stop cleanly!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 6: Chisi petting stopped cleanly, hearts hidden, audio stopped.");
+
   console.log("=== ALL PETTING ANIMATIONS AND SOUND TESTS PASSED! ===");
   app.exit(0);
 });

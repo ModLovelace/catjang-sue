@@ -998,10 +998,10 @@ function wrapElement(el) {
   return wrapper;
 }
 
-function initDogTracking() {
-  if (!dogObj || !dogObj.contentDocument) return;
-  const dogDoc = dogObj.contentDocument;
-  if (trackingInitializedDocs.has(dogDoc)) return;
+function initDogTracking(specificDoc) {
+  const currentEl = typeof currentIdleElement === "function" ? currentIdleElement() : null;
+  const dogDoc = specificDoc || (currentEl && currentEl.contentDocument) || (dogObj && dogObj.contentDocument);
+  if (!dogDoc || trackingInitializedDocs.has(dogDoc)) return;
   trackingInitializedDocs.add(dogDoc);
 
   if (!layers) layers = {};
@@ -1845,7 +1845,8 @@ function getReminderMeowVolume() {
 
 function playReminderMeow(options = {}) {
   if (completionMeowVolume <= 0) return;
-  if (currentMascot === "schnauzer") {
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
     playPuppyBark();
     return;
   }
@@ -2098,7 +2099,8 @@ function formatAiCompleteText(event) {
 function playAiComplete(event) {
   setThinkingDotsVisible(false);
   playCompletionJump();
-  if (currentMascot === "schnauzer") {
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
     playPuppyBark();
   } else {
     playCompletionMeow();
@@ -3554,7 +3556,9 @@ function playCompletionJump(options = {}) {
 }
 
 function scrollSvgObject() {
-  const id = currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : "scroll-unroll";
+  const id = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "scroll")
+    : (currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : (currentMascot === "chisi" ? "chisi-scroll-unroll" : "scroll-unroll"));
   return document.getElementById(id);
 }
 
@@ -3892,8 +3896,10 @@ window.electronAPI.onPomodoroFocusStart(() => {
 function handleScrollGesture() {
   if (isStretching() || dragging || document.body.dataset.press || document.body.dataset.jump) return;
   registerUserActivity();
-  if (!document.body.dataset.scroll) restartScrollSvgAnimation();
-  ensureSvgObjectReady(currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : "scroll-unroll");
+  const scrollId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "scroll")
+    : (currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : (currentMascot === "chisi" ? "chisi-scroll-unroll" : "scroll-unroll"));
+  ensureSvgObjectReady(scrollId);
   document.body.dataset.scroll = "unroll";
   clearTimeout(scrollReleaseTimer);
   scrollReleaseTimer = setTimeout(() => {
@@ -3956,11 +3962,10 @@ window.addEventListener("keydown", registerUserActivity, { passive: true });
 
 // ── MASCOT SWITCHING ──
 function applyMascot(mascot) {
-  currentMascot = mascot === "schnauzer" ? "schnauzer" : "cat";
+  currentMascot = (mascot === "schnauzer" || mascot === "chisi") ? mascot : "cat";
   document.body.dataset.mascot = currentMascot;
-  if (currentMascot === "schnauzer") {
-    if (dogObj && dogObj.contentDocument) initDogTracking();
-  }
+  const currentEl = currentIdleElement();
+  if (currentEl && currentEl.contentDocument) initDogTracking(currentEl.contentDocument);
 }
 
 if (window.electronAPI && window.electronAPI.mascotGet) {
@@ -3970,9 +3975,18 @@ if (window.electronAPI && window.electronAPI.mascotGet) {
 
 if (dogObj) {
   dogObj.addEventListener("load", () => {
-    initDogTracking();
+    initDogTracking(dogObj.contentDocument);
   });
   requestAnimationFrame(() => {
-    if (dogObj && dogObj.contentDocument) initDogTracking();
+    if (dogObj && dogObj.contentDocument) initDogTracking(dogObj.contentDocument);
+  });
+}
+const chisiObj = document.getElementById("chisi");
+if (chisiObj) {
+  chisiObj.addEventListener("load", () => {
+    initDogTracking(chisiObj.contentDocument);
+  });
+  requestAnimationFrame(() => {
+    if (chisiObj && chisiObj.contentDocument) initDogTracking(chisiObj.contentDocument);
   });
 }

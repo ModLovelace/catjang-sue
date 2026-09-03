@@ -62,6 +62,34 @@ const MASCOTS = {
       stretch: "svg/schnauzer/stretch.svg",
     },
   },
+  chisi: {
+    id: "chisi",
+    defaultName: "Chisi",
+    label: "Caniche Toy (Chisi) 🐩",
+    soundType: "bark",
+    folder: "svg/chisi",
+    petting: { cx: 0.50, cy: 0.35, rx: 0.28, ry: 0.26 },
+    elements: {
+      idle: "chisi",
+      pressLeft: "chisi-press-left",
+      pressRight: "chisi-press-right",
+      scroll: "chisi-scroll-unroll",
+      jumpStart: "chisi-jump-start",
+      jumpIng: "chisi-jump-ing",
+      drag: "chisi-drag",
+      stretch: "chisi-stretch",
+    },
+    svgFiles: {
+      idle: "svg/chisi/idle.svg",
+      pressLeft: "svg/chisi/press-left.svg",
+      pressRight: "svg/chisi/press-right.svg",
+      scroll: "svg/chisi/scroll.svg",
+      jumpStart: "svg/chisi/jump-start.svg",
+      jumpIng: "svg/chisi/jump-ing.svg",
+      drag: "svg/chisi/drag.svg",
+      stretch: "svg/chisi/stretch.svg",
+    },
+  },
 };
 
 function getMascot(id) {

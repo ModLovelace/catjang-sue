@@ -231,6 +231,7 @@ const I18N = {
     mascot: "Mascot",
     mascotCat: "Cat (Catjang) 🐱",
     mascotSchnauzer: "Puppy (Schnauzer) 🐶",
+    mascotChisi: "Poodle Toy (Chisi) 🐩",
   },
   es: {
     licenseMissingKey: "Introduce tu clave de licencia.",
@@ -317,6 +318,7 @@ const I18N = {
     mascot: "Mascota",
     mascotCat: "Gatito (Catjang) 🐱",
     mascotSchnauzer: "Perrito (Schnauzer) 🐶",
+    mascotChisi: "Caniche Toy (Chisi) 🐩",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -403,6 +405,7 @@ const I18N = {
     mascot: "반려동물",
     mascotCat: "고양이 (캣짱) 🐱",
     mascotSchnauzer: "강아지 (슈나우저) 🐶",
+    mascotChisi: "토이푸들 (치시) 🐩",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -489,6 +492,7 @@ const I18N = {
     mascot: "ペット",
     mascotCat: "子猫 (Catjang) 🐱",
     mascotSchnauzer: "子犬 (シュナウザー) 🐶",
+    mascotChisi: "トイプードル (Chisi) 🐩",
   },
 };
 
@@ -721,6 +725,7 @@ let reminderTimer = null;
 let mascotNames = {
   cat: "Catjang",
   schnauzer: "Otto",
+  chisi: "Chisi",
 };
 let catName = "Catjang";
 let userName = "";
@@ -787,10 +792,13 @@ function loadSettings() {
         if (typeof data.mascotNames.schnauzer === "string" && data.mascotNames.schnauzer.trim()) {
           mascotNames.schnauzer = data.mascotNames.schnauzer.trim().slice(0, 24);
         }
+        if (typeof data.mascotNames.chisi === "string" && data.mascotNames.chisi.trim()) {
+          mascotNames.chisi = data.mascotNames.chisi.trim().slice(0, 24);
+        }
       } else if (typeof data.catName === "string" && data.catName.trim()) {
         mascotNames.cat = data.catName.trim().slice(0, 24);
       }
-      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer")) {
+      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer" || data.mascot === "chisi")) {
         currentMascot = data.mascot;
       }
       catName = mascotNames[currentMascot] || mascotNames.cat;
@@ -857,10 +865,10 @@ function saveSettings() {
 }
 
 function setMascot(mascot) {
-  if (mascot !== "cat" && mascot !== "schnauzer") return;
+  if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
-  catName = mascotNames[currentMascot] || (currentMascot === "schnauzer" ? "Otto" : "Catjang");
+  catName = mascotNames[currentMascot] || (currentMascot === "schnauzer" ? "Otto" : (currentMascot === "chisi" ? "Chisi" : "Catjang"));
   saveSettings();
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("mascot-changed", currentMascot);
@@ -1631,6 +1639,7 @@ function confirmAndPerformFullReset() {
   mascotNames = {
     cat: "Catjang",
     schnauzer: "Otto",
+    chisi: "Chisi",
   };
   catName = "Catjang";
   currentMascot = "cat";
@@ -2729,6 +2738,7 @@ function showPetContextMenu() {
       submenu: [
         { label: t("mascotCat"), type: "radio", checked: currentMascot === "cat", click: () => setMascot("cat") },
         { label: t("mascotSchnauzer"), type: "radio", checked: currentMascot === "schnauzer", click: () => setMascot("schnauzer") },
+        { label: t("mascotChisi"), type: "radio", checked: currentMascot === "chisi", click: () => setMascot("chisi") },
       ],
     },
     { type: "separator" },

@@ -280,6 +280,117 @@ app.whenReady().then(async () => {
   console.log("PASS 3.6: Cat drag is visible, Dog drag is hidden.");
   await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
 
+  // 4. Switch to Chisi
+  const stateChisi = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.mascot = "chisi";
+      const cat = document.getElementById("cat");
+      const schnauzer = document.getElementById("schnauzer");
+      const chisi = document.getElementById("chisi");
+      return {
+        mascot: document.body.dataset.mascot,
+        catDisplay: window.getComputedStyle(cat).display,
+        schnauzerDisplay: window.getComputedStyle(schnauzer).display,
+        chisiDisplay: window.getComputedStyle(chisi).display,
+        chisiWidth: chisi.getBoundingClientRect().width,
+        chisiHeight: chisi.getBoundingClientRect().height,
+      };
+    })()
+  `);
+  console.log("STATE 4 (Switched to Chisi):", stateChisi);
+
+  if (stateChisi.catDisplay !== "none" || stateChisi.schnauzerDisplay !== "none" || stateChisi.chisiDisplay !== "block") {
+    console.error("FAIL: Chisi is not properly visible or other mascots not hidden!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 4: Chisi is visible and Cat/Schnauzer are hidden.");
+
+  // 4.1 Test Chisi typing
+  const stateChisiPress = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.press = "left";
+      const chisi = document.getElementById("chisi");
+      const chisiPressLeft = document.getElementById("chisi-press-left");
+      return {
+        chisiIdle: window.getComputedStyle(chisi).display,
+        chisiPress: window.getComputedStyle(chisiPressLeft).display,
+      };
+    })()
+  `);
+  console.log("STATE 4.1 (Chisi Typing Left):", stateChisiPress);
+  if (stateChisiPress.chisiIdle !== "none" || stateChisiPress.chisiPress !== "block") {
+    console.error("FAIL: Chisi typing left display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.press`);
+
+  // 4.2 Test Chisi scrolling
+  const stateChisiScroll = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.scroll = "1";
+      const chisi = document.getElementById("chisi");
+      const chisiScroll = document.getElementById("chisi-scroll-unroll");
+      return {
+        chisiIdle: window.getComputedStyle(chisi).display,
+        chisiScroll: window.getComputedStyle(chisiScroll).display,
+      };
+    })()
+  `);
+  console.log("STATE 4.2 (Chisi Scrolling):", stateChisiScroll);
+  if (stateChisiScroll.chisiIdle !== "none" || stateChisiScroll.chisiScroll !== "block") {
+    console.error("FAIL: Chisi scrolling display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
+
+  // 4.3 Test Chisi dragging
+  const stateChisiDrag = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.classList.add("dragging");
+      const chisi = document.getElementById("chisi");
+      const chisiDrag = document.getElementById("chisi-drag");
+      const schnauzerDrag = document.getElementById("schnauzer-drag");
+      return {
+        chisiIdle: window.getComputedStyle(chisi).display,
+        chisiDrag: window.getComputedStyle(chisiDrag).display,
+        schnauzerDrag: window.getComputedStyle(schnauzerDrag).display,
+      };
+    })()
+  `);
+  console.log("STATE 4.3 (Chisi Dragging):", stateChisiDrag);
+  if (stateChisiDrag.chisiIdle !== "none" || stateChisiDrag.chisiDrag !== "block" || stateChisiDrag.schnauzerDrag !== "none") {
+    console.error("FAIL: Chisi dragging display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
+
+  // 4.4 Test Chisi stretching
+  const stateChisiStretch = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.stretching = "ing";
+      const chisi = document.getElementById("chisi");
+      const chisiStretch = document.getElementById("chisi-stretch");
+      const schnauzerStretch = document.getElementById("schnauzer-stretch");
+      return {
+        chisiIdle: window.getComputedStyle(chisi).display,
+        chisiStretch: window.getComputedStyle(chisiStretch).display,
+        schnauzerStretch: window.getComputedStyle(schnauzerStretch).display,
+      };
+    })()
+  `);
+  console.log("STATE 4.4 (Chisi Stretching):", stateChisiStretch);
+  if (stateChisiStretch.chisiIdle !== "none" || stateChisiStretch.chisiStretch !== "block" || stateChisiStretch.schnauzerStretch !== "none") {
+    console.error("FAIL: Chisi stretching display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
+  console.log("PASS 4: All Chisi animations and state transitions passed cleanly!");
+
   console.log("=== ALL LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
   app.exit(0);
 });

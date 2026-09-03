@@ -959,6 +959,7 @@ body[data-jump="ing"] #jump-ing { display: block; }
 
 body[data-stretching] #cat,
 body[data-stretching] #schnauzer,
+body[data-stretching] #chisi,
 body[data-stretching] .mascot-idle,
 body[data-stretching] #press-left,
 body[data-hunting] #press-left,
@@ -1059,53 +1060,69 @@ body[data-jump] #purr-hearts { display: none; }
 
 /* Inactive mascot isolation */
 body[data-mascot="cat"] .mascot-sprite:not([data-mascot="cat"]),
-body[data-mascot="schnauzer"] .mascot-sprite:not([data-mascot="schnauzer"]) {
+body[data-mascot="schnauzer"] .mascot-sprite:not([data-mascot="schnauzer"]),
+body[data-mascot="chisi"] .mascot-sprite:not([data-mascot="chisi"]) {
   display: none !important;
 }
 
 /* Base Idle active mascot */
-body:not([data-mascot="schnauzer"]) #cat { display: block; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]) #cat { display: block; }
 body[data-mascot="schnauzer"] #schnauzer { display: block; }
+body[data-mascot="chisi"] #chisi { display: block; }
 
 /* Typing Left */
-body:not([data-mascot="schnauzer"])[data-press="left"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"])[data-press="left"] #press-left { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-press="left"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-press="left"] #press-left { display: block !important; }
 body[data-mascot="schnauzer"][data-press="left"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display: block !important; }
+body[data-mascot="chisi"][data-press="left"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-press="left"] #chisi-press-left { display: block !important; }
 
 /* Typing Right */
-body:not([data-mascot="schnauzer"])[data-press="right"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"])[data-press="right"] #press-right { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-press="right"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-press="right"] #press-right { display: block !important; }
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block !important; }
+body[data-mascot="chisi"][data-press="right"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-press="right"] #chisi-press-right { display: block !important; }
 
 /* Scroll Unroll */
-body:not([data-mascot="schnauzer"])[data-scroll] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"])[data-scroll] #scroll-unroll { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-scroll] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-scroll] #scroll-unroll { display: block !important; }
 body[data-mascot="schnauzer"][data-scroll] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-scroll] #schnauzer-scroll-unroll { display: block !important; }
+body[data-mascot="chisi"][data-scroll] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-scroll] #chisi-scroll-unroll { display: block !important; }
 body[data-press] #scroll-unroll,
 body[data-press] #schnauzer-scroll-unroll,
+body[data-press] #chisi-scroll-unroll,
 body[data-jump] #scroll-unroll,
-body[data-jump] #schnauzer-scroll-unroll { display: none !important; }
+body[data-jump] #schnauzer-scroll-unroll,
+body[data-jump] #chisi-scroll-unroll { display: none !important; }
 
 /* Jump Start */
-body:not([data-mascot="schnauzer"])[data-jump="start"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"])[data-jump="start"] #jump-start { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-jump="start"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-jump="start"] #jump-start { display: block !important; }
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block !important; }
+body[data-mascot="chisi"][data-jump="start"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-jump="start"] #chisi-jump-start { display: block !important; }
 
 /* Jump In Air */
-body:not([data-mascot="schnauzer"])[data-jump="ing"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"])[data-jump="ing"] #jump-ing { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-jump="ing"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-jump="ing"] #jump-ing { display: block !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block !important; }
+body[data-mascot="chisi"][data-jump="ing"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-jump="ing"] #chisi-jump-ing { display: block !important; }
 
 /* Dragging */
-body:not([data-mascot="schnauzer"]).dragging #stretch-svg-end { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]).dragging #stretch-svg-end { display: block !important; }
 body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
+body[data-mascot="chisi"].dragging #chisi-drag { display: block !important; }
 body.dragging #cat,
 body.dragging #schnauzer,
+body.dragging #chisi,
 body.dragging .mascot-idle,
 body.dragging .mascot-press-left,
 body.dragging .mascot-press-right,
@@ -1115,10 +1132,12 @@ body.dragging .mascot-jump-ing,
 body.dragging .mascot-stretch { display: none !important; }
 
 /* Stretching */
-body:not([data-mascot="schnauzer"])[data-stretching] #stretch-pose-default { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"])[data-stretching] #stretch-pose-default { display: block !important; }
 body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch { display: block !important; }
+body[data-mascot="chisi"][data-stretching] #chisi-stretch { display: block !important; }
 body[data-stretching] #cat,
 body[data-stretching] #schnauzer,
+body[data-stretching] #chisi,
 body[data-stretching] .mascot-idle,
 body[data-stretching] .mascot-press-left,
 body[data-stretching] .mascot-press-right,
@@ -1129,7 +1148,8 @@ body[data-stretching] .mascot-drag { display: none !important; }
 
 /* ── SLEEP / NAP ANIMATION ── */
 body[data-sleeping="1"] #cat,
-body[data-sleeping="1"] #schnauzer {
+body[data-sleeping="1"] #schnauzer,
+body[data-sleeping="1"] #chisi {
   animation: pet-sleep-breathe 2.4s infinite ease-in-out;
 }
 
