@@ -69,27 +69,51 @@ Uso de notify-catjang:
   }
 
   try {
+    let agentId = "cli";
+    let agentName = "";
+    let task = "";
+
+    // Parse options --agent and --task if provided
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === "--agent" && args[i + 1]) {
+        agentName = args[i + 1];
+        agentId = args[i + 1].toLowerCase().replace(/\s+/g, "-");
+        args.splice(i, 2);
+        i--;
+      } else if (args[i] === "--task" && args[i + 1]) {
+        task = args[i + 1];
+        args.splice(i, 2);
+        i--;
+      }
+    }
+
     if (command === "--start") {
-      const text = args.slice(1).join(" ") || "Pensando...";
+      const text = args.slice(1).join(" ") || (task ? `Pensando en: ${task}` : "Pensando...");
       const res = await sendPost("/agent-state", {
-        agentId: "cli",
+        agentId,
+        agentName,
         state: "working",
+        task,
         text,
       });
       console.log("Catjang: agente en estado de trabajo.", res);
     } else if (command === "--complete") {
-      const text = args.slice(1).join(" ") || "¡Tarea completada!";
+      const text = args.slice(1).join(" ");
       const res = await sendPost("/agent-state", {
-        agentId: "cli",
+        agentId,
+        agentName,
         state: "complete",
-        text,
+        task,
+        text: text || "",
       });
       console.log("Catjang: tarea completada enviada.", res);
     } else if (command === "--alert") {
       const text = args.slice(1).join(" ") || "¡Atención requerida!";
       const res = await sendPost("/agent-state", {
-        agentId: "cli",
+        agentId,
+        agentName,
         state: "notification",
+        task,
         text,
       });
       console.log("Catjang: alerta enviada.", res);

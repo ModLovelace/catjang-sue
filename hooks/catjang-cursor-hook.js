@@ -46,10 +46,13 @@ async function main() {
   const payload = await readStdinJson();
   const event = process.argv[2] || payload.hook_event_name || "";
   if (event === "beforeShellExecution" || event === "beforeMCPExecution") {
+    const task = (payload.command || payload.tool_name || payload.prompt || "").slice(0, 55);
     postAgentState({
       agentId: "cursor",
+      agentName: "Cursor",
       event,
       state: "notification",
+      task,
       sessionId: payload.conversation_id || payload.session_id || "cursor",
       cwd: cwdFromPayload(payload),
     }, () => {

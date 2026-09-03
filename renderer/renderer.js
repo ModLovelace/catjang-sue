@@ -1822,12 +1822,44 @@ function playReminderMeow(options = {}) {
   if (repeat >= 3) setTimeout(play, 3000);
 }
 
+function formatAgentDisplayName(agentId, agentName) {
+  if (agentName && typeof agentName === "string" && agentName.trim()) {
+    return agentName.trim();
+  }
+  const id = (agentId || "").toLowerCase();
+  if (id.includes("gemini") || id.includes("antigravity")) return "Gemini";
+  if (id.includes("codex")) return "Codex";
+  if (id.includes("claude")) return "Claude Code";
+  if (id.includes("cursor")) return "Cursor";
+  if (id && id !== "agent" && id !== "test") return id.charAt(0).toUpperCase() + id.slice(1);
+  return "Agente IA";
+}
+
+function formatAiCompleteText(event) {
+  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
+  const task = (event && typeof event.task === "string" && event.task.trim()) || "";
+  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
+
+  if (customText) {
+    if (customText.toLowerCase().includes(agent.toLowerCase()) || customText.includes(":")) {
+      return customText;
+    }
+    return `${agent}: ${customText}`;
+  }
+
+  if (task) {
+    return `${agent}: Terminó "${task}"`;
+  }
+
+  return `${agent}: ${tr("agentComplete") || "¡Tarea completada!"}`;
+}
+
 function playAiComplete(event) {
   setThinkingDotsVisible(false);
   playCompletionJump();
   playCompletionMeow();
-  const text = (event && typeof event.text === "string" && event.text.trim()) || tr("agentComplete");
-  showSpeech(text, { kind: "complete" });
+  const text = formatAiCompleteText(event);
+  showSpeech(text, { duration: 5000, kind: "complete" });
 }
 
 function playAiNotification(event) {

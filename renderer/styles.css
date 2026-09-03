@@ -237,9 +237,10 @@ body[data-speech="reminder"] #cat-speech-bubble::after {
 body[data-speech="complete"] #cat-speech-bubble {
   color: #fff;
   background: #23a35b;
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: normal;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  max-width: min(92vw, 360px);
 }
 
 body[data-speech="complete"] #cat-speech-bubble::after {

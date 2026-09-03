@@ -2771,8 +2771,10 @@ function handleAgentStateEvent(event) {
   const state = typeof event.state === "string" ? event.state : "";
   if (!state) return;
   const agentId = event.agentId || "agent";
+  const agentName = typeof event.agentName === "string" ? event.agentName : "";
   const sessionId = event.sessionId || agentId;
   const sessionKey = `${agentId}:${sessionId}`;
+  const task = typeof event.task === "string" ? event.task : "";
   const text = typeof event.text === "string" ? event.text : (typeof event.message === "string" ? event.message : "");
   const now = Date.now();
   for (const [key, active] of activeAgentSessions) {
@@ -2788,9 +2790,11 @@ function handleAgentStateEvent(event) {
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("ai-task-state", {
       agentId,
+      agentName,
       sessionId,
       event: event.event || "",
       state,
+      task,
       text,
     });
   }
@@ -2798,8 +2802,10 @@ function handleAgentStateEvent(event) {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("ai-task-complete", {
         agentId,
+        agentName,
         sessionId,
         event: event.event || "",
+        task,
         text,
       });
     }
@@ -2807,8 +2813,10 @@ function handleAgentStateEvent(event) {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("ai-task-notification", {
         agentId,
+        agentName,
         sessionId,
         event: event.event || "",
+        task,
         text,
       });
     }
