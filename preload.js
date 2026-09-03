@@ -123,4 +123,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   languageSet: (language) => ipcRenderer.invoke("language-set", language),
   onLanguageChanged: (callback) =>
     ipcRenderer.on("language-changed", (_evt, language) => callback(language)),
+  openAgentConnect: () => ipcRenderer.send("open-agent-connect"),
+  agentStatusGet: () => ipcRenderer.invoke("agent-status-get"),
+  agentHooksInstall: () => ipcRenderer.invoke("agent-hooks-install"),
+  agentTestNotify: (payload) => ipcRenderer.invoke("agent-test-notify", payload),
+  agentOnboardingComplete: () => ipcRenderer.invoke("agent-onboarding-complete"),
 });

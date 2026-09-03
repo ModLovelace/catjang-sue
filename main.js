@@ -30,7 +30,12 @@ const IS_LINUX_WAYLAND_SESSION = IS_LINUX && process.env.XDG_SESSION_TYPE === "w
 const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().toLowerCase();
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
 const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
-const ENABLE_AGENT_INTEGRATIONS = process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS === "1";
+// Agent integrations (hooks & local agent server).
+// On Linux, default to opt-in for sandboxing/safety tests.
+// On Windows and macOS, enable by default unless explicitly disabled with CATJANG_ENABLE_AGENT_INTEGRATIONS=0.
+const ENABLE_AGENT_INTEGRATIONS = IS_LINUX
+  ? process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS === "1"
+  : process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS !== "0";
 // Typing and wheel gestures are core pet interactions. Keep them enabled when
 // uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
 // for installations that do not want a global input hook.
@@ -100,6 +105,7 @@ let petWin = null;
 let patternWin = null;
 let mappingWin = null;
 let licenseWin = null;
+let agentConnectWin = null;
 let shareOverlayWin = null;
 let shareControlsWin = null;
 let shareCaptureSession = null;
@@ -145,6 +151,8 @@ const I18N = {
     licenseWindowTitle: "Catjang License",
     patternEditorTitle: "Catjang Pattern Editor",
     mappingEditorTitle: "Catjang Cell Mapping Editor",
+    aiAgentsSetup: "Connect AI Agents...",
+    aiAgentsSetupTitle: "Connect AI Agents - Catjang",
     appMenuAbout: "About Catjang",
     appMenuQuit: "Quit",
     checkForUpdates: "Check for Updates",
@@ -222,6 +230,8 @@ const I18N = {
     licenseWindowTitle: "Licencia de Catjang",
     patternEditorTitle: "Editor de patrones de Catjang",
     mappingEditorTitle: "Editor de celdas de Catjang",
+    aiAgentsSetup: "Conectar Agentes IA...",
+    aiAgentsSetupTitle: "Conectar con Agentes de IA - Catjang",
     appMenuAbout: "Acerca de Catjang",
     appMenuQuit: "Salir",
     checkForUpdates: "Buscar actualizaciones",
@@ -299,6 +309,8 @@ const I18N = {
     licenseWindowTitle: "Catjang 라이선스",
     patternEditorTitle: "캣짱 패턴 편집기",
     mappingEditorTitle: "캣짱 셀 매핑 편집기",
+    aiAgentsSetup: "AI 에이전트 연결...",
+    aiAgentsSetupTitle: "AI 에이전트 연결 - Catjang",
     appMenuAbout: "Catjang에 관하여",
     appMenuQuit: "종료",
     checkForUpdates: "업데이트 확인",
@@ -376,6 +388,8 @@ const I18N = {
     licenseWindowTitle: "Catjang ライセンス",
     patternEditorTitle: "Catjang パターンエディター",
     mappingEditorTitle: "Catjang セルマッピングエディター",
+    aiAgentsSetup: "AIエージェントの接続...",
+    aiAgentsSetupTitle: "AIエージェントの接続 - Catjang",
     appMenuAbout: "Catjang について",
     appMenuQuit: "終了",
     checkForUpdates: "アップデートを確認",
@@ -690,6 +704,7 @@ let pomodoroTimer = null;
 let accessibilityPermissionGuideShown = false;
 let inputPermissionGuideShown = false;
 let catNamePromptShown = false;
+let agentOnboardingShown = false;
 let taskCompleteSoundVolume = 0.1;
 
 function releaseBuildExcludesDevOptions() {
@@ -750,6 +765,9 @@ function loadSettings() {
       if (typeof data.catNamePromptShown === "boolean") {
         catNamePromptShown = data.catNamePromptShown;
       }
+      if (typeof data.agentOnboardingShown === "boolean") {
+        agentOnboardingShown = data.agentOnboardingShown;
+      }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
       }
@@ -782,6 +800,7 @@ function saveSettings() {
       fixedMessage,
       showReminderButtonOutside,
       catNamePromptShown,
+      agentOnboardingShown,
       taskCompleteSoundVolume,
       petSize: currentPetSize,
       petPosition: currentPetPosition,
@@ -1073,6 +1092,12 @@ function markCatNamePromptShown() {
   saveSettings();
 }
 
+function markAgentOnboardingShown() {
+  if (agentOnboardingShown) return;
+  agentOnboardingShown = true;
+  saveSettings();
+}
+
 function broadcastTaskCompleteSoundVolume() {
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("task-complete-sound-volume", taskCompleteSoundVolume);
@@ -1345,6 +1370,12 @@ function createPetWindow() {
         petWin.webContents.send("cat-name-edit", catName);
       }, 1000);
     }
+    if (!agentOnboardingShown) {
+      setTimeout(() => {
+        if (!petWin || petWin.isDestroyed() || agentOnboardingShown) return;
+        openAgentConnectWindow();
+      }, 1400);
+    }
   });
   if (!app.isPackaged) petWin.webContents.openDevTools({ mode: "detach" });
 
@@ -1475,7 +1506,34 @@ function returnToLicenseWindow(reason = "invalid") {
   createLicenseWindow(String(reason || "invalid"));
   if (patternWin && !patternWin.isDestroyed()) patternWin.close();
   if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
   if (petWin && !petWin.isDestroyed()) petWin.close();
+}
+
+function openAgentConnectWindow() {
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.focus();
+    return;
+  }
+  agentConnectWin = new BrowserWindow({
+    width: 520,
+    height: 640,
+    title: t("aiAgentsSetupTitle") || "Conectar con Agentes de IA",
+    backgroundColor: "#f7f4ef",
+    icon: APP_ICON_PATH,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  agentConnectWin.setMenu(null);
+  attachWindowDiagnostics(agentConnectWin, "agent-connect");
+  agentConnectWin.loadFile(path.join(__dirname, "agents-setup", "index.html"));
+  agentConnectWin.on("closed", () => { agentConnectWin = null; });
 }
 
 // ── 패턴 에디터 윈도우 ──
@@ -2241,6 +2299,50 @@ ipcMain.handle("cat-name-prompt-shown", () => {
   markCatNamePromptShown();
   return { ok: true };
 });
+ipcMain.handle("agent-status-get", () => {
+  const geminiHookPath = path.join(os.homedir(), ".gemini", "config", "hooks.json");
+  const claudeSettingsPath = path.join(os.homedir(), ".claude", "settings.json");
+  const cursorHooksPath = path.join(os.homedir(), ".cursor", "hooks.json");
+  const codexDir = path.join(os.homedir(), ".codex", "sessions");
+
+  return {
+    serverActive: !!agentStateServer,
+    port: AGENT_STATE_PORT,
+    antigravityInstalled: fs.existsSync(geminiHookPath),
+    claudeInstalled: fs.existsSync(claudeSettingsPath),
+    cursorInstalled: fs.existsSync(cursorHooksPath),
+    codexDetected: fs.existsSync(codexDir),
+  };
+});
+ipcMain.handle("agent-hooks-install", () => {
+  try {
+    installAntigravityHooks();
+    installClaudeCodeHooks();
+    installCursorHooks();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err && err.message };
+  }
+});
+ipcMain.handle("agent-test-notify", (_evt, payload) => {
+  handleAgentStateEvent({
+    agentId: "test",
+    sessionId: "test",
+    state: "complete",
+    text: (payload && payload.text) || "¡Hola! Tu agente está conectado a Catjang.",
+  });
+  return { ok: true };
+});
+ipcMain.handle("agent-onboarding-complete", () => {
+  markAgentOnboardingShown();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.close();
+  }
+  return { ok: true };
+});
+ipcMain.on("open-agent-connect", () => {
+  openAgentConnectWindow();
+});
 ipcMain.handle("task-complete-sound-volume-get", () => taskCompleteSoundVolume);
 ipcMain.handle("task-complete-sound-volume-set", (_evt, volume) => setTaskCompleteSoundVolume(volume));
 ipcMain.handle("reminders-get", () => reminderList());
@@ -2458,6 +2560,10 @@ function showPetContextMenu() {
     },
     { type: "separator" },
     {
+      label: t("aiAgentsSetup"),
+      click: () => openAgentConnectWindow(),
+    },
+    {
       label: t("patternEditor"),
       click: () => openPatternEditor(),
     },
@@ -2649,6 +2755,7 @@ function handleAgentStateEvent(event) {
   const agentId = event.agentId || "agent";
   const sessionId = event.sessionId || agentId;
   const sessionKey = `${agentId}:${sessionId}`;
+  const text = typeof event.text === "string" ? event.text : (typeof event.message === "string" ? event.message : "");
   const now = Date.now();
   for (const [key, active] of activeAgentSessions) {
     if (!active || now - active.lastActiveAt > AGENT_ACTIVE_TTL_MS) activeAgentSessions.delete(key);
@@ -2656,10 +2763,6 @@ function handleAgentStateEvent(event) {
   if (state === "thinking" || state === "working") {
     activeAgentSessions.set(sessionKey, { lastActiveAt: now });
   } else if (state === "complete") {
-    if (!activeAgentSessions.has(sessionKey)) {
-      console.warn(`[Catjang] ignored agent complete without active task: ${agentId} ${event.event || ""}`);
-      return;
-    }
     activeAgentSessions.delete(sessionKey);
   } else if (state === "idle" || state === "error") {
     activeAgentSessions.delete(sessionKey);
@@ -2670,6 +2773,7 @@ function handleAgentStateEvent(event) {
       sessionId,
       event: event.event || "",
       state,
+      text,
     });
   }
   if (state === "complete") {
@@ -2678,6 +2782,7 @@ function handleAgentStateEvent(event) {
         agentId,
         sessionId,
         event: event.event || "",
+        text,
       });
     }
   } else if (state === "notification") {
@@ -2686,6 +2791,7 @@ function handleAgentStateEvent(event) {
         agentId,
         sessionId,
         event: event.event || "",
+        text,
       });
     }
   }
@@ -2694,9 +2800,9 @@ function handleAgentStateEvent(event) {
 function startAgentStateServer() {
   if (agentStateServer) return;
   agentStateServer = http.createServer((req, res) => {
-    if (req.method !== "POST" || req.url !== "/agent-state") {
-      res.writeHead(404);
-      res.end("not found");
+    if (req.method !== "POST" || (req.url !== "/agent-state" && req.url !== "/agent-reminder" && req.url !== "/reminder")) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "not found" }));
       return;
     }
     let body = "";
@@ -2707,17 +2813,36 @@ function startAgentStateServer() {
     });
     req.on("end", () => {
       if (size > 8192) {
-        res.writeHead(413);
-        res.end("too large");
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "too large" }));
         return;
       }
       try {
-        handleAgentStateEvent(JSON.parse(body || "{}"));
-        res.writeHead(200);
-        res.end("ok");
+        const payload = JSON.parse(body || "{}");
+        if (req.url === "/agent-reminder" || req.url === "/reminder") {
+          if (payload.triggerNow) {
+            const text = typeof payload.text === "string" ? payload.text : (typeof payload.message === "string" ? payload.message : "");
+            if (petWin && !petWin.isDestroyed()) {
+              petWin.webContents.send("reminder-triggered", {
+                id: `agent-reminder-${Date.now()}`,
+                text: text || "¡Recordatorio!",
+              });
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true, triggered: true }));
+            return;
+          }
+          const result = addReminder(payload);
+          res.writeHead(result && result.ok ? 200 : 400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(result || { ok: false }));
+          return;
+        }
+        handleAgentStateEvent(payload);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
       } catch {
-        res.writeHead(400);
-        res.end("bad json");
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "bad json" }));
       }
     });
   });

@@ -20,6 +20,8 @@
   "scripts": {
     "start": "electron .",
     "smoke": "electron . --catjang-smoke-test",
+    "setup:hooks": "node -e \"const i=require('./hooks/install'); i.registerAntigravityHooks(); i.registerClaudeHooks(); i.registerCursorHooks(); console.log('Hooks installed successfully.');\"",
+    "notify": "node scripts/notify-catjang.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
@@ -50,6 +52,7 @@
       "license/**",
       "hooks/**",
       "agents/**",
+      "agents-setup/**",
       "workspace/**",
       "presets/**",
       "svg/**",

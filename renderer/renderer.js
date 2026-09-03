@@ -1822,17 +1822,19 @@ function playReminderMeow(options = {}) {
   if (repeat >= 3) setTimeout(play, 3000);
 }
 
-function playAiComplete() {
+function playAiComplete(event) {
   setThinkingDotsVisible(false);
   playCompletionJump();
   playCompletionMeow();
-  showSpeech(tr("agentComplete"), { kind: "complete" });
+  const text = (event && typeof event.text === "string" && event.text.trim()) || tr("agentComplete");
+  showSpeech(text, { kind: "complete" });
 }
 
-function playAiNotification() {
+function playAiNotification(event) {
   setThinkingDotsVisible(false);
   playReminderAlertOnce();
-  showSpeech(tr("needsAttention", currentUserName), { duration: 5200, kind: "reminder" });
+  const text = (event && typeof event.text === "string" && event.text.trim()) || tr("needsAttention", currentUserName);
+  showSpeech(text, { duration: 5200, kind: "reminder" });
 }
 
 function formatPomodoroTime(totalSec) {
