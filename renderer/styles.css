@@ -1040,10 +1040,22 @@ body.dragging #stretch-svg-end { display: block; }
   top: var(--cat-top);
   transform: translateX(-50%);
   width: var(--cat-size);
-  height: var(--cat-size);
+  aspect-ratio: 1;
   display: none;
   pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
   z-index: 2;
+}
+
+#schnauzer-press-left,
+#schnauzer-press-right {
+  width: calc(var(--cat-size) * 0.98);
+}
+
+#schnauzer-jump-start,
+#schnauzer-jump-ing {
+  width: calc(var(--cat-size) * 1.12);
 }
 
 body[data-mascot="schnauzer"] #cat,
@@ -1055,18 +1067,18 @@ body[data-mascot="schnauzer"] #jump-ing {
 }
 
 body[data-mascot="schnauzer"] #schnauzer {
-  display: block;
+  display: block !important;
 }
 
-body[data-mascot="schnauzer"][data-press="left"] #schnauzer { display: none; }
-body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display: block; }
-body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none; }
-body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block; }
+body[data-mascot="schnauzer"][data-press="left"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display: block !important; }
+body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block !important; }
 
-body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none; }
-body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block; }
-body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none; }
-body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block; }
+body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block !important; }
+body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block !important; }
 
 body.dragging #schnauzer,
 body.dragging #schnauzer-press-left,

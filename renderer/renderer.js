@@ -2265,6 +2265,7 @@ function scheduleNativeWindowShapeUpdate() {
       "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
       "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
       "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
+      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-jump-start", "#schnauzer-jump-ing",
       "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
       "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
     ];
