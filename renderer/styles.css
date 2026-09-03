@@ -958,6 +958,8 @@ body[data-jump="ing"] #jump-ing { display: block; }
 #stretch-pose-ing { display: none; }
 
 body[data-stretching] #cat,
+body[data-stretching] #schnauzer,
+body[data-stretching] .mascot-idle,
 body[data-stretching] #press-left,
 body[data-hunting] #press-left,
 body[data-stretching] #press-right,
@@ -967,8 +969,8 @@ body[data-hunting] #scroll-unroll,
 body[data-stretching] #jump-start,
 body[data-hunting] #jump-start,
 body[data-stretching] #jump-ing,
-body[data-hunting] #jump-ing { display: none; }
-body:not([data-mascot="schnauzer"])[data-stretching] #stretch-pose-default { display: block; }
+body[data-hunting] #jump-ing { display: none !important; }
+body:not([data-mascot="schnauzer"])[data-stretching] #stretch-pose-default { display: block !important; }
 
 /* ── 타이핑 heat steam — 머리 위 빨간 김 particle들 ──
    JS가 --steam-opacity 변수로 전체 opacity 조절 (heat > 0.5일 때만 보임) */
@@ -1063,7 +1065,7 @@ body[data-mascot="schnauzer"] .mascot-sprite:not([data-mascot="schnauzer"]) {
 
 /* Base Idle active mascot */
 body:not([data-mascot="schnauzer"]) #cat { display: block; }
-body[data-mascot="schnauzer"] #schnauzer { display: block !important; }
+body[data-mascot="schnauzer"] #schnauzer { display: block; }
 
 /* Typing Left */
 body:not([data-mascot="schnauzer"])[data-press="left"] #cat { display: none !important; }
@@ -1102,6 +1104,8 @@ body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: bl
 /* Dragging */
 body:not([data-mascot="schnauzer"]).dragging #stretch-svg-end { display: block !important; }
 body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
+body.dragging #cat,
+body.dragging #schnauzer,
 body.dragging .mascot-idle,
 body.dragging .mascot-press-left,
 body.dragging .mascot-press-right,
@@ -1113,12 +1117,15 @@ body.dragging .mascot-stretch { display: none !important; }
 /* Stretching */
 body:not([data-mascot="schnauzer"])[data-stretching] #stretch-pose-default { display: block !important; }
 body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch { display: block !important; }
+body[data-stretching] #cat,
+body[data-stretching] #schnauzer,
 body[data-stretching] .mascot-idle,
 body[data-stretching] .mascot-press-left,
 body[data-stretching] .mascot-press-right,
 body[data-stretching] .mascot-scroll,
 body[data-stretching] .mascot-jump-start,
-body[data-stretching] .mascot-jump-ing { display: none !important; }
+body[data-stretching] .mascot-jump-ing,
+body[data-stretching] .mascot-drag { display: none !important; }
 
 /* ── SLEEP / NAP ANIMATION ── */
 body[data-sleeping="1"] #cat,

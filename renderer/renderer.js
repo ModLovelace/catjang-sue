@@ -3722,9 +3722,16 @@ const STRETCH_DURATION_MS = 3000;
 let stretchingTimers = [];
 let pendingStretchAnimation = 0;
 let pendingStretchLoadListener = null;
+function currentStretchElement() {
+  const stretchId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "stretch")
+    : (currentMascot === "schnauzer" ? "schnauzer-stretch" : "stretch-pose-default");
+  return (stretchId && document.getElementById(stretchId)) || document.getElementById("stretch-pose-default");
+}
+
 function clearPendingStretchLoadListener() {
   if (pendingStretchLoadListener) {
-    const obj = document.getElementById("stretch-pose-default");
+    const obj = currentStretchElement();
     if (obj) obj.removeEventListener("load", pendingStretchLoadListener);
     pendingStretchLoadListener = null;
   }
@@ -3739,7 +3746,7 @@ function clearStretchingTimers() {
 function requestStretchPoseAnimation() {
   const token = ++pendingStretchAnimation;
   if (pendingStretchLoadListener) {
-    const obj = document.getElementById("stretch-pose-default");
+    const obj = currentStretchElement();
     if (obj) obj.removeEventListener("load", pendingStretchLoadListener);
     pendingStretchLoadListener = null;
   }
@@ -3752,7 +3759,7 @@ function requestStretchPoseAnimation() {
     }
     if (performance.now() - startedAt < STRETCH_DURATION_MS) requestAnimationFrame(tryStart);
   };
-  const obj = document.getElementById("stretch-pose-default");
+  const obj = currentStretchElement();
   if (obj) {
     pendingStretchLoadListener = () => {
       if (token !== pendingStretchAnimation || !document.body.dataset.stretching) return;
@@ -3764,7 +3771,7 @@ function requestStretchPoseAnimation() {
 }
 
 function setStretchPoseAnimating(active) {
-  const obj = document.getElementById("stretch-pose-default");
+  const obj = currentStretchElement();
   if (!obj) return false;
   const doc = obj.contentDocument;
   if (!doc || !doc.documentElement) return false;
@@ -3795,7 +3802,10 @@ window.electronAPI.onDoStretch(() => {
   stopCompletionJump();
   stopScrollAnimation();
   stopHuntingPose();
-  ensureSvgObjectReady("stretch-pose-default");
+  const stretchId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "stretch")
+    : (currentMascot === "schnauzer" ? "schnauzer-stretch" : "stretch-pose-default");
+  if (stretchId) ensureSvgObjectReady(stretchId);
   document.body.dataset.stretching = "ing";
   requestStretchPoseAnimation();
   // 색상: 검정 → 초록 → 검정 (전체 3초 안에 자연스럽게)

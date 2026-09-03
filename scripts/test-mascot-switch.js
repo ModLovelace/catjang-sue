@@ -162,7 +162,12 @@ app.whenReady().then(async () => {
     app.exit(1);
     return;
   }
-  console.log("PASS 2.6: Schnauzer drag is visible, Cat drag is hidden.");
+  if (stateDragDog.dogIdleDisplay !== "none") {
+    console.error("FAIL: Dog idle is showing while Schnauzer is dragged!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 2.6: Schnauzer drag is visible, Cat drag and Dog idle are hidden.");
   await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
 
   // 2.7 Test stretching while schnauzer is active
@@ -171,9 +176,11 @@ app.whenReady().then(async () => {
       document.body.dataset.stretching = "ing";
       const catStretch = document.getElementById("stretch-pose-default");
       const dogStretch = document.getElementById("schnauzer-stretch");
+      const dogIdle = document.getElementById("schnauzer");
       return {
         catStretchDisplay: window.getComputedStyle(catStretch).display,
         dogStretchDisplay: window.getComputedStyle(dogStretch).display,
+        dogIdleDisplay: window.getComputedStyle(dogIdle).display,
       };
     })()
   `);
@@ -189,7 +196,12 @@ app.whenReady().then(async () => {
     app.exit(1);
     return;
   }
-  console.log("PASS 2.7: Schnauzer stretch is visible, Cat stretch is hidden.");
+  if (stateStretchDog.dogIdleDisplay !== "none") {
+    console.error("FAIL: Dog idle is showing while Schnauzer is stretching (double dog bug)!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 2.7: Schnauzer stretch is visible, Cat stretch and Dog idle are hidden.");
   await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
 
   // 3. Switch back to cat
