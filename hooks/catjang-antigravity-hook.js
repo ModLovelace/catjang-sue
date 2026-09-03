@@ -26,7 +26,7 @@ function readStdinJson() {
 function stateForEvent(event, payload) {
   if (event === "Stop") {
     if (payload && (payload.error || payload.terminationReason === "error")) return "error";
-    return payload && payload.fullyIdle === false ? "working" : "complete";
+    return "complete";
   }
   if (event === "PostToolUse" && payload && payload.error) return "error";
   return EVENT_TO_STATE[event] || "";
@@ -49,13 +49,15 @@ async function main() {
   const payload = await readStdinJson();
   const state = stateForEvent(event, payload);
   if (state) {
-    postAgentState({
-      agentId: "antigravity",
-      event,
-      state,
-      sessionId: payload.conversationId || "antigravity",
-      cwd: cwdFromPayload(payload),
-    });
+    try {
+      await postAgentState({
+        agentId: "antigravity",
+        event,
+        state,
+        sessionId: payload.conversationId || "antigravity",
+        cwd: cwdFromPayload(payload),
+      });
+    } catch {}
   }
   process.stdout.write(`${JSON.stringify(hookResponse(event))}\n`);
 }
