@@ -1511,7 +1511,9 @@ function returnToLicenseWindow(reason = "invalid") {
 }
 
 function openAgentConnectWindow() {
+  logInfo("[Catjang] openAgentConnectWindow called");
   if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.show();
     agentConnectWin.focus();
     return;
   }
@@ -1524,6 +1526,7 @@ function openAgentConnectWindow() {
     resizable: false,
     maximizable: false,
     fullscreenable: false,
+    alwaysOnTop: true,
     center: true,
     show: true,
     webPreferences: {
