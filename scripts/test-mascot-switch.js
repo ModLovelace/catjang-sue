@@ -101,6 +101,40 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 2: Schnauzer is rendered and visible with width=" + state2.schnauzerWidth + " and height=" + state2.schnauzerHeight);
 
+  // 2.5 Test scrolling while schnauzer is active
+  const stateScrollDog = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.scroll = "unroll";
+      const cat = document.getElementById("cat");
+      const schnauzer = document.getElementById("schnauzer");
+      const catScroll = document.getElementById("scroll-unroll");
+      const dogScroll = document.getElementById("schnauzer-scroll-unroll");
+      return {
+        catDisplay: window.getComputedStyle(cat).display,
+        schnauzerDisplay: window.getComputedStyle(schnauzer).display,
+        catScrollDisplay: window.getComputedStyle(catScroll).display,
+        dogScrollDisplay: window.getComputedStyle(dogScroll).display,
+        dogScrollWidth: dogScroll.getBoundingClientRect().width,
+      };
+    })()
+  `);
+  console.log("STATE 2.5 (Schnauzer Scrolling):", stateScrollDog);
+
+  if (stateScrollDog.catScrollDisplay !== "none") {
+    console.error("FAIL: Cat scroll unroll is showing while Schnauzer is active!");
+    app.exit(1);
+    return;
+  }
+  if (stateScrollDog.dogScrollDisplay === "none") {
+    console.error("FAIL: Schnauzer scroll unroll is NOT showing while scrolling!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 2.5: Schnauzer scroll unroll is visible, Cat scroll unroll is hidden.");
+
+  // Clean scroll state
+  await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
+
   // 3. Switch back to cat
   const state3 = await win.webContents.executeJavaScript(`
     (() => {
@@ -123,6 +157,32 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 3: Switched back to cat cleanly.");
 
-  console.log("=== ALL LIVE ELECTRON MASCOT SWITCH TESTS PASSED! ===");
+  // 3.5 Test scrolling while cat is active
+  const stateScrollCat = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.scroll = "unroll";
+      const catScroll = document.getElementById("scroll-unroll");
+      const dogScroll = document.getElementById("schnauzer-scroll-unroll");
+      return {
+        catScrollDisplay: window.getComputedStyle(catScroll).display,
+        dogScrollDisplay: window.getComputedStyle(dogScroll).display,
+      };
+    })()
+  `);
+  console.log("STATE 3.5 (Cat Scrolling):", stateScrollCat);
+
+  if (stateScrollCat.catScrollDisplay === "none") {
+    console.error("FAIL: Cat scroll unroll is NOT showing while cat is scrolling!");
+    app.exit(1);
+    return;
+  }
+  if (stateScrollCat.dogScrollDisplay !== "none") {
+    console.error("FAIL: Dog scroll unroll is showing while cat is scrolling!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 3.5: Cat scroll unroll is visible, Dog scroll unroll is hidden.");
+
+  console.log("=== ALL LIVE ELECTRON MASCOT SWITCH & SCROLL TESTS PASSED! ===");
   app.exit(0);
 });

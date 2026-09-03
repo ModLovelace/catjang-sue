@@ -2265,7 +2265,7 @@ function scheduleNativeWindowShapeUpdate() {
       "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
       "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
       "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
-      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-jump-start", "#schnauzer-jump-ing",
+      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-scroll-unroll", "#schnauzer-jump-start", "#schnauzer-jump-ing",
       "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
       "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
     ];
@@ -2503,32 +2503,40 @@ function currentPoseElement() {
     ensureSvgObjectReady("stretch-pose-default");
     return document.getElementById("stretch-pose-default");
   }
+  const isSchnauzer = currentMascot === "schnauzer";
   if (document.body.dataset.hunting) {
-    ensureSvgObjectReady("cat");
-    return document.getElementById("cat");
+    const id = isSchnauzer ? "schnauzer" : "cat";
+    ensureSvgObjectReady(id);
+    return isSchnauzer ? dogObj : document.getElementById("cat");
   }
   if (document.body.dataset.jump === "start") {
-    ensureSvgObjectReady("jump-start");
-    return document.getElementById("jump-start");
+    const id = isSchnauzer ? "schnauzer-jump-start" : "jump-start";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
   if (document.body.dataset.jump === "ing") {
-    ensureSvgObjectReady("jump-ing");
-    return document.getElementById("jump-ing");
+    const id = isSchnauzer ? "schnauzer-jump-ing" : "jump-ing";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
   if (document.body.dataset.scroll) {
-    ensureSvgObjectReady("scroll-unroll");
-    return document.getElementById("scroll-unroll");
+    const id = isSchnauzer ? "schnauzer-scroll-unroll" : "scroll-unroll";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
   if (document.body.dataset.press === "left") {
-    ensureSvgObjectReady("press-left");
-    return document.getElementById("press-left");
+    const id = isSchnauzer ? "schnauzer-press-left" : "press-left";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
   if (document.body.dataset.press === "right") {
-    ensureSvgObjectReady("press-right");
-    return document.getElementById("press-right");
+    const id = isSchnauzer ? "schnauzer-press-right" : "press-right";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
-  ensureSvgObjectReady("cat");
-  return obj;
+  const id = isSchnauzer ? "schnauzer" : "cat";
+  ensureSvgObjectReady(id);
+  return isSchnauzer ? dogObj : obj;
 }
 
 function isCatHitPoint(x, y) {
@@ -3405,7 +3413,8 @@ function playCompletionJump(options = {}) {
 }
 
 function scrollSvgObject() {
-  return document.getElementById("scroll-unroll");
+  const id = currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : "scroll-unroll";
+  return document.getElementById(id);
 }
 
 function scrollSvgDoc() {
@@ -3421,9 +3430,12 @@ function clearScrollPaperTimers() {
 }
 
 function setScrollPaperHeight(height) {
-  const doc = scrollSvgDoc();
-  const mask = doc && doc.getElementById("paper-strip-mask");
-  if (mask) mask.setAttribute("height", height.toFixed(2));
+  const doc1 = document.getElementById("scroll-unroll")?.contentDocument;
+  const doc2 = document.getElementById("schnauzer-scroll-unroll")?.contentDocument;
+  for (const doc of [doc1, doc2]) {
+    const mask = doc && doc.getElementById("paper-strip-mask");
+    if (mask) mask.setAttribute("height", height.toFixed(2));
+  }
 }
 
 function resetScrollSvgAnimation() {
@@ -3473,7 +3485,7 @@ function registerSvgObjectWhenReady(id) {
 // press / wheel / stretch-pose / schnauzer SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
 for (const id of [
   "press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing",
-  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-jump-start", "schnauzer-jump-ing"
+  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-scroll-unroll", "schnauzer-jump-start", "schnauzer-jump-ing"
 ]) {
   registerSvgObjectWhenReady(id);
 }
@@ -3726,7 +3738,7 @@ function handleScrollGesture() {
   if (isStretching() || dragging || document.body.dataset.press || document.body.dataset.jump) return;
   registerUserActivity();
   if (!document.body.dataset.scroll) restartScrollSvgAnimation();
-  ensureSvgObjectReady("scroll-unroll");
+  ensureSvgObjectReady(currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : "scroll-unroll");
   document.body.dataset.scroll = "unroll";
   clearTimeout(scrollReleaseTimer);
   scrollReleaseTimer = setTimeout(() => {

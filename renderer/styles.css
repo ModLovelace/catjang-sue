@@ -921,10 +921,10 @@ body[data-press="right"] #press-right { display: block; }
 
 body.dragging #stretch-svg-end { animation: sprite-fadein 50ms ease-out; }
 
-body[data-scroll] #cat,
-body[data-scroll] #press-left,
-body[data-scroll] #press-right { display: none; }
-body[data-scroll] #scroll-unroll { display: block; }
+body:not([data-mascot="schnauzer"])[data-scroll] #cat,
+body:not([data-mascot="schnauzer"])[data-scroll] #press-left,
+body:not([data-mascot="schnauzer"])[data-scroll] #press-right { display: none; }
+body:not([data-mascot="schnauzer"])[data-scroll] #scroll-unroll { display: block; }
 body[data-press] #scroll-unroll { display: none; }
 
 body[data-jump] #cat,
@@ -1033,6 +1033,7 @@ body.dragging #stretch-svg-end { display: block; }
 #schnauzer,
 #schnauzer-press-left,
 #schnauzer-press-right,
+#schnauzer-scroll-unroll,
 #schnauzer-jump-start,
 #schnauzer-jump-ing {
   position: absolute;
@@ -1049,7 +1050,8 @@ body.dragging #stretch-svg-end { display: block; }
 }
 
 #schnauzer-press-left,
-#schnauzer-press-right {
+#schnauzer-press-right,
+#schnauzer-scroll-unroll {
   width: calc(var(--cat-size) * 0.98);
 }
 
@@ -1061,6 +1063,7 @@ body.dragging #stretch-svg-end { display: block; }
 body[data-mascot="schnauzer"] #cat,
 body[data-mascot="schnauzer"] #press-left,
 body[data-mascot="schnauzer"] #press-right,
+body[data-mascot="schnauzer"] #scroll-unroll,
 body[data-mascot="schnauzer"] #jump-start,
 body[data-mascot="schnauzer"] #jump-ing {
   display: none !important;
@@ -1075,6 +1078,12 @@ body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block !important; }
 
+/* Scroll unroll for Schnauzer */
+body[data-mascot="schnauzer"][data-scroll] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-scroll] #schnauzer-scroll-unroll { display: block !important; }
+body[data-mascot="schnauzer"][data-press] #schnauzer-scroll-unroll { display: none !important; }
+body[data-mascot="schnauzer"][data-jump] #schnauzer-scroll-unroll { display: none !important; }
+
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
@@ -1083,6 +1092,7 @@ body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: bl
 body.dragging #schnauzer,
 body.dragging #schnauzer-press-left,
 body.dragging #schnauzer-press-right,
+body.dragging #schnauzer-scroll-unroll,
 body.dragging #schnauzer-jump-start,
 body.dragging #schnauzer-jump-ing { display: none !important; }
 
