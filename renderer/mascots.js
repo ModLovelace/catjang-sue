@@ -1,16 +1,18 @@
 "use strict";
 
 /**
- * Catjang Mascot Registry
- * Defines all available mascots and their animated pose equivalents based on the original Cat.
- * Each mascot has its own default name and complete set of animation SVG elements.
+ * Catjang Mascot Registry & Architecture
+ * Defines all available mascots, their folder locations, animation equivalents,
+ * default names, sound profiles, and petting hitbox geometry.
  */
 const MASCOTS = {
   cat: {
     id: "cat",
     defaultName: "Catjang",
     label: "Gatito (Catjang) 🐱",
-    sound: "meow",
+    soundType: "meow",
+    folder: "svg/cat",
+    petting: { cx: 0.40, cy: 0.33, rx: 0.25, ry: 0.23 },
     elements: {
       idle: "cat",
       pressLeft: "press-left",
@@ -22,21 +24,23 @@ const MASCOTS = {
       stretch: "stretch-pose-default",
     },
     svgFiles: {
-      idle: "svg/cat-idle-follow-v2.svg",
-      pressLeft: "svg/press-left.svg",
-      pressRight: "svg/press-right.svg",
-      scroll: "svg/scroll-unroll.svg",
-      jumpStart: "svg/jump-start.svg",
-      jumpIng: "svg/jump-ing.svg",
-      drag: "svg/stretch-end.svg",
-      stretch: "svg/stretch-pose-default.svg",
+      idle: "svg/cat/idle.svg",
+      pressLeft: "svg/cat/press-left.svg",
+      pressRight: "svg/cat/press-right.svg",
+      scroll: "svg/cat/scroll.svg",
+      jumpStart: "svg/cat/jump-start.svg",
+      jumpIng: "svg/cat/jump-ing.svg",
+      drag: "svg/cat/drag.svg",
+      stretch: "svg/cat/stretch.svg",
     },
   },
   schnauzer: {
     id: "schnauzer",
     defaultName: "Otto",
     label: "Perrito (Schnauzer) 🐶",
-    sound: "bark",
+    soundType: "bark",
+    folder: "svg/schnauzer",
+    petting: { cx: 0.50, cy: 0.34, rx: 0.28, ry: 0.26 },
     elements: {
       idle: "schnauzer",
       pressLeft: "schnauzer-press-left",
@@ -48,18 +52,36 @@ const MASCOTS = {
       stretch: "schnauzer-stretch",
     },
     svgFiles: {
-      idle: "svg/schnauzer-idle.svg",
-      pressLeft: "svg/schnauzer-press-left.svg",
-      pressRight: "svg/schnauzer-press-right.svg",
-      scroll: "svg/schnauzer-scroll-unroll.svg",
-      jumpStart: "svg/schnauzer-jump-start.svg",
-      jumpIng: "svg/schnauzer-jump-ing.svg",
-      drag: "svg/schnauzer-drag.svg",
-      stretch: "svg/schnauzer-stretch.svg",
+      idle: "svg/schnauzer/idle.svg",
+      pressLeft: "svg/schnauzer/press-left.svg",
+      pressRight: "svg/schnauzer/press-right.svg",
+      scroll: "svg/schnauzer/scroll.svg",
+      jumpStart: "svg/schnauzer/jump-start.svg",
+      jumpIng: "svg/schnauzer/jump-ing.svg",
+      drag: "svg/schnauzer/drag.svg",
+      stretch: "svg/schnauzer/stretch.svg",
     },
   },
 };
 
+function getMascot(id) {
+  return MASCOTS[id] || MASCOTS.cat;
+}
+
+function getMascotPoseElementId(mascotId, pose) {
+  const m = getMascot(mascotId);
+  return m && m.elements && m.elements[pose] ? m.elements[pose] : null;
+}
+
+function listMascotIds() {
+  return Object.keys(MASCOTS);
+}
+
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = MASCOTS;
+  module.exports = {
+    MASCOTS,
+    getMascot,
+    getMascotPoseElementId,
+    listMascotIds,
+  };
 }

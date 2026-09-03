@@ -109,8 +109,27 @@
     <button type="submit" id="share-duration-start">REC</button>
     <button type="button" id="share-duration-cancel">×</button>
   </form>
-  <object id="cat" type="image/svg+xml" data="../svg/cat-idle-follow-v2.svg" aria-label="cat"></object>
-  <object id="schnauzer" type="image/svg+xml" data="../svg/schnauzer-idle.svg" aria-label="schnauzer"></object>
+  <!-- Cat Mascot Sprites -->
+  <object id="cat" class="mascot-sprite mascot-idle" data-mascot="cat" data-pose="idle" type="image/svg+xml" data="../svg/cat/idle.svg" aria-label="cat"></object>
+  <object id="press-left" class="mascot-sprite mascot-press-left" data-mascot="cat" data-pose="pressLeft" type="image/svg+xml" data="../svg/cat/press-left.svg" aria-label="cat-typing-left"></object>
+  <object id="press-right" class="mascot-sprite mascot-press-right" data-mascot="cat" data-pose="pressRight" type="image/svg+xml" data="../svg/cat/press-right.svg" aria-label="cat-typing-right"></object>
+  <object id="scroll-unroll" class="mascot-sprite mascot-scroll" data-mascot="cat" data-pose="scroll" type="image/svg+xml" data="../svg/cat/scroll.svg" aria-label="cat-unrolling-paper"></object>
+  <object id="jump-start" class="mascot-sprite mascot-jump-start" data-mascot="cat" data-pose="jumpStart" type="image/svg+xml" data="../svg/cat/jump-start.svg" aria-label="cat-jump-start"></object>
+  <object id="jump-ing" class="mascot-sprite mascot-jump-ing" data-mascot="cat" data-pose="jumpIng" type="image/svg+xml" data="../svg/cat/jump-ing.svg" aria-label="cat-jumping"></object>
+  <object id="stretch-svg-end" class="mascot-sprite mascot-drag" data-mascot="cat" data-pose="drag" type="image/svg+xml" data="../svg/cat/drag.svg" aria-label="stretch"></object>
+  <object id="stretch-pose-default" class="mascot-sprite mascot-stretch" data-mascot="cat" data-pose="stretch" type="image/svg+xml" data="../svg/cat/stretch.svg" aria-label="stretching-default"></object>
+  <object id="stretch-pose-ing" class="mascot-sprite mascot-stretch-ing" data-mascot="cat" data-pose="stretchIng" type="image/svg+xml" data="../svg/cat/stretch-pose-ing.svg" aria-label="stretching-active"></object>
+
+  <!-- Schnauzer Mascot Sprites -->
+  <object id="schnauzer" class="mascot-sprite mascot-idle" data-mascot="schnauzer" data-pose="idle" type="image/svg+xml" data="../svg/schnauzer/idle.svg" aria-label="schnauzer"></object>
+  <object id="schnauzer-press-left" class="mascot-sprite mascot-press-left" data-mascot="schnauzer" data-pose="pressLeft" type="image/svg+xml" data="../svg/schnauzer/press-left.svg" aria-label="schnauzer-typing-left"></object>
+  <object id="schnauzer-press-right" class="mascot-sprite mascot-press-right" data-mascot="schnauzer" data-pose="pressRight" type="image/svg+xml" data="../svg/schnauzer/press-right.svg" aria-label="schnauzer-typing-right"></object>
+  <object id="schnauzer-scroll-unroll" class="mascot-sprite mascot-scroll" data-mascot="schnauzer" data-pose="scroll" type="image/svg+xml" data="../svg/schnauzer/scroll.svg" aria-label="schnauzer-unrolling-paper"></object>
+  <object id="schnauzer-jump-start" class="mascot-sprite mascot-jump-start" data-mascot="schnauzer" data-pose="jumpStart" type="image/svg+xml" data="../svg/schnauzer/jump-start.svg" aria-label="schnauzer-jump-start"></object>
+  <object id="schnauzer-jump-ing" class="mascot-sprite mascot-jump-ing" data-mascot="schnauzer" data-pose="jumpIng" type="image/svg+xml" data="../svg/schnauzer/jump-ing.svg" aria-label="schnauzer-jumping"></object>
+  <object id="schnauzer-drag" class="mascot-sprite mascot-drag" data-mascot="schnauzer" data-pose="drag" type="image/svg+xml" data="../svg/schnauzer/drag.svg" aria-label="schnauzer-drag"></object>
+  <object id="schnauzer-stretch" class="mascot-sprite mascot-stretch" data-mascot="schnauzer" data-pose="stretch" type="image/svg+xml" data="../svg/schnauzer/stretch.svg" aria-label="schnauzer-stretch"></object>
+
   <div id="sleep-bubble" aria-hidden="true"><span>Z</span><span>z</span><span>z</span></div>
   <div id="alert-exclamation" aria-hidden="true">!</div>
   <div id="completion-confetti" aria-hidden="true"></div>
@@ -127,21 +146,6 @@
     <span class="steam-particle"></span>
     <span class="steam-particle"></span>
   </div>
-  <object id="press-left" type="image/svg+xml" data="../svg/press-left.svg" aria-label="cat-typing-left"></object>
-  <object id="press-right" type="image/svg+xml" data="../svg/press-right.svg" aria-label="cat-typing-right"></object>
-  <object id="schnauzer-press-left" type="image/svg+xml" data="../svg/schnauzer-press-left.svg" aria-label="schnauzer-typing-left"></object>
-  <object id="schnauzer-press-right" type="image/svg+xml" data="../svg/schnauzer-press-right.svg" aria-label="schnauzer-typing-right"></object>
-  <object id="scroll-unroll" type="image/svg+xml" data="../svg/scroll-unroll.svg" aria-label="cat-unrolling-paper"></object>
-  <object id="schnauzer-scroll-unroll" type="image/svg+xml" data="../svg/schnauzer-scroll-unroll.svg" aria-label="schnauzer-unrolling-paper"></object>
-  <object id="jump-start" type="image/svg+xml" data="../svg/jump-start.svg" aria-label="cat-jump-start"></object>
-  <object id="jump-ing" type="image/svg+xml" data="../svg/jump-ing.svg" aria-label="cat-jumping"></object>
-  <object id="schnauzer-jump-start" type="image/svg+xml" data="../svg/schnauzer-jump-start.svg" aria-label="schnauzer-jump-start"></object>
-  <object id="schnauzer-jump-ing" type="image/svg+xml" data="../svg/schnauzer-jump-ing.svg" aria-label="schnauzer-jumping"></object>
-  <object id="stretch-svg-end" type="image/svg+xml" data="../svg/stretch-end.svg" aria-label="stretch"></object>
-  <object id="schnauzer-drag" type="image/svg+xml" data="../svg/schnauzer-drag.svg" aria-label="schnauzer-drag"></object>
-  <object id="stretch-pose-default" type="image/svg+xml" data="../svg/stretch-pose-default.svg" aria-label="stretching-default"></object>
-  <object id="schnauzer-stretch" type="image/svg+xml" data="../svg/schnauzer-stretch.svg" aria-label="schnauzer-stretch"></object>
-  <object id="stretch-pose-ing" type="image/svg+xml" data="../svg/stretch-pose-ing.svg" aria-label="stretching-active"></object>
   <script src="mascots.js"></script>
   <script src="cell-mappings.js"></script>
   <script src="renderer.js"></script>

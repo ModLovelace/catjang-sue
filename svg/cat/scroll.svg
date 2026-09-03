@@ -1,0 +1,146 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<style>
+  :root {
+    --cat-color: #1A1A1A;
+    --eye-color: var(--cat-color);
+    --eye-color-left: var(--eye-color);
+    --eye-color-right: var(--eye-color);
+  }
+  @keyframes speed-line-a {
+    0% { opacity: 0; transform: translateY(-2px); }
+    20%, 65% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(5px); }
+  }
+  @keyframes speed-line-b {
+    0% { opacity: 0; transform: translateY(1px); }
+    20%, 70% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(7px); }
+  }
+  .speed-a {
+    animation: speed-line-a 0.34s steps(3, end) infinite;
+  }
+  .speed-b {
+    animation: speed-line-b 0.34s steps(3, end) infinite;
+    animation-delay: 0.08s;
+  }
+  @keyframes scroll-ear-left {
+    0%, 100% { transform: rotate(-2deg) translateY(0); }
+    50% { transform: rotate(5deg) translateY(-1px); }
+  }
+  @keyframes scroll-ear-right {
+    0%, 100% { transform: rotate(2deg) translateY(0); }
+    50% { transform: rotate(-5deg) translateY(-1px); }
+  }
+  @keyframes scroll-tail-sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(7deg) translateY(-1px); }
+  }
+  .scroll-ear-left {
+    transform-origin: 25px 13px;
+    animation: scroll-ear-left 0.28s steps(2, end) infinite;
+  }
+  .scroll-ear-right {
+    transform-origin: 36px 13px;
+    animation: scroll-ear-right 0.28s steps(2, end) infinite;
+  }
+  .scroll-tail-sway {
+    transform-origin: 37px 39px;
+    animation: scroll-tail-sway 0.36s steps(2, end) infinite;
+  }
+</style>
+<defs>
+  <clipPath id="body-clip">
+    <path d="M23 36V26H24V25H26V24H27V22H35V23H36V24H38V26H39V30H40V34H41V40H40V41H34V42H28V41H23V40H22V36H23Z"/>
+  </clipPath>
+  <clipPath id="head-clip">
+    <path d="M24 10H22V12H21V14H20V19H21V23H23V24H24V25H26V26H36V25H38V24H39V23H40V22H41V19H42V15H41V12H40V11H39V10H37V9H35V8H27V9H24V10Z"/>
+  </clipPath>
+  <clipPath id="leg-rl-clip">
+    <path d="M22 42V38H30V42H29V44H28V46H24V44H23V42H22Z"/>
+  </clipPath>
+  <clipPath id="leg-rr-clip">
+    <path d="M34 42V38H42V42H41V44H40V46H36V44H35V42H34Z"/>
+  </clipPath>
+  <clipPath id="leg-fl-clip">
+    <path d="M28 36L28 26L29 26V25L32 25V26L33 26L33 38.5H32V42H31V43H30V44H26L26 40H27L27 36H28Z"/>
+  </clipPath>
+  <clipPath id="leg-fr-clip">
+    <path d="M29 37L29 27L30 27V26L33 26V27L34 27L34 39.5H33V43H32V44H31V45H27L27 41H28L28 37H29Z"/>
+  </clipPath>
+  <clipPath id="paper-strip-clip">
+    <rect id="paper-strip-mask" x="5" y="13" width="11" height="17"/>
+  </clipPath>
+  <filter id="cat-outline" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="var(--cat-outline, #FFFFFF)" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<path d="M13 13H3V14H2V15H1V22H2V23H3V24H4V25H13V24H14V22H15V21H16V17H15V15H14V14H13V13Z" fill="#D9D9D9" stroke="black"/>
+<path d="M8 22H7V23H6V25" stroke="black"/>
+<path id="paper-strip" class="paper-strip" d="M13 13H5V15H6V16H7V17H8V45.5H16V17H15V15H14V14H13V13Z" fill="#D9D9D9" stroke="black" clip-path="url(#paper-strip-clip)"/>
+
+<g id="cat-content" filter="url(#cat-outline)">
+<g id="tail" class="scroll-tail-sway" data-patch-frame="36 31 1 1"></g>
+<g id="leg-fl" data-patch-frame="26 25 0.875 1.727">
+<g class="paw-a">
+  <animateTransform attributeName="transform" type="rotate" values="84 33 26; 66 33 26; 84 33 26" dur="0.18s" repeatCount="indefinite"/>
+  <path d="M28 36L28 26L29 26V25L32 25V26L33 26L33 38.5H32V42H31V43H30V44H26L26 40H27L27 36H28Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fl-clip)"></g>
+</g>
+</g>
+<g id="leg-rl" data-patch-frame="22 38 1 1">
+  <path d="M22 42V38H30V42H29V44H28V46H24V44H23V42H22Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-rl-clip)"></g>
+</g>
+<g id="leg-rr" data-patch-frame="34 38 1 1">
+  <path d="M34 42V38H42V42H41V44H40V46H36V44H35V42H34Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-rr-clip)"></g>
+</g>
+<g id="body" data-patch-frame="22 22 0.864 1.333">
+  <path d="M23 36V26H24V25H26V24H27V22H35V23H36V24H38V26H39V30H40V34H41V40H40V41H34V42H28V41H23V40H22V36H23Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#body-clip)"></g>
+</g>
+<g id="leg-fr" data-patch-frame="27 26 0.875 1.727">
+<g class="paw-b">
+  <animateTransform attributeName="transform" type="rotate" values="66 34 27; 84 34 27; 66 34 27" dur="0.18s" repeatCount="indefinite"/>
+  <path d="M29 37L29 27L30 27V26L33 26V27L34 27L34 39.5H33V43H32V44H31V45H27L27 41H28L28 37H29Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fr-clip)"></g>
+</g>
+</g>
+<g id="head" data-patch-frame="20 8 1 1">
+  <path d="M24 10H22V12H21V14H20V19H21V23H23V24H24V25H26V26H36V25H38V24H39V23H40V22H41V19H42V15H41V12H40V11H39V10H37V9H35V8H27V9H24V10Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#head-clip)"></g>
+</g>
+<g id="whiskers" data-heat-overlay="true">
+  <rect width="6" height="1" transform="translate(17 18)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(38 19)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(18 20)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(39 21)" fill="var(--cat-color)"/>
+</g>
+<g id="ear-left" class="scroll-ear-left" data-ear-position="22 5"></g>
+<g id="ear-right" class="scroll-ear-right" data-ear-position="34 5"></g>
+<rect width="1" height="3" transform="translate(31 16)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="1" height="3" transform="translate(35 16)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="5" transform="translate(32 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect class="pupil-right" width="3" height="3" transform="translate(32 16)" fill="var(--eye-color-right, var(--eye-color, var(--cat-color)))"/>
+<rect width="1" height="3" transform="translate(22 16)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="1" height="3" transform="translate(26 16)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="5" transform="translate(23 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect class="pupil-left" width="3" height="3" transform="translate(23 16)" fill="var(--eye-color-left, var(--eye-color, var(--cat-color)))"/>
+</g>
+<path d="M4 20V18H5V20H4Z" stroke="black"/>
+<g class="speed-a">
+  <path d="M5 29V34.5" stroke="black"/>
+  <path d="M18 34V38" stroke="black"/>
+</g>
+<g class="speed-b">
+  <path d="M11.5 24V28" stroke="black"/>
+  <path d="M14 38V42" stroke="black"/>
+</g>
+</svg>

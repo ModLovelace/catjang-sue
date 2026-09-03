@@ -5,7 +5,7 @@ const path = require("path");
 
 console.log("=== TEST MASCOT RESOURCES & EQUIVALENCE INTEGRATION ===");
 
-const MASCOTS = require("../renderer/mascots.js");
+const { MASCOTS } = require("../renderer/mascots.js");
 
 // 1. Check all mascots and their 8 equivalent SVG animation files
 let allFilesOk = true;

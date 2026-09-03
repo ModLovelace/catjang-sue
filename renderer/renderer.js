@@ -1845,6 +1845,10 @@ function getReminderMeowVolume() {
 
 function playReminderMeow(options = {}) {
   if (completionMeowVolume <= 0) return;
+  if (currentMascot === "schnauzer") {
+    playPuppyBark();
+    return;
+  }
   const repeat = Math.max(1, Math.min(3, Math.round(Number(options.repeat) || 3)));
   const play = () => {
     reminderMeow.volume = getReminderMeowVolume();
@@ -1856,39 +1860,113 @@ function playReminderMeow(options = {}) {
   if (repeat >= 3) setTimeout(play, 3000);
 }
 
-function formatAgentDisplayName(agentId, agentName) {
-  if (agentName && typeof agentName === "string" && agentName.trim()) {
-    return agentName.trim();
-  }
-  const id = (agentId || "").toLowerCase();
-  if (id.includes("gemini") || id.includes("antigravity")) return "Gemini";
-  if (id.includes("codex")) return "Codex";
-  if (id.includes("claude")) return "Claude Code";
-  if (id.includes("cursor")) return "Cursor";
-  if (id && id !== "agent" && id !== "test") return id.charAt(0).toUpperCase() + id.slice(1);
-  return "Agente IA";
-}
-
-function formatAiCompleteText(event) {
-  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
-  const task = (event && typeof event.task === "string" && event.task.trim()) || "";
-  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
-
-  if (customText) {
-    if (customText.toLowerCase().includes(agent.toLowerCase()) || customText.includes(":")) {
-      return customText;
-    }
-    return `${agent}: ${customText}`;
-  }
-
-  if (task) {
-    return `${agent}: Terminó "${task}"`;
-  }
-
-  return `${agent}: ${tr("agentComplete") || "¡Tarea completada!"}`;
-}
-
 let puppyAudioCtx = null;
+let dogPettingNodes = null;
+
+function startDogPettingAudio() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
+    if (puppyAudioCtx.state === "suspended") {
+      puppyAudioCtx.resume().catch(() => {});
+    }
+    if (dogPettingNodes) return; // already active
+
+    const ctx = puppyAudioCtx;
+
+    // Buffer for soft pinkish breath noise (panting)
+    const bufferSize = ctx.sampleRate * 2;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99 * b0 + white * 0.05;
+      b1 = 0.96 * b1 + white * 0.11;
+      b2 = 0.86 * b2 + white * 0.25;
+      output[i] = (b0 + b1 + b2) * 0.15;
+    }
+
+    const whiteNoise = ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const breathFilter = ctx.createBiquadFilter();
+    breathFilter.type = "bandpass";
+    breathFilter.frequency.value = 750;
+    breathFilter.Q.value = 1.6;
+
+    // LFO for rhythmic panting (3.4 Hz breath rate)
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 3.4;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.04;
+
+    const breathGain = ctx.createGain();
+    breathGain.gain.value = 0.05;
+
+    whiteNoise.connect(breathFilter);
+    breathFilter.connect(breathGain);
+    lfo.connect(lfoGain);
+    lfoGain.connect(breathGain.gain);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
+    masterGain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.15);
+
+    breathGain.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    whiteNoise.start();
+    lfo.start();
+
+    // Occasional gentle contented puppy sigh while continuously petted
+    const sighTimer = setInterval(() => {
+      if (!dogPettingNodes) return;
+      try {
+        const osc = ctx.createOscillator();
+        const sGain = ctx.createGain();
+        osc.type = "sine";
+        const t = ctx.currentTime;
+        osc.frequency.setValueAtTime(420, t);
+        osc.frequency.exponentialRampToValueAtTime(260, t + 0.45);
+
+        sGain.gain.setValueAtTime(0, t);
+        sGain.gain.linearRampToValueAtTime(0.04, t + 0.1);
+        sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+        osc.connect(sGain);
+        sGain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.55);
+      } catch {}
+    }, 2200);
+
+    dogPettingNodes = { whiteNoise, lfo, masterGain, sighTimer };
+  } catch {}
+}
+
+function stopDogPettingAudio() {
+  if (!dogPettingNodes) return;
+  try {
+    const { whiteNoise, lfo, masterGain, sighTimer } = dogPettingNodes;
+    clearInterval(sighTimer);
+    if (puppyAudioCtx && masterGain) {
+      masterGain.gain.linearRampToValueAtTime(0.001, puppyAudioCtx.currentTime + 0.12);
+    }
+    setTimeout(() => {
+      try {
+        whiteNoise.stop();
+        lfo.stop();
+        whiteNoise.disconnect();
+        lfo.disconnect();
+      } catch {}
+    }, 150);
+  } catch {}
+  dogPettingNodes = null;
+}
+
 function playPuppyBark() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -2378,15 +2456,24 @@ function isIdlePoseInteractive() {
     !document.body.dataset.huntingReturn;
 }
 
+function currentIdleElement() {
+  const id = typeof getMascotPoseElementId === "function" ? getMascotPoseElementId(currentMascot, "idle") : null;
+  return (id && document.getElementById(id)) || (currentMascot === "schnauzer" ? dogObj : obj);
+}
+
 function isIdleHeadPoint(x, y) {
   if (!isIdlePoseInteractive()) return false;
-  const point = normalizedPointInElement(obj, x, y);
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const target = currentIdleElement();
+  const point = normalizedPointInElement(target, x, y);
   if (!point) return false;
-  return pointInEllipse(point.nx, point.ny, 0.40, 0.33, 0.25, 0.23);
+  const { cx, cy, rx, ry } = (m && m.petting) || { cx: 0.40, cy: 0.33, rx: 0.25, ry: 0.23 };
+  return pointInEllipse(point.nx, point.ny, cx, cy, rx, ry);
 }
 
 function idleSvgRoot() {
-  const doc = obj && obj.contentDocument;
+  const target = currentIdleElement();
+  const doc = target && target.contentDocument;
   return doc && doc.documentElement ? doc.documentElement : null;
 }
 
@@ -2447,10 +2534,13 @@ function setPurrFaceOffset(x, y) {
 }
 
 function purrFaceOffsetForPoint(x, y) {
-  const point = normalizedPointInElement(obj, x, y);
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const target = currentIdleElement();
+  const point = normalizedPointInElement(target, x, y);
   if (!point) return { x: 0, y: 0 };
-  const dx = Math.max(-1, Math.min(1, (point.nx - 0.40) / 0.25));
-  const dy = Math.max(-1, Math.min(1, (point.ny - 0.33) / 0.23));
+  const { cx, cy } = (m && m.petting) || { cx: 0.40, cy: 0.33 };
+  const dx = Math.max(-1, Math.min(1, (point.nx - cx) / 0.25));
+  const dy = Math.max(-1, Math.min(1, (point.ny - cy) / 0.23));
   return {
     x: dx * 1.15,
     y: dy * 0.75,
@@ -2464,16 +2554,27 @@ function startPurring(clientX, clientY) {
   setIdleSvgClass("purring", true);
   document.body.dataset.purring = "1";
   purrWanted = true;
-  if (purringSound.paused && !purrPlayPromise) {
+
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const isDogSound = m && m.soundType === "bark";
+
+  if (isDogSound) {
+    purringSound.pause();
     purringSound.currentTime = 0;
-    purrPlayPromise = purringSound.play()
-      .then(() => {
-        purrPlayPromise = null;
-        if (!purrWanted) stopPurring();
-      })
-      .catch(() => {
-        purrPlayPromise = null;
-      });
+    startDogPettingAudio();
+  } else {
+    stopDogPettingAudio();
+    if (purringSound.paused && !purrPlayPromise) {
+      purringSound.currentTime = 0;
+      purrPlayPromise = purringSound.play()
+        .then(() => {
+          purrPlayPromise = null;
+          if (!purrWanted) stopPurring();
+        })
+        .catch(() => {
+          purrPlayPromise = null;
+        });
+    }
   }
   scheduleStopPurring(PURR_IDLE_TIMEOUT_MS);
 }
@@ -2492,53 +2593,37 @@ function stopPurring() {
   purrStopTimer = null;
   purringSound.pause();
   purringSound.currentTime = 0;
+  stopDogPettingAudio();
 }
 
 function currentPoseElement() {
-  const isSchnauzer = currentMascot === "schnauzer";
+  let poseKey = "idle";
   if (document.body.classList.contains("dragging")) {
-    const id = isSchnauzer ? "schnauzer-drag" : "stretch-svg-end";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
+    poseKey = "drag";
+  } else if (document.body.dataset.stretching) {
+    poseKey = "stretch";
+  } else if (document.body.dataset.hunting) {
+    poseKey = "idle";
+  } else if (document.body.dataset.jump === "start") {
+    poseKey = "jumpStart";
+  } else if (document.body.dataset.jump === "ing") {
+    poseKey = "jumpIng";
+  } else if (document.body.dataset.scroll) {
+    poseKey = "scroll";
+  } else if (document.body.dataset.press === "left") {
+    poseKey = "pressLeft";
+  } else if (document.body.dataset.press === "right") {
+    poseKey = "pressRight";
   }
-  if (document.body.dataset.stretching) {
-    const id = isSchnauzer ? "schnauzer-stretch" : "stretch-pose-default";
+  const id = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, poseKey)
+    : null;
+  if (id) {
     ensureSvgObjectReady(id);
-    return document.getElementById(id);
+    const el = document.getElementById(id);
+    if (el) return el;
   }
-  if (document.body.dataset.hunting) {
-    const id = isSchnauzer ? "schnauzer" : "cat";
-    ensureSvgObjectReady(id);
-    return isSchnauzer ? dogObj : document.getElementById("cat");
-  }
-  if (document.body.dataset.jump === "start") {
-    const id = isSchnauzer ? "schnauzer-jump-start" : "jump-start";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
-  }
-  if (document.body.dataset.jump === "ing") {
-    const id = isSchnauzer ? "schnauzer-jump-ing" : "jump-ing";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
-  }
-  if (document.body.dataset.scroll) {
-    const id = isSchnauzer ? "schnauzer-scroll-unroll" : "scroll-unroll";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
-  }
-  if (document.body.dataset.press === "left") {
-    const id = isSchnauzer ? "schnauzer-press-left" : "press-left";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
-  }
-  if (document.body.dataset.press === "right") {
-    const id = isSchnauzer ? "schnauzer-press-right" : "press-right";
-    ensureSvgObjectReady(id);
-    return document.getElementById(id);
-  }
-  const id = isSchnauzer ? "schnauzer" : "cat";
-  ensureSvgObjectReady(id);
-  return isSchnauzer ? dogObj : obj;
+  return currentIdleElement();
 }
 
 function isCatHitPoint(x, y) {
@@ -3432,12 +3517,12 @@ function clearScrollPaperTimers() {
 }
 
 function setScrollPaperHeight(height) {
-  const doc1 = document.getElementById("scroll-unroll")?.contentDocument;
-  const doc2 = document.getElementById("schnauzer-scroll-unroll")?.contentDocument;
-  for (const doc of [doc1, doc2]) {
-    const mask = doc && doc.getElementById("paper-strip-mask");
-    if (mask) mask.setAttribute("height", height.toFixed(2));
-  }
+  const scrollId = typeof getMascotPoseElementId === "function" ? getMascotPoseElementId(currentMascot, "scroll") : "scroll-unroll";
+  const doc = (scrollId && document.getElementById(scrollId)?.contentDocument) ||
+              document.getElementById("scroll-unroll")?.contentDocument ||
+              document.getElementById("schnauzer-scroll-unroll")?.contentDocument;
+  const mask = doc && doc.getElementById("paper-strip-mask");
+  if (mask) mask.setAttribute("height", height.toFixed(2));
 }
 
 function resetScrollSvgAnimation() {
@@ -3484,14 +3569,17 @@ function registerSvgObjectWhenReady(id) {
   requestAnimationFrame(register);
 }
 
-// press / wheel / stretch-pose / schnauzer SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
-for (const id of [
-  "press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing",
-  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-scroll-unroll", "schnauzer-jump-start", "schnauzer-jump-ing",
-  "schnauzer-drag", "schnauzer-stretch"
-]) {
-  registerSvgObjectWhenReady(id);
+// Automatically register all mascot SVG elements from MASCOTS
+if (typeof MASCOTS === "object") {
+  for (const mascot of Object.values(MASCOTS)) {
+    if (mascot.elements) {
+      for (const elId of Object.values(mascot.elements)) {
+        registerSvgObjectWhenReady(elId);
+      }
+    }
+  }
 }
+registerSvgObjectWhenReady("stretch-pose-ing");
 
 // ── 타이핑 강도(KPS)에 따라 --cat-color를 base→빨강으로 lerp ──
 // BASE_RGB는 사용자가 패턴에서 정한 baseColor에서 동적으로 갱신.
