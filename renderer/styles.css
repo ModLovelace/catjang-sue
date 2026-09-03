@@ -968,7 +968,7 @@ body[data-stretching] #jump-start,
 body[data-hunting] #jump-start,
 body[data-stretching] #jump-ing,
 body[data-hunting] #jump-ing { display: none; }
-body[data-stretching] #stretch-pose-default { display: block; }
+body:not([data-mascot="schnauzer"])[data-stretching] #stretch-pose-default { display: block; }
 
 /* ── 타이핑 heat steam — 머리 위 빨간 김 particle들 ──
    JS가 --steam-opacity 변수로 전체 opacity 조절 (heat > 0.5일 때만 보임) */
@@ -1027,7 +1027,7 @@ body.dragging #jump-start,
 body.dragging #jump-ing,
 body.dragging #stretch-pose-default,
 body.dragging #stretch-pose-ing { display: none; }
-body.dragging #stretch-svg-end { display: block; }
+body:not([data-mascot="schnauzer"]).dragging #stretch-svg-end { display: block; }
 
 /* ── MASCOT SELECTION (Cat vs Schnauzer) ── */
 #schnauzer,
@@ -1060,12 +1060,58 @@ body.dragging #stretch-svg-end { display: block; }
   width: calc(var(--cat-size) * 1.12);
 }
 
+/* Schnauzer Drag sprite */
+#schnauzer-drag {
+  position: absolute;
+  top: calc(var(--cat-top) - 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--cat-size) * 1.1);
+  aspect-ratio: 50 / 64;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  display: none;
+  z-index: 2;
+}
+
+/* Schnauzer Stretch sprite */
+#schnauzer-stretch {
+  position: absolute;
+  top: var(--cat-top);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 77.1%;
+  aspect-ratio: 72 / 56;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  display: none;
+  z-index: 2;
+}
+
+/* When Schnauzer is active, hide all Cat SVGs */
 body[data-mascot="schnauzer"] #cat,
 body[data-mascot="schnauzer"] #press-left,
 body[data-mascot="schnauzer"] #press-right,
 body[data-mascot="schnauzer"] #scroll-unroll,
 body[data-mascot="schnauzer"] #jump-start,
-body[data-mascot="schnauzer"] #jump-ing {
+body[data-mascot="schnauzer"] #jump-ing,
+body[data-mascot="schnauzer"] #stretch-svg-end,
+body[data-mascot="schnauzer"] #stretch-pose-default,
+body[data-mascot="schnauzer"] #stretch-pose-ing {
+  display: none !important;
+}
+
+/* When Cat is active, hide all Schnauzer SVGs */
+body:not([data-mascot="schnauzer"]) #schnauzer,
+body:not([data-mascot="schnauzer"]) #schnauzer-press-left,
+body:not([data-mascot="schnauzer"]) #schnauzer-press-right,
+body:not([data-mascot="schnauzer"]) #schnauzer-scroll-unroll,
+body:not([data-mascot="schnauzer"]) #schnauzer-jump-start,
+body:not([data-mascot="schnauzer"]) #schnauzer-jump-ing,
+body:not([data-mascot="schnauzer"]) #schnauzer-drag,
+body:not([data-mascot="schnauzer"]) #schnauzer-stretch {
   display: none !important;
 }
 
@@ -1089,12 +1135,20 @@ body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block !important; }
 
-body.dragging #schnauzer,
+/* Dragging for Schnauzer */
+body[data-mascot="schnauzer"].dragging #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
+
+/* Stretching for Schnauzer */
+body[data-mascot="schnauzer"][data-stretching] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch { display: block !important; }
+
 body.dragging #schnauzer-press-left,
 body.dragging #schnauzer-press-right,
 body.dragging #schnauzer-scroll-unroll,
 body.dragging #schnauzer-jump-start,
-body.dragging #schnauzer-jump-ing { display: none !important; }
+body.dragging #schnauzer-jump-ing,
+body.dragging #schnauzer-stretch { display: none !important; }
 
 /* ── SLEEP / NAP ANIMATION ── */
 body[data-sleeping="1"] #cat,

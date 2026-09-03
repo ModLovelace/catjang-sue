@@ -170,8 +170,8 @@ const I18N = {
     jumpNow: "Jump now",
     shareCat: "Show off my Catjang",
     setUserName: "Tell my name",
-    setCatName: "Set Catjang name",
-    showCatName: "Show Catjang name",
+    setCatName: "Set pet name",
+    showCatName: "Show pet name",
     fixedMessage: "Fixed message",
     reminders: "Reminders",
     remindersOpen: "Open reminders",
@@ -256,8 +256,8 @@ const I18N = {
     jumpNow: "Saltar ahora",
     shareCat: "Presumir a mi Catjang",
     setUserName: "Indicar mi nombre",
-    setCatName: "Cambiar el nombre de Catjang",
-    showCatName: "Mostrar el nombre de Catjang",
+    setCatName: "Cambiar nombre de la mascota",
+    showCatName: "Mostrar nombre de la mascota",
     fixedMessage: "Mensaje fijo",
     reminders: "Recordatorios",
     remindersOpen: "Abrir recordatorios",
@@ -342,8 +342,8 @@ const I18N = {
     jumpNow: "지금 점프",
     shareCat: "내 캣짱 자랑 영상찍기",
     setUserName: "내 이름 알려주기",
-    setCatName: "캣짱 이름 지정",
-    showCatName: "캣짱 이름 표시",
+    setCatName: "반려동물 이름 지정",
+    showCatName: "반려동물 이름 표시",
     fixedMessage: "고정 메시지",
     reminders: "알림",
     remindersOpen: "알림 열기",
@@ -428,8 +428,8 @@ const I18N = {
     jumpNow: "今すぐジャンプ",
     shareCat: "Catjang を自慢する動画を撮る",
     setUserName: "自分の名前を教える",
-    setCatName: "Catjang の名前を設定",
-    showCatName: "Catjang の名前を表示",
+    setCatName: "ペットの名前を設定",
+    showCatName: "ペットの名前を表示",
     fixedMessage: "固定メッセージ",
     reminders: "通知",
     remindersOpen: "通知を開く",
@@ -718,6 +718,10 @@ let stretchIntervalMin = DEFAULT_STRETCH_INTERVAL_MIN; // 0 = 끔
 let stretchTimer = null;
 let reminders = [];
 let reminderTimer = null;
+let mascotNames = {
+  cat: "Catjang",
+  schnauzer: "Otto",
+};
 let catName = "Catjang";
 let userName = "";
 let showCatName = true;
@@ -776,9 +780,20 @@ function loadSettings() {
       if (typeof data.language === "string") {
         currentLanguage = normalizeLanguage(data.language);
       }
-      if (typeof data.catName === "string" && data.catName.trim()) {
-        catName = data.catName.trim().slice(0, 24);
+      if (data.mascotNames && typeof data.mascotNames === "object") {
+        if (typeof data.mascotNames.cat === "string" && data.mascotNames.cat.trim()) {
+          mascotNames.cat = data.mascotNames.cat.trim().slice(0, 24);
+        }
+        if (typeof data.mascotNames.schnauzer === "string" && data.mascotNames.schnauzer.trim()) {
+          mascotNames.schnauzer = data.mascotNames.schnauzer.trim().slice(0, 24);
+        }
+      } else if (typeof data.catName === "string" && data.catName.trim()) {
+        mascotNames.cat = data.catName.trim().slice(0, 24);
       }
+      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer")) {
+        currentMascot = data.mascot;
+      }
+      catName = mascotNames[currentMascot] || mascotNames.cat;
       if (typeof data.userName === "string") {
         userName = data.userName.trim().slice(0, 24);
       }
@@ -796,9 +811,6 @@ function loadSettings() {
       }
       if (typeof data.agentOnboardingShown === "boolean") {
         agentOnboardingShown = data.agentOnboardingShown;
-      }
-      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer")) {
-        currentMascot = data.mascot;
       }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
@@ -827,6 +839,7 @@ function saveSettings() {
       reminders,
       language: currentLanguage,
       mascot: currentMascot,
+      mascotNames,
       catName,
       userName,
       showCatName,
@@ -845,10 +858,13 @@ function saveSettings() {
 
 function setMascot(mascot) {
   if (mascot !== "cat" && mascot !== "schnauzer") return;
+  mascotNames[currentMascot] = catName;
   currentMascot = mascot;
+  catName = mascotNames[currentMascot] || (currentMascot === "schnauzer" ? "Otto" : "Catjang");
   saveSettings();
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("mascot-changed", currentMascot);
+    broadcastCatNameSettings();
   }
 }
 
@@ -1103,8 +1119,10 @@ function broadcastFixedMessageSettings() {
 }
 
 function setCatName(value) {
-  const next = String(value || "").trim().slice(0, 24) || "Catjang";
+  const fallback = currentMascot === "schnauzer" ? "Otto" : "Catjang";
+  const next = String(value || "").trim().slice(0, 24) || fallback;
   catName = next;
+  mascotNames[currentMascot] = catName;
   saveSettings();
   broadcastCatNameSettings();
   return { name: catName, visible: showCatName };
@@ -1610,6 +1628,10 @@ function confirmAndPerformFullReset() {
     if (fs.existsSync(cp)) fs.unlinkSync(cp);
   } catch {}
 
+  mascotNames = {
+    cat: "Catjang",
+    schnauzer: "Otto",
+  };
   catName = "Catjang";
   currentMascot = "cat";
   userName = "";

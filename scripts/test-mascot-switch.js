@@ -135,6 +135,63 @@ app.whenReady().then(async () => {
   // Clean scroll state
   await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
 
+  // 2.6 Test dragging while schnauzer is active
+  const stateDragDog = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.classList.add("dragging");
+      const catDrag = document.getElementById("stretch-svg-end");
+      const dogDrag = document.getElementById("schnauzer-drag");
+      const dogIdle = document.getElementById("schnauzer");
+      return {
+        catDragDisplay: window.getComputedStyle(catDrag).display,
+        dogDragDisplay: window.getComputedStyle(dogDrag).display,
+        dogIdleDisplay: window.getComputedStyle(dogIdle).display,
+        dogDragWidth: dogDrag.getBoundingClientRect().width,
+      };
+    })()
+  `);
+  console.log("STATE 2.6 (Schnauzer Dragging):", stateDragDog);
+
+  if (stateDragDog.catDragDisplay !== "none") {
+    console.error("FAIL: Cat drag is showing while Schnauzer is dragged!");
+    app.exit(1);
+    return;
+  }
+  if (stateDragDog.dogDragDisplay === "none") {
+    console.error("FAIL: Dog drag is NOT showing while Schnauzer is dragged!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 2.6: Schnauzer drag is visible, Cat drag is hidden.");
+  await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
+
+  // 2.7 Test stretching while schnauzer is active
+  const stateStretchDog = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.stretching = "ing";
+      const catStretch = document.getElementById("stretch-pose-default");
+      const dogStretch = document.getElementById("schnauzer-stretch");
+      return {
+        catStretchDisplay: window.getComputedStyle(catStretch).display,
+        dogStretchDisplay: window.getComputedStyle(dogStretch).display,
+      };
+    })()
+  `);
+  console.log("STATE 2.7 (Schnauzer Stretching):", stateStretchDog);
+
+  if (stateStretchDog.catStretchDisplay !== "none") {
+    console.error("FAIL: Cat stretch is showing while Schnauzer is stretching!");
+    app.exit(1);
+    return;
+  }
+  if (stateStretchDog.dogStretchDisplay === "none") {
+    console.error("FAIL: Dog stretch is NOT showing while Schnauzer is stretching!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 2.7: Schnauzer stretch is visible, Cat stretch is hidden.");
+  await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
+
   // 3. Switch back to cat
   const state3 = await win.webContents.executeJavaScript(`
     (() => {
@@ -182,7 +239,35 @@ app.whenReady().then(async () => {
     return;
   }
   console.log("PASS 3.5: Cat scroll unroll is visible, Dog scroll unroll is hidden.");
+  await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
 
-  console.log("=== ALL LIVE ELECTRON MASCOT SWITCH & SCROLL TESTS PASSED! ===");
+  // 3.6 Test dragging while cat is active
+  const stateDragCat = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.classList.add("dragging");
+      const catDrag = document.getElementById("stretch-svg-end");
+      const dogDrag = document.getElementById("schnauzer-drag");
+      return {
+        catDragDisplay: window.getComputedStyle(catDrag).display,
+        dogDragDisplay: window.getComputedStyle(dogDrag).display,
+      };
+    })()
+  `);
+  console.log("STATE 3.6 (Cat Dragging):", stateDragCat);
+
+  if (stateDragCat.catDragDisplay === "none") {
+    console.error("FAIL: Cat drag is NOT showing while cat is dragged!");
+    app.exit(1);
+    return;
+  }
+  if (stateDragCat.dogDragDisplay !== "none") {
+    console.error("FAIL: Dog drag is showing while cat is dragged!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 3.6: Cat drag is visible, Dog drag is hidden.");
+  await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
+
+  console.log("=== ALL LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
   app.exit(0);
 });

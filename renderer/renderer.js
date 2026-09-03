@@ -2265,7 +2265,7 @@ function scheduleNativeWindowShapeUpdate() {
       "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
       "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
       "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
-      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-scroll-unroll", "#schnauzer-jump-start", "#schnauzer-jump-ing",
+      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-scroll-unroll", "#schnauzer-jump-start", "#schnauzer-jump-ing", "#schnauzer-drag", "#schnauzer-stretch",
       "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
       "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
     ];
@@ -2495,15 +2495,17 @@ function stopPurring() {
 }
 
 function currentPoseElement() {
+  const isSchnauzer = currentMascot === "schnauzer";
   if (document.body.classList.contains("dragging")) {
-    ensureSvgObjectReady("stretch-svg-end");
-    return stretchEndObj;
+    const id = isSchnauzer ? "schnauzer-drag" : "stretch-svg-end";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
   if (document.body.dataset.stretching) {
-    ensureSvgObjectReady("stretch-pose-default");
-    return document.getElementById("stretch-pose-default");
+    const id = isSchnauzer ? "schnauzer-stretch" : "stretch-pose-default";
+    ensureSvgObjectReady(id);
+    return document.getElementById(id);
   }
-  const isSchnauzer = currentMascot === "schnauzer";
   if (document.body.dataset.hunting) {
     const id = isSchnauzer ? "schnauzer" : "cat";
     ensureSvgObjectReady(id);
@@ -3485,7 +3487,8 @@ function registerSvgObjectWhenReady(id) {
 // press / wheel / stretch-pose / schnauzer SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
 for (const id of [
   "press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing",
-  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-scroll-unroll", "schnauzer-jump-start", "schnauzer-jump-ing"
+  "schnauzer", "schnauzer-press-left", "schnauzer-press-right", "schnauzer-scroll-unroll", "schnauzer-jump-start", "schnauzer-jump-ing",
+  "schnauzer-drag", "schnauzer-stretch"
 ]) {
   registerSvgObjectWhenReady(id);
 }
