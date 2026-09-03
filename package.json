@@ -54,6 +54,7 @@
       "hooks/**",
       "agents/**",
       "agents-setup/**",
+      "scripts/**",
       "workspace/**",
       "presets/**",
       "svg/**",
