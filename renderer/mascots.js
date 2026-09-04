@@ -118,6 +118,34 @@ const MASCOTS = {
       stretch: "svg/milo/stretch.svg",
     },
   },
+  musubi: {
+    id: "musubi",
+    defaultName: "Musubi",
+    label: "Gato Atigrado (Musubi) 🐱",
+    soundType: "meow",
+    folder: "svg/musubi",
+    petting: { cx: 0.48, cy: 0.33, rx: 0.26, ry: 0.24 },
+    elements: {
+      idle: "musubi",
+      pressLeft: "musubi-press-left",
+      pressRight: "musubi-press-right",
+      scroll: "musubi-scroll-unroll",
+      jumpStart: "musubi-jump-start",
+      jumpIng: "musubi-jump-ing",
+      drag: "musubi-drag",
+      stretch: "musubi-stretch",
+    },
+    svgFiles: {
+      idle: "svg/musubi/idle.svg",
+      pressLeft: "svg/musubi/press-left.svg",
+      pressRight: "svg/musubi/press-right.svg",
+      scroll: "svg/musubi/scroll.svg",
+      jumpStart: "svg/musubi/jump-start.svg",
+      jumpIng: "svg/musubi/jump-ing.svg",
+      drag: "svg/musubi/drag.svg",
+      stretch: "svg/musubi/stretch.svg",
+    },
+  },
 };
 
 function getMascot(id) {

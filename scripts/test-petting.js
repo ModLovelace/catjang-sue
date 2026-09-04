@@ -343,6 +343,74 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 8: Milo petting stopped cleanly, hearts hidden, audio stopped.");
 
+  // 5. Test Musubi Petting (Cat audio / purring)
+  const musubiPetState = await win.webContents.executeJavaScript(`
+    (async () => {
+      document.body.dataset.mascot = "musubi";
+      currentMascot = "musubi";
+      const musubi = document.getElementById("musubi");
+      if (!musubi.contentDocument || !musubi.contentDocument.querySelector("svg")) {
+        await new Promise(r => {
+          musubi.addEventListener("load", r, { once: true });
+          setTimeout(r, 600);
+        });
+      }
+      await new Promise(r => setTimeout(r, 200));
+      const rect = musubi.getBoundingClientRect();
+      const headX = rect.left + rect.width * 0.48;
+      const headY = rect.top + rect.height * 0.33;
+
+      startPurring(headX, headY);
+
+      const hearts = document.getElementById("purr-hearts");
+      const musubiDoc = musubi.contentDocument;
+      const musubiRoot = musubiDoc && musubiDoc.documentElement;
+      const isPurringClass = musubiRoot ? musubiRoot.classList.contains("purring") : false;
+
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        musubiHasPurringClass: isPurringClass,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Musubi Petting State:", musubiPetState);
+
+  if (musubiPetState.purringDataset !== "1" || musubiPetState.heartsDisplay === "none" || !musubiPetState.musubiHasPurringClass) {
+    console.error("FAIL: Musubi petting did not trigger properly!");
+    app.exit(1);
+    return;
+  }
+  if (musubiPetState.dogPettingNodesActive) {
+    console.error("FAIL: Musubi should use cat purring audio, not dog petting audio!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 9: Musubi petting active, hearts visible, .purring applied, feline purr audio active.");
+
+  // Stop Musubi Petting
+  const musubiStopState = await win.webContents.executeJavaScript(`
+    (() => {
+      stopPurring();
+      const hearts = document.getElementById("purr-hearts");
+      const musubi = document.getElementById("musubi");
+      const musubiRoot = musubi.contentDocument && musubi.contentDocument.documentElement;
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        musubiHasPurringClass: musubiRoot ? musubiRoot.classList.contains("purring") : false,
+      };
+    })()
+  `);
+  console.log("Musubi Stop Petting State:", musubiStopState);
+  if (musubiStopState.purringDataset || musubiStopState.heartsDisplay !== "none" || musubiStopState.musubiHasPurringClass) {
+    console.error("FAIL: Musubi petting did not stop cleanly!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 10: Musubi petting stopped cleanly, hearts hidden, purr stopped.");
+
   console.log("=== ALL PETTING ANIMATIONS AND SOUND TESTS PASSED! ===");
   app.exit(0);
 });

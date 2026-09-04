@@ -3962,7 +3962,7 @@ window.addEventListener("keydown", registerUserActivity, { passive: true });
 
 // ── MASCOT SWITCHING ──
 function applyMascot(mascot) {
-  currentMascot = (mascot === "schnauzer" || mascot === "chisi" || mascot === "milo") ? mascot : "cat";
+  currentMascot = (mascot === "schnauzer" || mascot === "chisi" || mascot === "milo" || mascot === "musubi") ? mascot : "cat";
   document.body.dataset.mascot = currentMascot;
   const currentEl = currentIdleElement();
   if (currentEl && currentEl.contentDocument) initDogTracking(currentEl.contentDocument);
@@ -3997,5 +3997,14 @@ if (miloObj) {
   });
   requestAnimationFrame(() => {
     if (miloObj && miloObj.contentDocument) initDogTracking(miloObj.contentDocument);
+  });
+}
+const musubiObj = document.getElementById("musubi");
+if (musubiObj) {
+  musubiObj.addEventListener("load", () => {
+    initDogTracking(musubiObj.contentDocument);
+  });
+  requestAnimationFrame(() => {
+    if (musubiObj && musubiObj.contentDocument) initDogTracking(musubiObj.contentDocument);
   });
 }

@@ -508,6 +508,129 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
   console.log("PASS 5: All Milo animations and state transitions passed cleanly!");
 
+  // 6. Switch to Musubi
+  const state6 = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.mascot = "musubi";
+      const cat = document.getElementById("cat");
+      const schnauzer = document.getElementById("schnauzer");
+      const chisi = document.getElementById("chisi");
+      const milo = document.getElementById("milo");
+      const musubi = document.getElementById("musubi");
+      const rect = musubi.getBoundingClientRect();
+      return {
+        mascot: document.body.dataset.mascot,
+        catDisplay: window.getComputedStyle(cat).display,
+        schnauzerDisplay: window.getComputedStyle(schnauzer).display,
+        chisiDisplay: window.getComputedStyle(chisi).display,
+        miloDisplay: window.getComputedStyle(milo).display,
+        musubiDisplay: window.getComputedStyle(musubi).display,
+        musubiWidth: rect.width,
+        musubiHeight: rect.height,
+      };
+    })()
+  `);
+  console.log("STATE 6 (Switched to Musubi):", state6);
+  if (state6.musubiDisplay !== "block" || state6.catDisplay !== "none" || state6.schnauzerDisplay !== "none" || state6.chisiDisplay !== "none" || state6.miloDisplay !== "none") {
+    console.error("FAIL: Musubi is not visible or other mascots are not hidden!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 6: Musubi is visible and Cat/Schnauzer/Chisi/Milo are hidden.");
+
+  // 6.1 Test Musubi typing
+  const stateMusubiPress = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.press = "left";
+      const musubi = document.getElementById("musubi");
+      const musubiPress = document.getElementById("musubi-press-left");
+      return {
+        musubiIdle: window.getComputedStyle(musubi).display,
+        musubiPress: window.getComputedStyle(musubiPress).display,
+      };
+    })()
+  `);
+  console.log("STATE 6.1 (Musubi Typing Left):", stateMusubiPress);
+  if (stateMusubiPress.musubiIdle !== "none" || stateMusubiPress.musubiPress !== "block") {
+    console.error("FAIL: Musubi typing display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.press`);
+
+  // 6.2 Test Musubi scrolling
+  const stateMusubiScroll = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.scroll = "unroll";
+      const musubi = document.getElementById("musubi");
+      const musubiScroll = document.getElementById("musubi-scroll-unroll");
+      return {
+        musubiIdle: window.getComputedStyle(musubi).display,
+        musubiScroll: window.getComputedStyle(musubiScroll).display,
+      };
+    })()
+  `);
+  console.log("STATE 6.2 (Musubi Scrolling):", stateMusubiScroll);
+  if (stateMusubiScroll.musubiIdle !== "none" || stateMusubiScroll.musubiScroll !== "block") {
+    console.error("FAIL: Musubi scrolling display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.scroll`);
+
+  // 6.3 Test Musubi dragging
+  const stateMusubiDrag = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.classList.add("dragging");
+      const musubi = document.getElementById("musubi");
+      const musubiDrag = document.getElementById("musubi-drag");
+      const miloDrag = document.getElementById("milo-drag");
+      const chisiDrag = document.getElementById("chisi-drag");
+      const schnauzerDrag = document.getElementById("schnauzer-drag");
+      return {
+        musubiIdle: window.getComputedStyle(musubi).display,
+        musubiDrag: window.getComputedStyle(musubiDrag).display,
+        miloDrag: window.getComputedStyle(miloDrag).display,
+        chisiDrag: window.getComputedStyle(chisiDrag).display,
+        schnauzerDrag: window.getComputedStyle(schnauzerDrag).display,
+      };
+    })()
+  `);
+  console.log("STATE 6.3 (Musubi Dragging):", stateMusubiDrag);
+  if (stateMusubiDrag.musubiIdle !== "none" || stateMusubiDrag.musubiDrag !== "block" || stateMusubiDrag.miloDrag !== "none" || stateMusubiDrag.chisiDrag !== "none" || stateMusubiDrag.schnauzerDrag !== "none") {
+    console.error("FAIL: Musubi dragging display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`document.body.classList.remove("dragging")`);
+
+  // 6.4 Test Musubi stretching
+  const stateMusubiStretch = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.stretching = "ing";
+      const musubi = document.getElementById("musubi");
+      const musubiStretch = document.getElementById("musubi-stretch");
+      const miloStretch = document.getElementById("milo-stretch");
+      const chisiStretch = document.getElementById("chisi-stretch");
+      const schnauzerStretch = document.getElementById("schnauzer-stretch");
+      return {
+        musubiIdle: window.getComputedStyle(musubi).display,
+        musubiStretch: window.getComputedStyle(musubiStretch).display,
+        miloStretch: window.getComputedStyle(miloStretch).display,
+        chisiStretch: window.getComputedStyle(chisiStretch).display,
+        schnauzerStretch: window.getComputedStyle(schnauzerStretch).display,
+      };
+    })()
+  `);
+  console.log("STATE 6.4 (Musubi Stretching):", stateMusubiStretch);
+  if (stateMusubiStretch.musubiIdle !== "none" || stateMusubiStretch.musubiStretch !== "block" || stateMusubiStretch.miloStretch !== "none" || stateMusubiStretch.chisiStretch !== "none" || stateMusubiStretch.schnauzerStretch !== "none") {
+    console.error("FAIL: Musubi stretching display incorrect!");
+    app.exit(1);
+    return;
+  }
+  await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
+  console.log("PASS 6: All Musubi animations and state transitions passed cleanly!");
+
   console.log("=== ALL LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
   app.exit(0);
 });

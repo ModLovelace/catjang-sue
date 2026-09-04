@@ -65,8 +65,9 @@ const css = fs.readFileSync(path.join(__dirname, "..", "renderer", "styles.css")
 if (!css.includes('body[data-mascot="schnauzer"].dragging #schnauzer-drag') ||
     !css.includes('body[data-mascot="chisi"].dragging #chisi-drag') ||
     !css.includes('body[data-mascot="milo"].dragging #milo-drag') ||
-    !css.includes('body[data-mascot="milo"][data-stretching] #milo-stretch') ||
-    !css.includes('body[data-mascot="milo"][data-scroll] #milo-scroll-unroll')) {
+    !css.includes('body[data-mascot="musubi"].dragging #musubi-drag') ||
+    !css.includes('body[data-mascot="musubi"][data-stretching] #musubi-stretch') ||
+    !css.includes('body[data-mascot="musubi"][data-scroll] #musubi-scroll-unroll')) {
   console.error("FAIL: styles.css missing complete animation equivalence rules for mascots");
 } else {
   console.log("PASS: styles.css contains complete drag, stretch, scroll and press rules per mascot.");
