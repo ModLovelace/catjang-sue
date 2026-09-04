@@ -32,71 +32,75 @@
   <g id="dog-content" class="stretch-body-anim" filter="url(#dog-outline)">
     <!-- Tail (High in the air wagging happily) -->
     <g class="stretch-tail">
-      <rect x="47" y="21" width="3" height="4" fill="#333333"/>
-      <rect x="49" y="17" width="3" height="4" fill="#555555"/>
-      <rect x="50" y="13" width="3" height="4" fill="#DDDDDD"/>
-      <rect x="51" y="9" width="3" height="4" fill="#FFFFFF"/>
+      <rect x="47" y="21" width="3" height="4" fill="#2C2F36"/>
+      <rect x="49" y="17" width="3" height="4" fill="#454952"/>
+      <rect x="50" y="13" width="3" height="4" fill="#9197A3"/>
+      <rect x="51" y="9" width="3" height="4" fill="#ECEFF4"/>
     </g>
 
     <!-- Rear Body (Arched high) -->
-    <rect x="33" y="22" width="16" height="18" fill="#555555"/>
-    <rect x="36" y="20" width="12" height="4" fill="#444444"/>
+    <rect x="33" y="22" width="16" height="18" fill="#454952"/>
+    <rect x="36" y="20" width="12" height="4" fill="#34373D"/>
 
     <!-- Hind Legs (Standing tall pushing up) -->
-    <rect x="41" y="38" width="5" height="11" fill="#444444"/>
-    <rect x="41" y="49" width="6" height="3" fill="#E8E8E8"/>
-    <rect x="46" y="37" width="5" height="12" fill="#333333"/>
-    <rect x="46" y="49" width="6" height="3" fill="#E8E8E8"/>
+    <rect x="41" y="38" width="5" height="11" fill="#34373D"/>
+    <rect x="41" y="49" width="6" height="3" fill="#D6D9E0"/>
+    <rect x="46" y="37" width="5" height="12" fill="#2C2F36"/>
+    <rect x="46" y="49" width="6" height="3" fill="#D6D9E0"/>
 
     <!-- Slanted Mid-Back (Down towards front) -->
-    <rect x="23" y="26" width="12" height="16" fill="#555555"/>
-    <rect x="25" y="25" width="10" height="3" fill="#444444"/>
+    <rect x="23" y="26" width="12" height="16" fill="#454952"/>
+    <rect x="25" y="25" width="10" height="3" fill="#34373D"/>
     <!-- Chest on floor -->
-    <rect x="17" y="32" width="10" height="12" fill="#DDDDDD"/>
-    <rect x="18" y="34" width="8" height="8" fill="#FFFFFF"/>
+    <rect x="17" y="32" width="10" height="12" fill="#D6D9E0"/>
+    <rect x="18" y="34" width="8" height="8" fill="#ECEFF4"/>
 
-    <!-- Front Paws (Stretched straight out forward on floor) -->
-    <rect x="3" y="44" width="18" height="4" fill="#555555"/>
-    <rect x="2" y="46" width="12" height="3" fill="#E8E8E8"/>
+    <!-- Front Plush Paws (Stretched straight out forward on floor) -->
+    <rect x="3" y="44" width="18" height="4" fill="#454952"/>
+    <rect x="2" y="46" width="12" height="3" fill="#D6D9E0"/>
     <rect x="0" y="47" width="8" height="3" fill="#FFFFFF"/>
 
-    <rect x="5" y="41" width="16" height="4" fill="#444444"/>
-    <rect x="4" y="43" width="10" height="3" fill="#CCCCCC"/>
-    <rect x="3" y="44" width="6" height="3" fill="#E8E8E8"/>
+    <rect x="5" y="41" width="16" height="4" fill="#34373D"/>
+    <rect x="4" y="43" width="10" height="3" fill="#D6D9E0"/>
+    <rect x="3" y="44" width="6" height="3" fill="#ECEFF4"/>
 
     <!-- Head (Down between paws, looking forward happily) -->
     <g transform="translate(4, 20)">
-      <!-- Left Ear (resting flat/back) -->
-      <rect x="11" y="3" width="5" height="4" fill="#333333"/>
-      <rect x="10" y="6" width="5" height="4" fill="#444444"/>
+      <!-- Left Ear (resting back with fawn tip) -->
+      <rect x="11" y="3" width="5" height="4" fill="#2C2F36"/>
+      <rect x="10" y="6" width="5" height="4" fill="#454952"/>
+      <rect x="9" y="5" width="2" height="5" fill="#D6C3AB"/>
+      <rect x="10" y="8" width="3" height="2" fill="#B39F87"/>
 
       <!-- Head Base -->
-      <rect x="14" y="5" width="14" height="14" fill="#555555"/>
-      <rect x="16" y="4" width="11" height="3" fill="#444444"/>
+      <rect x="14" y="5" width="14" height="14" fill="#454952"/>
+      <rect x="16" y="4" width="11" height="3" fill="#34373D"/>
 
       <!-- Eyebrows (Relaxed happy stretch) -->
-      <rect x="13" y="7" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="14" y="6" width="4" height="2" fill="#FFFFFF"/>
-      <rect x="21" y="7" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="22" y="6" width="4" height="2" fill="#FFFFFF"/>
+      <rect x="13" y="7" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="14" y="6" width="4" height="2" fill="#ECEFF4"/>
+      <rect x="21" y="7" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="22" y="6" width="4" height="2" fill="#ECEFF4"/>
 
       <!-- Eyes (Happy closed crescent eyes ^ ^) -->
-      <rect x="15" y="10" width="4" height="1" fill="#1A1A1A"/>
-      <rect x="14" y="11" width="1" height="1" fill="#1A1A1A"/>
-      <rect x="19" y="11" width="1" height="1" fill="#1A1A1A"/>
+      <rect x="15" y="10" width="4" height="1" fill="#141517"/>
+      <rect x="14" y="11" width="1" height="1" fill="#141517"/>
+      <rect x="19" y="11" width="1" height="1" fill="#141517"/>
 
-      <rect x="22" y="10" width="4" height="1" fill="#1A1A1A"/>
-      <rect x="21" y="11" width="1" height="1" fill="#1A1A1A"/>
-      <rect x="26" y="11" width="1" height="1" fill="#1A1A1A"/>
+      <rect x="22" y="10" width="4" height="1" fill="#141517"/>
+      <rect x="21" y="11" width="1" height="1" fill="#141517"/>
+      <rect x="26" y="11" width="1" height="1" fill="#141517"/>
 
       <!-- Nose -->
-      <rect x="18" y="12" width="4" height="2" fill="#111111"/>
+      <rect x="18" y="12" width="5" height="2" fill="#141517"/>
 
       <!-- Beard (Resting on paws) -->
-      <rect x="15" y="14" width="10" height="4" fill="#E0E0E0"/>
-      <rect x="14" y="16" width="12" height="4" fill="#EEEEEE"/>
+      <rect x="15" y="14" width="10" height="4" fill="#D6D9E0"/>
+      <rect x="14" y="16" width="12" height="4" fill="#ECEFF4"/>
       <rect x="15" y="19" width="10" height="4" fill="#FFFFFF"/>
       <rect x="16" y="22" width="8" height="2" fill="#FFFFFF"/>
+      <rect x="13" y="17" width="2" height="3" fill="#D6C3AB"/>
+      <rect x="25" y="17" width="2" height="3" fill="#D6C3AB"/>
     </g>
   </g>
 </svg>

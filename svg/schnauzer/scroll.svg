@@ -66,76 +66,99 @@
     <path d="M14 38V42" stroke="black"/>
   </g>
 
-  <!-- Schnauzer Body & Actions -->
+  <!-- Schnauzer Otto Body & Actions -->
   <g id="dog-content" filter="url(#dog-outline)">
     <!-- Wagging Tail -->
     <g transform="translate(36, 30)">
       <animateTransform attributeName="transform" type="rotate" values="10 36 30; -20 36 30; 10 36 30" dur="0.18s" repeatCount="indefinite"/>
-      <rect x="0" y="-3" width="3" height="4" fill="#333333"/>
-      <rect x="2" y="-6" width="3" height="4" fill="#E0E0E0"/>
-      <rect x="3" y="-9" width="2" height="4" fill="#FFFFFF"/>
+      <rect x="0" y="-3" width="2" height="3" fill="#2C2F36"/>
+      <rect x="2" y="-6" width="3" height="4" fill="#454952"/>
+      <rect x="3" y="-9" width="2" height="4" fill="#ECEFF4"/>
     </g>
 
     <!-- Body -->
-    <rect x="22" y="24" width="16" height="15" fill="#444444"/>
-    <rect x="25" y="22" width="12" height="3" fill="#333333"/>
-    <rect x="20" y="26" width="5" height="10" fill="#CCCCCC"/>
+    <rect x="22" y="24" width="16" height="15" fill="#34373D"/>
+    <rect x="25" y="22" width="12" height="3" fill="#2C2F36"/>
+    <rect x="20" y="26" width="5" height="10" fill="#D6D9E0"/>
     <!-- Back Paws -->
-    <rect x="33" y="38" width="6" height="4" fill="#333333"/>
-    <rect x="34" y="41" width="5" height="2" fill="#E0E0E0"/>
+    <rect x="33" y="38" width="6" height="4" fill="#34373D"/>
+    <rect x="34" y="41" width="5" height="2" fill="#D6D9E0"/>
 
-    <!-- Left Paw Furiously Rolling Paper (alternating) -->
+    <!-- Left Plush Paw Furiously Rolling Paper (alternating) -->
     <g transform="translate(0, 0)">
       <animateTransform attributeName="transform" type="rotate" values="24 26 26; -18 26 26; 24 26 26" dur="0.16s" repeatCount="indefinite"/>
-      <rect x="18" y="22" width="6" height="11" fill="#444444"/>
-      <rect x="16" y="29" width="6" height="4" fill="#E8E8E8"/>
-      <rect x="15" y="32" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="18" y="22" width="6" height="10" fill="#454952"/>
+      <rect x="16" y="28" width="6" height="4" fill="#D6D9E0"/>
+      <rect x="16" y="31" width="6" height="4" fill="#ECEFF4"/>
+      <rect x="15" y="33" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="17" y="29" width="1" height="3" fill="#B39F87"/>
     </g>
 
-    <!-- Right Paw Furiously Rolling Paper (alternating) -->
+    <!-- Right Plush Paw Furiously Rolling Paper (alternating) -->
     <g transform="translate(0, 0)">
       <animateTransform attributeName="transform" type="rotate" values="-18 30 27; 24 30 27; -18 30 27" dur="0.16s" repeatCount="indefinite"/>
-      <rect x="21" y="23" width="6" height="11" fill="#555555"/>
-      <rect x="19" y="30" width="6" height="4" fill="#E8E8E8"/>
-      <rect x="18" y="33" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="21" y="23" width="6" height="10" fill="#454952"/>
+      <rect x="19" y="29" width="6" height="4" fill="#D6D9E0"/>
+      <rect x="19" y="32" width="6" height="4" fill="#ECEFF4"/>
+      <rect x="18" y="34" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="20" y="30" width="1" height="3" fill="#B39F87"/>
     </g>
 
-    <!-- Head & Face (Facing left toward paper roll) -->
+    <!-- Head & Otto Face (Facing left toward paper roll) -->
     <g transform="translate(14, 2)">
-      <!-- Ears with motion -->
+      <!-- V-ears with motion and fawn tips -->
       <g class="scroll-ear-l">
-        <rect x="7" y="4" width="5" height="4" fill="#333333"/>
-        <rect x="6" y="7" width="4" height="4" fill="#444444"/>
+        <rect x="7" y="4" width="4" height="3" fill="#2C2F36"/>
+        <rect x="6" y="6" width="4" height="4" fill="#454952"/>
+        <rect x="5" y="6" width="2" height="5" fill="#D6C3AB"/>
+        <rect x="6" y="9" width="3" height="3" fill="#D6C3AB"/>
+        <rect x="7" y="11" width="2" height="2" fill="#B39F87"/>
       </g>
       <g class="scroll-ear-r">
-        <rect x="18" y="4" width="5" height="4" fill="#333333"/>
-        <rect x="20" y="7" width="4" height="4" fill="#444444"/>
+        <rect x="18" y="4" width="4" height="3" fill="#2C2F36"/>
+        <rect x="19" y="6" width="4" height="4" fill="#454952"/>
+        <rect x="22" y="6" width="2" height="5" fill="#D6C3AB"/>
+        <rect x="20" y="9" width="3" height="3" fill="#D6C3AB"/>
+        <rect x="20" y="11" width="2" height="2" fill="#B39F87"/>
       </g>
 
       <!-- Head Base -->
-      <rect x="9" y="6" width="12" height="12" fill="#555555"/>
-      <rect x="7" y="9" width="14" height="9" fill="#444444"/>
+      <rect x="9" y="6" width="12" height="12" fill="#454952"/>
+      <rect x="7" y="8" width="14" height="10" fill="#34373D"/>
+      <rect x="9" y="5" width="10" height="2" fill="#2C2F36"/>
 
-      <!-- Bushy Eyebrows (Focused forward) -->
-      <rect x="6" y="8" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="7" y="7" width="4" height="2" fill="#FFFFFF"/>
-      <rect x="16" y="8" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="17" y="7" width="4" height="2" fill="#FFFFFF"/>
+      <!-- Bushy Silvery Eyebrows (Focused forward) -->
+      <rect x="6" y="8" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="7" y="7" width="4" height="2" fill="#ECEFF4"/>
+      <rect x="8" y="6" width="2" height="1" fill="#FFFFFF"/>
+      <rect x="16" y="8" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="17" y="7" width="4" height="2" fill="#ECEFF4"/>
+      <rect x="18" y="6" width="2" height="1" fill="#FFFFFF"/>
 
-      <!-- Eyes (Excited focus on paper) -->
-      <rect x="8" y="11" width="4" height="3" fill="#FFFFFF"/>
-      <rect x="8" y="11" width="2" height="3" fill="#1A1A1A"/><!-- Looking left -->
-      <rect x="16" y="11" width="4" height="3" fill="#FFFFFF"/>
-      <rect x="16" y="11" width="2" height="3" fill="#1A1A1A"/><!-- Looking left -->
+      <!-- Eyes (Excited focus on paper, looking left) -->
+      <rect x="8" y="11" width="4" height="3" fill="#141517" rx="0.5"/>
+      <rect x="8" y="11" width="2" height="3" fill="#1C1613"/>
+      <rect x="8" y="11" width="1" height="1" fill="#FFFFFF"/><!-- glint -->
 
-      <!-- Snout, Nose & Beard -->
-      <rect x="11" y="12" width="4" height="2" fill="#111111"/>
-      <!-- Happy Tongue Out -->
-      <rect x="10" y="16" width="3" height="3" fill="#FF7799" rx="1"/>
-      <rect x="8" y="14" width="10" height="4" fill="#E0E0E0"/>
-      <rect x="7" y="15" width="12" height="4" fill="#EEEEEE"/>
-      <rect x="8" y="18" width="10" height="4" fill="#FFFFFF"/>
-      <rect x="9" y="21" width="8" height="3" fill="#FFFFFF"/>
+      <rect x="16" y="11" width="4" height="3" fill="#141517" rx="0.5"/>
+      <rect x="16" y="11" width="2" height="3" fill="#1C1613"/>
+      <rect x="16" y="11" width="1" height="1" fill="#FFFFFF"/>
+
+      <!-- Truffle button nose -->
+      <rect x="11" y="12" width="5" height="3" fill="#141517" rx="1"/>
+
+      <!-- Happy Puppy Tongue Out -->
+      <rect x="10" y="16" width="3" height="3" fill="#FF6B8B" rx="1"/>
+      <rect x="11" y="18" width="1" height="1" fill="#FF4770"/>
+
+      <!-- Rounded Beard -->
+      <rect x="8" y="14" width="11" height="4" fill="#D6D9E0"/>
+      <rect x="7" y="15" width="13" height="4" fill="#ECEFF4"/>
+      <rect x="8" y="18" width="11" height="4" fill="#FFFFFF"/>
+      <rect x="9" y="21" width="9" height="3" fill="#FFFFFF"/>
+      <rect x="10" y="23" width="7" height="2" fill="#ECEFF4"/>
+      <rect x="6" y="16" width="2" height="3" fill="#D6C3AB"/>
+      <rect x="19" y="16" width="2" height="3" fill="#D6C3AB"/>
     </g>
   </g>
 </svg>

@@ -77,6 +77,8 @@ let updateCtaState = null;
 const completionMeow = new Audio("../workspace/assets/sound/meow.m4a");
 const reminderMeow = new Audio("../workspace/assets/sound/meow-alert.m4a");
 const purringSound = new Audio("../workspace/assets/sound/purring.m4a");
+const dogBarkSound = new Audio("../workspace/assets/sound/dog-bark.m4a");
+const dogPettingSound = new Audio("../workspace/assets/sound/dog-panting.m4a");
 let completionMeowVolume = 0.1;
 const reminderMeowVolumeBoost = 2.4;
 completionMeow.volume = completionMeowVolume;
@@ -86,6 +88,11 @@ reminderMeow.preload = "auto";
 purringSound.loop = true;
 purringSound.preload = "auto";
 purringSound.volume = 0.28;
+dogBarkSound.preload = "auto";
+dogBarkSound.volume = 0.45;
+dogPettingSound.loop = true;
+dogPettingSound.preload = "auto";
+dogPettingSound.volume = 0.40;
 
 const I18N = {
   en: {
@@ -1834,6 +1841,11 @@ function playCompletionMeow() {
   const now = Date.now();
   if (now - lastMeowAt < MEOW_COOLDOWN_MS) return;
   lastMeowAt = now;
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
+    playPuppyBark();
+    return;
+  }
   completionMeow.volume = completionMeowVolume;
   completionMeow.currentTime = 0;
   completionMeow.play().catch(() => {});
@@ -1886,7 +1898,7 @@ function startDogPettingAudio() {
       b0 = 0.99 * b0 + white * 0.05;
       b1 = 0.96 * b1 + white * 0.11;
       b2 = 0.86 * b2 + white * 0.25;
-      output[i] = (b0 + b1 + b2) * 0.15;
+      output[i] = (b0 + b1 + b2) * 0.45;
     }
 
     const whiteNoise = ctx.createBufferSource();
@@ -1895,17 +1907,17 @@ function startDogPettingAudio() {
 
     const breathFilter = ctx.createBiquadFilter();
     breathFilter.type = "bandpass";
-    breathFilter.frequency.value = 750;
-    breathFilter.Q.value = 1.6;
+    breathFilter.frequency.value = 850;
+    breathFilter.Q.value = 1.4;
 
-    // LFO for rhythmic panting (3.4 Hz breath rate)
+    // LFO for rhythmic panting (3.3 Hz breath rate)
     const lfo = ctx.createOscillator();
-    lfo.frequency.value = 3.4;
+    lfo.frequency.value = 3.3;
     const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.04;
+    lfoGain.gain.value = 0.30;
 
     const breathGain = ctx.createGain();
-    breathGain.gain.value = 0.05;
+    breathGain.gain.value = 0.40;
 
     whiteNoise.connect(breathFilter);
     breathFilter.connect(breathGain);
@@ -1914,7 +1926,7 @@ function startDogPettingAudio() {
 
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-    masterGain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.15);
+    masterGain.gain.exponentialRampToValueAtTime(0.38, ctx.currentTime + 0.15);
 
     breathGain.connect(masterGain);
     masterGain.connect(ctx.destination);
@@ -1930,11 +1942,11 @@ function startDogPettingAudio() {
         const sGain = ctx.createGain();
         osc.type = "sine";
         const t = ctx.currentTime;
-        osc.frequency.setValueAtTime(420, t);
-        osc.frequency.exponentialRampToValueAtTime(260, t + 0.45);
+        osc.frequency.setValueAtTime(460, t);
+        osc.frequency.exponentialRampToValueAtTime(280, t + 0.45);
 
         sGain.gain.setValueAtTime(0, t);
-        sGain.gain.linearRampToValueAtTime(0.04, t + 0.1);
+        sGain.gain.linearRampToValueAtTime(0.22, t + 0.1);
         sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
 
         osc.connect(sGain);
@@ -1970,6 +1982,12 @@ function stopDogPettingAudio() {
 
 function playPuppyBark() {
   try {
+    dogBarkSound.volume = Math.max(0.18, completionMeowVolume * 2.5);
+    dogBarkSound.currentTime = 0;
+    dogBarkSound.play().catch(() => {});
+  } catch {}
+
+  try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
@@ -1985,14 +2003,14 @@ function playPuppyBark() {
       const filter = ctx.createBiquadFilter();
 
       osc.type = "triangle";
-      osc.frequency.setValueAtTime(380 * pitch, t);
-      osc.frequency.exponentialRampToValueAtTime(140 * pitch, t + 0.13);
+      osc.frequency.setValueAtTime(400 * pitch, t);
+      osc.frequency.exponentialRampToValueAtTime(160 * pitch, t + 0.13);
 
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(1200, t);
+      filter.frequency.setValueAtTime(1400, t);
 
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      gain.gain.linearRampToValueAtTime(0.35, t + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
 
       osc.connect(filter);
@@ -2370,6 +2388,7 @@ let lagY = 0, lagVelY = 0;
 let pendingDrag = null;
 let purrStopTimer = null;
 let purrPlayPromise = null;
+let dogPetPlayPromise = null;
 let purrWanted = false;
 let huntingTimer = null;
 let huntingReturnTimer = null;
@@ -2617,8 +2636,21 @@ function startPurring(clientX, clientY) {
   if (isDogSound) {
     purringSound.pause();
     purringSound.currentTime = 0;
+    if (dogPettingSound.paused && !dogPetPlayPromise) {
+      dogPettingSound.currentTime = 0;
+      dogPetPlayPromise = dogPettingSound.play()
+        .then(() => {
+          dogPetPlayPromise = null;
+          if (!purrWanted) stopPurring();
+        })
+        .catch(() => {
+          dogPetPlayPromise = null;
+        });
+    }
     startDogPettingAudio();
   } else {
+    dogPettingSound.pause();
+    dogPettingSound.currentTime = 0;
     stopDogPettingAudio();
     if (purringSound.paused && !purrPlayPromise) {
       purringSound.currentTime = 0;
@@ -2649,6 +2681,8 @@ function stopPurring() {
   purrStopTimer = null;
   purringSound.pause();
   purringSound.currentTime = 0;
+  dogPettingSound.pause();
+  dogPettingSound.currentTime = 0;
   stopDogPettingAudio();
 }
 

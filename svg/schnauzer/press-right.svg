@@ -12,19 +12,21 @@
   </defs>
 
   <g id="dog-content" filter="url(#dog-outline)">
-    <!-- Tail (raised happily) -->
-    <rect x="31" y="15" width="3" height="4" fill="#FFFFFF"/>
-    <rect x="30" y="18" width="3" height="4" fill="#E0E0E0"/>
-    <rect x="28" y="21" width="3" height="4" fill="#444444"/>
+    <!-- Tail (Raised happily, wagging) -->
+    <rect x="30" y="15" width="2" height="3" fill="#2C2F36"/>
+    <rect x="31" y="17" width="3" height="4" fill="#454952"/>
+    <rect x="32" y="21" width="3" height="4" fill="#9197A3"/>
+    <rect x="33" y="13" width="2" height="3" fill="#ECEFF4"/>
 
-    <!-- Body -->
-    <rect x="15" y="18" width="16" height="15" fill="#444444"/>
-    <rect x="20" y="17" width="10" height="3" fill="#333333"/>
-    <rect x="13" y="21" width="5" height="10" fill="#CCCCCC"/>
-    <rect x="25" y="31" width="5" height="4" fill="#333333"/>
-    <rect x="26" y="34" width="5" height="2" fill="#E0E0E0"/>
+    <!-- Body (Pepper grey jacket & rear paws) -->
+    <rect x="14" y="18" width="16" height="14" fill="#34373D"/>
+    <rect x="18" y="17" width="12" height="3" fill="#2C2F36"/>
+    <rect x="20" y="20" width="8" height="11" fill="#2C2F36"/>
+    <rect x="13" y="20" width="4" height="10" fill="#D6D9E0"/>
+    <rect x="25" y="31" width="5" height="4" fill="#34373D"/>
+    <rect x="26" y="34" width="5" height="2" fill="#D6D9E0"/>
 
-    <!-- Keyboards -->
+    <!-- Keyboards (Dual keyboard setup) -->
     <!-- Left keyboard -->
     <path d="M4 33V32H5V31H18V32H19V35H18V38H17V40H16V42H1V41H0V39H1V37H2V35H3V33H4Z" fill="#999797"/>
     <path d="M0 41H1V42H16V44H15H2V43H1V42H0V41Z" fill="#605E5E"/>
@@ -33,48 +35,80 @@
     <path d="M24 29V28H25V27H38V28H39V31H38V34H37V36H36V38H21V37H20V35H21V33H22V31H23V29H24Z" fill="#999797"/>
     <path d="M20 37H21V38H36V40H35H22V39H21V38H20V37Z" fill="#605E5E"/>
 
-    <!-- Left Paw UP (raised in the air) -->
-    <rect x="9" y="21" width="6" height="7" fill="#444444"/>
-    <rect x="9" y="18" width="6" height="4" fill="#E8E8E8"/>
-    <rect x="9" y="17" width="5" height="2" fill="#FFFFFF"/>
+    <!-- Left Plush Column Paw UP (Raised eagerly) -->
+    <rect x="9" y="20" width="6" height="7" fill="#454952"/>
+    <rect x="9" y="17" width="6" height="4" fill="#D6D9E0"/>
+    <rect x="9" y="16" width="5" height="3" fill="#ECEFF4"/>
+    <rect x="9" y="15" width="5" height="2" fill="#FFFFFF"/>
+    <rect x="10" y="18" width="1" height="2" fill="#B39F87"/>
 
-    <!-- Right Paw DOWN (pressing right keyboard) -->
-    <rect x="23" y="25" width="5" height="8" fill="#444444"/>
-    <rect x="23" y="31" width="6" height="4" fill="#E8E8E8"/>
-    <rect x="24" y="34" width="5" height="2" fill="#FFFFFF"/>
+    <!-- Right Plush Column Paw DOWN (Typing on right keyboard) -->
+    <rect x="23" y="24" width="5" height="8" fill="#454952"/>
+    <rect x="22" y="29" width="6" height="4" fill="#D6D9E0"/>
+    <rect x="22" y="32" width="6" height="4" fill="#ECEFF4"/>
+    <rect x="23" y="35" width="5" height="2" fill="#FFFFFF"/>
+    <rect x="24" y="30" width="1" height="3" fill="#B39F87"/>
 
-    <!-- Head & Face -->
+    <!-- Head & Distinctive Otto Face -->
     <g transform="translate(-1, 1)">
-      <!-- Ears -->
-      <rect x="6" y="4" width="5" height="4" fill="#333333"/>
-      <rect x="5" y="7" width="4" height="4" fill="#444444"/>
-      <rect x="19" y="4" width="5" height="4" fill="#333333"/>
-      <rect x="21" y="7" width="4" height="4" fill="#444444"/>
+      <!-- V-shaped Folded Ears with Characteristic Fawn/Sand outer tips & edges -->
+      <!-- Left Ear -->
+      <rect x="5" y="4" width="4" height="3" fill="#2C2F36"/>
+      <rect x="4" y="6" width="5" height="4" fill="#454952"/>
+      <rect x="3" y="6" width="2" height="5" fill="#D6C3AB"/>
+      <rect x="4" y="9" width="4" height="3" fill="#D6C3AB"/>
+      <rect x="5" y="11" width="3" height="2" fill="#B39F87"/>
 
-      <!-- Head Base -->
-      <rect x="9" y="6" width="12" height="12" fill="#555555"/>
-      <rect x="8" y="9" width="14" height="9" fill="#444444"/>
+      <!-- Right Ear -->
+      <rect x="19" y="4" width="4" height="3" fill="#2C2F36"/>
+      <rect x="19" y="6" width="5" height="4" fill="#454952"/>
+      <rect x="23" y="6" width="2" height="5" fill="#D6C3AB"/>
+      <rect x="20" y="9" width="4" height="3" fill="#D6C3AB"/>
+      <rect x="20" y="11" width="3" height="2" fill="#B39F87"/>
 
-      <!-- Bushy Eyebrows -->
-      <rect x="7" y="8" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="8" y="7" width="4" height="2" fill="#FFFFFF"/>
-      <rect x="17" y="8" width="6" height="3" fill="#E8E8E8"/>
-      <rect x="18" y="7" width="4" height="2" fill="#FFFFFF"/>
+      <!-- Pepper Grey Crown & Head Base -->
+      <rect x="8" y="5" width="12" height="12" fill="#454952"/>
+      <rect x="7" y="8" width="14" height="9" fill="#34373D"/>
+      <rect x="9" y="5" width="10" height="2" fill="#2C2F36"/>
+      <rect x="11" y="7" width="6" height="3" fill="#767C87"/>
 
-      <!-- Eyes (Excited focus) -->
-      <rect x="9" y="11" width="4" height="3" fill="#FFFFFF"/>
-      <rect x="10" y="11" width="2" height="3" fill="#1A1A1A"/>
-      <rect x="17" y="11" width="4" height="3" fill="#FFFFFF"/>
-      <rect x="18" y="11" width="2" height="3" fill="#1A1A1A"/>
+      <!-- Arched Silvery Eyebrows -->
+      <rect x="6" y="8" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="7" y="7" width="5" height="2" fill="#ECEFF4"/>
+      <rect x="8" y="6" width="3" height="1" fill="#FFFFFF"/>
 
-      <!-- Snout, Nose & Beard -->
-      <rect x="13" y="12" width="4" height="2" fill="#111111"/>
-      <rect x="10" y="14" width="10" height="4" fill="#E0E0E0"/>
-      <rect x="9" y="15" width="12" height="4" fill="#EEEEEE"/>
-      <rect x="10" y="18" width="10" height="4" fill="#FFFFFF"/>
-      <rect x="11" y="21" width="8" height="3" fill="#FFFFFF"/>
-      <!-- Happy Tongue Out -->
-      <rect x="14" y="17" width="3" height="3" fill="#FF7799" rx="1"/>
+      <rect x="16" y="8" width="6" height="3" fill="#D6D9E0"/>
+      <rect x="16" y="7" width="5" height="2" fill="#ECEFF4"/>
+      <rect x="17" y="6" width="3" height="1" fill="#FFFFFF"/>
+
+      <!-- Dark Puppy Eyes with glint -->
+      <rect x="8" y="11" width="4" height="3" fill="#141517" rx="0.5"/>
+      <rect x="9" y="11" width="2" height="3" fill="#1C1613"/>
+      <rect x="8" y="11" width="1" height="1" fill="#FFFFFF"/>
+
+      <rect x="16" y="11" width="4" height="3" fill="#141517" rx="0.5"/>
+      <rect x="17" y="11" width="2" height="3" fill="#1C1613"/>
+      <rect x="16" y="11" width="1" height="1" fill="#FFFFFF"/>
+
+      <!-- Bridge of snout -->
+      <rect x="12" y="11" width="4" height="2" fill="#34373D"/>
+
+      <!-- Truffle button nose -->
+      <rect x="11" y="12" width="6" height="3" fill="#141517" rx="1"/>
+      <rect x="12" y="12" width="2" height="1" fill="#34373D"/>
+
+      <!-- Happy puppy tongue -->
+      <rect x="13" y="17" width="3" height="3" fill="#FF6B8B" rx="1"/>
+      <rect x="14" y="19" width="1" height="1" fill="#FF4770"/>
+
+      <!-- Rounded Silvery-White Beard with soft sand highlights -->
+      <rect x="8" y="14" width="12" height="4" fill="#D6D9E0"/>
+      <rect x="7" y="15" width="14" height="4" fill="#ECEFF4"/>
+      <rect x="8" y="18" width="12" height="4" fill="#FFFFFF"/>
+      <rect x="9" y="21" width="10" height="3" fill="#FFFFFF"/>
+      <rect x="10" y="23" width="8" height="2" fill="#ECEFF4"/>
+      <rect x="6" y="16" width="2" height="3" fill="#D6C3AB"/>
+      <rect x="20" y="16" width="2" height="3" fill="#D6C3AB"/>
     </g>
   </g>
 </svg>

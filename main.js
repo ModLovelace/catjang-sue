@@ -1144,7 +1144,13 @@ function broadcastFixedMessageSettings() {
 }
 
 function setCatName(value) {
-  const fallback = currentMascot === "schnauzer" ? "Otto" : "Catjang";
+  const fallback = currentMascot === "schnauzer"
+    ? "Otto"
+    : (currentMascot === "chisi"
+      ? "Chisi"
+      : (currentMascot === "milo"
+        ? "Milo"
+        : (currentMascot === "musubi" ? "Musubi" : "Catjang")));
   const next = String(value || "").trim().slice(0, 24) || fallback;
   catName = next;
   mascotNames[currentMascot] = catName;

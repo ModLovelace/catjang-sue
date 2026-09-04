@@ -19,10 +19,6 @@
         0%, 100% { transform: rotate(-12deg); }
         50% { transform: rotate(15deg); }
       }
-      @keyframes dog-dangle-ears {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-1px); }
-      }
       .dangle-fl {
         transform-origin: 17px 29px;
         animation: dog-dangle-legs 0.45s ease-in-out infinite alternate;
@@ -47,95 +43,109 @@
   </defs>
 
   <g id="dog-content" filter="url(#dog-outline)">
-    <!-- Scruff fold (being held at top of neck) -->
-    <rect x="21" y="14" width="4" height="3" fill="#333333"/>
-    <rect x="20" y="16" width="6" height="2" fill="#222222"/>
+    <!-- Scruff fold (Held at top of neck) -->
+    <rect x="21" y="14" width="4" height="3" fill="#2C2F36"/>
+    <rect x="20" y="16" width="6" height="2" fill="#141517"/>
 
-    <!-- Tail (wagging / swinging behind) -->
+    <!-- Tail (Dangling / swinging) -->
     <g class="dangle-tail">
-      <rect x="33" y="44" width="3" height="3" fill="#333333"/>
-      <rect x="35" y="42" width="3" height="3" fill="#666666"/>
-      <rect x="36" y="39" width="3" height="4" fill="#CCCCCC"/>
-      <rect x="37" y="36" width="2" height="4" fill="#FFFFFF"/>
+      <rect x="33" y="44" width="3" height="3" fill="#2C2F36"/>
+      <rect x="35" y="42" width="3" height="3" fill="#454952"/>
+      <rect x="36" y="39" width="3" height="4" fill="#9197A3"/>
+      <rect x="37" y="36" width="2" height="4" fill="#ECEFF4"/>
     </g>
 
     <!-- Back Left Leg (Dangling down) -->
     <g class="dangle-bl">
-      <rect x="16" y="44" width="4" height="8" fill="#444444"/>
-      <rect x="15" y="52" width="5" height="4" fill="#E8E8E8"/>
-      <rect x="15" y="56" width="4" height="2" fill="#FFFFFF"/>
+      <rect x="16" y="44" width="4" height="8" fill="#34373D"/>
+      <rect x="15" y="52" width="5" height="4" fill="#D6D9E0"/>
+      <rect x="15" y="56" width="5" height="2" fill="#FFFFFF"/>
     </g>
 
     <!-- Back Right Leg (Dangling down) -->
     <g class="dangle-br">
-      <rect x="26" y="44" width="4" height="8" fill="#444444"/>
-      <rect x="26" y="52" width="5" height="4" fill="#E8E8E8"/>
-      <rect x="27" y="56" width="4" height="2" fill="#FFFFFF"/>
+      <rect x="26" y="44" width="4" height="8" fill="#34373D"/>
+      <rect x="26" y="52" width="5" height="4" fill="#D6D9E0"/>
+      <rect x="26" y="56" width="5" height="2" fill="#FFFFFF"/>
     </g>
 
     <!-- Body (Elongated suspended torso) -->
-    <rect x="16" y="24" width="14" height="23" fill="#555555"/>
-    <rect x="18" y="25" width="10" height="20" fill="#444444"/>
+    <rect x="16" y="24" width="14" height="23" fill="#454952"/>
+    <rect x="18" y="25" width="10" height="20" fill="#34373D"/>
     <!-- Chest fur & salt-pepper highlights -->
-    <rect x="19" y="27" width="8" height="15" fill="#666666"/>
-    <rect x="20" y="30" width="6" height="9" fill="#DDDDDD"/>
-    <rect x="21" y="32" width="4" height="6" fill="#FFFFFF"/>
+    <rect x="19" y="27" width="8" height="15" fill="#767C87"/>
+    <rect x="20" y="30" width="6" height="9" fill="#D6D9E0"/>
+    <rect x="21" y="32" width="4" height="6" fill="#ECEFF4"/>
 
-    <!-- Front Left Leg (Dangling forward) -->
+    <!-- Front Left Plush Leg (Dangling forward) -->
     <g class="dangle-fl">
-      <rect x="14" y="28" width="4" height="10" fill="#555555"/>
-      <rect x="13" y="38" width="5" height="4" fill="#E8E8E8"/>
-      <rect x="13" y="42" width="4" height="2" fill="#FFFFFF"/>
+      <rect x="14" y="28" width="5" height="10" fill="#454952"/>
+      <rect x="13" y="38" width="6" height="4" fill="#D6D9E0"/>
+      <rect x="13" y="42" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="15" y="37" width="1" height="3" fill="#B39F87"/>
     </g>
 
-    <!-- Front Right Leg (Dangling forward) -->
+    <!-- Front Right Plush Leg (Dangling forward) -->
     <g class="dangle-fr">
-      <rect x="28" y="28" width="4" height="10" fill="#555555"/>
-      <rect x="28" y="38" width="5" height="4" fill="#E8E8E8"/>
-      <rect x="29" y="42" width="4" height="2" fill="#FFFFFF"/>
+      <rect x="27" y="28" width="5" height="10" fill="#454952"/>
+      <rect x="27" y="38" width="6" height="4" fill="#D6D9E0"/>
+      <rect x="27" y="42" width="6" height="2" fill="#FFFFFF"/>
+      <rect x="29" y="37" width="1" height="3" fill="#B39F87"/>
     </g>
 
-    <!-- Head (Surprised puppy held up) -->
+    <!-- Head (Curious puppy suspended in midair) -->
     <g transform="translate(0, 3)">
-      <!-- Left Ear (folded slightly back) -->
-      <rect x="10" y="9" width="4" height="3" fill="#333333"/>
-      <rect x="9" y="12" width="4" height="4" fill="#444444"/>
+      <!-- Left Ear with fawn tip -->
+      <rect x="10" y="8" width="4" height="3" fill="#2C2F36"/>
+      <rect x="9" y="11" width="4" height="4" fill="#454952"/>
+      <rect x="8" y="10" width="2" height="5" fill="#D6C3AB"/>
+      <rect x="9" y="13" width="3" height="3" fill="#D6C3AB"/>
+      <rect x="10" y="15" width="2" height="2" fill="#B39F87"/>
 
-      <!-- Right Ear (folded slightly back) -->
-      <rect x="32" y="9" width="4" height="3" fill="#333333"/>
-      <rect x="33" y="12" width="4" height="4" fill="#444444"/>
+      <!-- Right Ear with fawn tip -->
+      <rect x="32" y="8" width="4" height="3" fill="#2C2F36"/>
+      <rect x="33" y="11" width="4" height="4" fill="#454952"/>
+      <rect x="36" y="10" width="2" height="5" fill="#D6C3AB"/>
+      <rect x="34" y="13" width="3" height="3" fill="#D6C3AB"/>
+      <rect x="34" y="15" width="2" height="2" fill="#B39F87"/>
 
       <!-- Head Base -->
-      <rect x="13" y="7" width="20" height="16" fill="#555555"/>
-      <rect x="15" y="6" width="16" height="3" fill="#444444"/>
+      <rect x="13" y="7" width="20" height="16" fill="#454952"/>
+      <rect x="15" y="6" width="16" height="3" fill="#34373D"/>
+      <rect x="17" y="5" width="12" height="2" fill="#2C2F36"/>
 
       <!-- Forehead Salt & Pepper -->
-      <rect x="21" y="7" width="4" height="4" fill="#888888"/>
+      <rect x="21" y="7" width="4" height="4" fill="#767C87"/>
 
-      <!-- Bushy White Eyebrows (Perked / arched up) -->
-      <rect x="13" y="9" width="7" height="3" fill="#E8E8E8"/>
-      <rect x="14" y="8" width="5" height="2" fill="#FFFFFF"/>
-      <rect x="26" y="9" width="7" height="3" fill="#E8E8E8"/>
-      <rect x="27" y="8" width="5" height="2" fill="#FFFFFF"/>
+      <!-- Bushy Silvery Eyebrows (Perked / arched up) -->
+      <rect x="13" y="9" width="7" height="3" fill="#D6D9E0"/>
+      <rect x="14" y="8" width="5" height="2" fill="#ECEFF4"/>
+      <rect x="15" y="7" width="3" height="1" fill="#FFFFFF"/>
 
-      <!-- Big Curious Eyes (Looking down as it is held) -->
-      <rect x="15" y="12" width="5" height="4" fill="#FFFFFF"/>
-      <rect x="16" y="13" width="3" height="3" fill="#1A1A1A"/>
-      <rect x="17" y="13" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
+      <rect x="26" y="9" width="7" height="3" fill="#D6D9E0"/>
+      <rect x="27" y="8" width="5" height="2" fill="#ECEFF4"/>
+      <rect x="28" y="7" width="3" height="1" fill="#FFFFFF"/>
 
-      <rect x="26" y="12" width="5" height="4" fill="#FFFFFF"/>
-      <rect x="27" y="13" width="3" height="3" fill="#1A1A1A"/>
-      <rect x="28" y="13" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
+      <!-- Round Dark Puppy Eyes (Looking down with wonder) -->
+      <rect x="15" y="12" width="5" height="4" fill="#141517" rx="0.5"/>
+      <rect x="16" y="13" width="3" height="3" fill="#1C1613"/>
+      <rect x="16" y="12" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
 
-      <!-- Nose -->
-      <rect x="21" y="14" width="4" height="3" fill="#111111"/>
+      <rect x="26" y="12" width="5" height="4" fill="#141517" rx="0.5"/>
+      <rect x="27" y="13" width="3" height="3" fill="#1C1613"/>
+      <rect x="27" y="12" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
 
-      <!-- Signature Schnauzer Beard (Dangling fluffy) -->
-      <rect x="17" y="16" width="12" height="4" fill="#E0E0E0"/>
-      <rect x="16" y="18" width="14" height="5" fill="#EEEEEE"/>
-      <rect x="17" y="21" width="12" height="5" fill="#FFFFFF"/>
-      <rect x="18" y="25" width="10" height="4" fill="#FFFFFF"/>
-      <rect x="20" y="28" width="6" height="2" fill="#F8F8F8"/>
+      <!-- Button Nose -->
+      <rect x="20" y="14" width="6" height="3" fill="#141517" rx="1"/>
+
+      <!-- Distinctive Fluffy Rounded Beard -->
+      <rect x="16" y="16" width="14" height="4" fill="#D6D9E0"/>
+      <rect x="15" y="18" width="16" height="5" fill="#ECEFF4"/>
+      <rect x="16" y="21" width="14" height="5" fill="#FFFFFF"/>
+      <rect x="17" y="25" width="12" height="4" fill="#FFFFFF"/>
+      <rect x="19" y="28" width="8" height="2" fill="#ECEFF4"/>
+      <rect x="14" y="19" width="2" height="3" fill="#D6C3AB"/>
+      <rect x="30" y="19" width="2" height="3" fill="#D6C3AB"/>
     </g>
   </g>
 </svg>
