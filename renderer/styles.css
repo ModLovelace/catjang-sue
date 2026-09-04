@@ -25,6 +25,43 @@ html, body {
   aspect-ratio: 1;
   cursor: grab;
 }
+
+/* Chromium does not dispatch pointer events inside a native draggable region.
+   This small no-drag island leaves the cat's head available for petting while
+   the rest of the character continues to move through the Wayland compositor. */
+#petting-handle {
+  display: none;
+}
+
+/* Native Wayland must delegate moving to the compositor. Electron's drag
+   region maps to xdg_toplevel.move, which is allowed after a pointer press. */
+body[data-window-backend="wayland"] #drag-handle {
+  app-region: drag;
+  -webkit-app-region: drag;
+  z-index: 7;
+}
+
+body[data-window-backend="wayland"] #petting-handle {
+  position: absolute;
+  display: block;
+  left: 15%;
+  top: 10%;
+  width: 50%;
+  height: 46%;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+  cursor: default;
+}
+
+body[data-window-backend="wayland"].native-dragging #cat,
+body[data-window-backend="wayland"].native-dragging #press-left,
+body[data-window-backend="wayland"].native-dragging #press-right,
+body[data-window-backend="wayland"].native-dragging #scroll-unroll,
+body[data-window-backend="wayland"].native-dragging #jump-start,
+body[data-window-backend="wayland"].native-dragging #jump-ing {
+  scale: 1 1.06;
+  transform-origin: 50% 20%;
+}
 #drag-handle:active {
   cursor: grabbing;
 }

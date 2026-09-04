@@ -1,18 +1,19 @@
 {
   "name": "catjang",
   "productName": "Catjang",
+  "desktopName": "catjang",
   "version": "0.1.38",
   "description": "A companion cat on your desktop — pomodoro + health-aware pet for coders",
   "author": "jandev-png",
   "license": "CC-BY-NC-4.0",
   "licenseFile": "License.md",
-  "homepage": "https://github.com/jandev-png/catjang",
+  "homepage": "https://github.com/Mod-zZz/catjang-sue",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jandev-png/catjang.git"
+    "url": "https://github.com/Mod-zZz/catjang-sue.git"
   },
   "bugs": {
-    "url": "https://github.com/jandev-png/catjang/issues"
+    "url": "https://github.com/Mod-zZz/catjang-sue/issues"
   },
   "type": "commonjs",
   "main": "main.js",
@@ -23,22 +24,24 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux",
-    "postinstall": "electron-builder install-app-deps"
+    "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
-    "ffmpeg-static": "^5.3.0",
+    "ffmpeg-static": "^5.3.0"
+  },
+  "optionalDependencies": {
     "uiohook-napi": "^1.5.5"
   },
   "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.0"
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "dev.catjang.app",
     "productName": "Catjang",
     "copyright": "Copyright © 2026",
     "publish": null,
+    "npmRebuild": false,
     "files": [
       "main.js",
       "preload.js",
@@ -61,7 +64,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -71,7 +76,9 @@
     },
     "linux": {
       "target": "AppImage",
-      "category": "Utility"
+      "category": "Utility",
+      "icon": "assets/catjang-logo.png",
+      "syncDesktopName": true
     }
   }
 }

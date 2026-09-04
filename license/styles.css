@@ -139,3 +139,19 @@ button:disabled {
 .status-message.is-ok {
   color: #28633c;
 }
+body.is-launching .license-panel {
+  animation: license-launch 420ms ease-in-out both;
+}
+
+body.is-launching .brand-mark {
+  animation: brand-hop 420ms ease-in-out both;
+}
+
+@keyframes license-launch {
+  50% { transform: translateY(-5px); }
+  100% { opacity: 0.72; transform: translateY(-2px); }
+}
+
+@keyframes brand-hop {
+  50% { transform: translateY(-8px) rotate(-5deg); }
+  100% { transform: translateY(0) rotate(0); }
