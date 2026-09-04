@@ -66,7 +66,7 @@
     <path d="M14 38V42" stroke="black"/>
   </g>
 
-  <!-- Schnauzer Otto Body & Actions -->
+  <!-- Schnauzer Toto Body & Actions -->
   <g id="dog-content" filter="url(#dog-outline)">
     <!-- Wagging Tail -->
     <g transform="translate(36, 30)">
@@ -104,7 +104,7 @@
       <rect x="20" y="30" width="1" height="3" fill="#B39F87"/>
     </g>
 
-    <!-- Head & Otto Face (Facing left toward paper roll) -->
+    <!-- Head & Toto Face (Facing left toward paper roll) -->
     <g transform="translate(14, 2)">
       <!-- V-ears with motion and fawn tips -->
       <g class="scroll-ear-l">

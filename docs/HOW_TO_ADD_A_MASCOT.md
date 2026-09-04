@@ -143,7 +143,7 @@ Inyectar las etiquetas `<object>` usando la clase universal `mascot-sprite` y lo
 ```javascript
 let mascotNames = {
   cat: "Catjang",
-  schnauzer: "Otto",
+  schnauzer: "Toto",
   bunny: "Copito",
 };
 ```

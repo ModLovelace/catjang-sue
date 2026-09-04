@@ -732,7 +732,7 @@ let reminders = [];
 let reminderTimer = null;
 let mascotNames = {
   cat: "Catjang",
-  schnauzer: "Otto",
+  schnauzer: "Toto",
   chisi: "Chisi",
   milo: "Milo",
   musubi: "Musubi",
@@ -800,7 +800,8 @@ function loadSettings() {
           mascotNames.cat = data.mascotNames.cat.trim().slice(0, 24);
         }
         if (typeof data.mascotNames.schnauzer === "string" && data.mascotNames.schnauzer.trim()) {
-          mascotNames.schnauzer = data.mascotNames.schnauzer.trim().slice(0, 24);
+          const sName = data.mascotNames.schnauzer.trim().slice(0, 24);
+          mascotNames.schnauzer = (sName === "Otto") ? "Toto" : sName;
         }
         if (typeof data.mascotNames.chisi === "string" && data.mascotNames.chisi.trim()) {
           mascotNames.chisi = data.mascotNames.chisi.trim().slice(0, 24);
@@ -818,6 +819,10 @@ function loadSettings() {
         currentMascot = data.mascot;
       }
       catName = mascotNames[currentMascot] || mascotNames.cat;
+      if (catName === "Otto" && currentMascot === "schnauzer") {
+        catName = "Toto";
+        mascotNames.schnauzer = "Toto";
+      }
       if (typeof data.userName === "string") {
         userName = data.userName.trim().slice(0, 24);
       }
@@ -884,7 +889,7 @@ function setMascot(mascot) {
   if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
-  const defaultName = currentMascot === "schnauzer" ? "Otto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : "Catjang")));
+  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : "Catjang")));
   catName = mascotNames[currentMascot] || defaultName;
   saveSettings();
   if (petWin && !petWin.isDestroyed()) {
@@ -1145,7 +1150,7 @@ function broadcastFixedMessageSettings() {
 
 function setCatName(value) {
   const fallback = currentMascot === "schnauzer"
-    ? "Otto"
+    ? "Toto"
     : (currentMascot === "chisi"
       ? "Chisi"
       : (currentMascot === "milo"
@@ -1661,7 +1666,7 @@ function confirmAndPerformFullReset() {
 
   mascotNames = {
     cat: "Catjang",
-    schnauzer: "Otto",
+    schnauzer: "Toto",
     chisi: "Chisi",
     milo: "Milo",
     musubi: "Musubi",

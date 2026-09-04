@@ -36,7 +36,7 @@ const MASCOTS = {
   },
   schnauzer: {
     id: "schnauzer",
-    defaultName: "Otto",
+    defaultName: "Toto",
     label: "Perrito (Schnauzer) 🐶",
     soundType: "bark",
     folder: "svg/schnauzer",
