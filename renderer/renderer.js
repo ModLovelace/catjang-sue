@@ -1773,7 +1773,7 @@ function renderSpeech(speech) {
     return;
   }
   if (!renderPomodoroTimerSpeech(speech)) {
-    catSpeechBubble.textContent = speech.kind === "thinking" ? "" : speech.text;
+    catSpeechBubble.textContent = speech.text;
     catSpeechBubble.setAttribute("aria-label", speech.text);
     document.body.dataset.speech = speech.kind || "notice";
   }
@@ -2178,11 +2178,21 @@ function applyAiTaskState(event) {
   const active = state === "thinking" || state === "working";
   setThinkingDotsVisible(active);
   clearAiTaskStaleTimer();
-  if (active && event && event.agentId === "antigravity") {
+
+  if (active) {
+    const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName) || "Gemini";
+    let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+    if (conversation.length > 28) conversation = conversation.slice(0, 25) + "...";
+    const topicText = conversation ? ` [${conversation}]` : "";
+    const statusText = state === "thinking" ? "Pensando..." : "Trabajando...";
+    showSpeech(`${agent}${topicText}: ${statusText}`, { duration: 3500, kind: "thinking" });
+
     aiTaskStaleTimer = setTimeout(() => {
       aiTaskStaleTimer = null;
       setThinkingDotsVisible(false);
-    }, 3000);
+    }, 15000);
+  } else {
+    setThinkingDotsVisible(false);
   }
 }
 
@@ -3186,12 +3196,16 @@ const WIGGLE_IMPULSE = 0.008;  // lateral segment kick during drag only
 const WIGGLE_MIN_SPEED = 6;    // minimum dx (px/event) before wiggle fires at all
 const WIGGLE_MAX_DX = 2.5;     // hard clamp on per-segment lateral offset (svg units)
 
+let dragReleaseWatchdog = null;
+
 function chainTick() {
-  if (!endData) {
-    // The object starts with display:none, so Chromium may defer loading its
-    // SVG until the first drag makes it visible. Keep waiting during that
-    // short window instead of permanently cancelling the animation loop.
-    chainRafId = (dragging || releasing) ? requestAnimationFrame(chainTick) : null;
+  if (currentMascot !== "cat" || !endData) {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
+    chainRafId = null;
     return;
   }
 
@@ -3282,10 +3296,15 @@ function chainTick() {
   if (dragging || releasing || maxMotion > 0.01 || lagMotion > 0.01) {
     chainRafId = requestAnimationFrame(chainTick);
   } else {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
     for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
     pendulumAngle = 0; pendulumVelAngle = 0;
     if (stretchEndObj) stretchEndObj.style.transform = "translateX(-50%)";
     applyStretchChain();
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
     chainRafId = null;
   }
 }
@@ -3316,22 +3335,39 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
 }
 
 function finishDragStretch(notifyMain = true) {
-  if (!dragging) return;
+  if (!dragging && !releasing) return;
   dragging = false;
   if (notifyMain) window.electronAPI.dragWindowEnded();
   // Kill wiggle instantly; the pendulum carries on during the release.
   lastWiggleDx = 0;
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
-  if (stretchT > 0.01) {
+
+  // Only the original cat mascot uses the 16-segment dynamic SVG spine chain.
+  // All other mascots (schnauzer, chisi, milo, musubi) use dedicated drag sprites
+  // and must restore immediately to idle upon mouse release.
+  if (currentMascot === "cat" && endData && stretchT > 0.01) {
     releasing = true;
     stretchTVel = -stretchT * 0.55;
     prevDragDx = 0;
     startChain();
+    clearTimeout(dragReleaseWatchdog);
+    dragReleaseWatchdog = setTimeout(() => {
+      if (releasing) {
+        releasing = false;
+        stretchT = 0;
+        stretchTVel = 0;
+        document.body.classList.remove("dragging");
+        window.electronAPI.setStretchMode(false);
+        chainRafId = null;
+      }
+    }, 450);
   } else {
+    releasing = false;
     stretchT = 0;
     stretchTVel = 0;
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
+    chainRafId = null;
   }
 }
 
@@ -3488,10 +3524,13 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", (e) => {
   clearPendingDrag();
-  if (dragging) {
+  if (dragging || releasing) {
     finishDragStretch(true);
   } else {
     dragging = false;
+    releasing = false;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
   }
   updateMouseEventPassthrough(e);
 });
@@ -3499,6 +3538,7 @@ window.addEventListener("mouseup", (e) => {
 window.addEventListener("mouseleave", () => {
   if (!dragging) setPetMouseEventsEnabled(false);
   clearPendingDrag();
+  if (dragging || releasing) finishDragStretch(true);
   stopPurring();
   if (windowBackend === "wayland") updateCursorTracking({ dx: 0, dy: 0 });
 });

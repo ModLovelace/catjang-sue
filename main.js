@@ -753,7 +753,8 @@ let accessibilityPermissionGuideShown = false;
 let inputPermissionGuideShown = false;
 let catNamePromptShown = false;
 let agentOnboardingShown = false;
-let taskCompleteSoundVolume = 0.1;
+const DEFAULT_TASK_COMPLETE_SOUND_VOLUME = 0.1;
+let taskCompleteSoundVolume = DEFAULT_TASK_COMPLETE_SOUND_VOLUME;
 
 function releaseBuildExcludesDevOptions() {
   return app.isPackaged;

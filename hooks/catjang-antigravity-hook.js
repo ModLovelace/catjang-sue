@@ -13,15 +13,28 @@ const EVENT_TO_STATE = {
 
 function readStdinJson() {
   return new Promise((resolve) => {
+    if (process.stdin.isTTY) {
+      return resolve({});
+    }
     let data = "";
     process.stdin.setEncoding("utf8");
     process.stdin.on("data", (chunk) => { data += chunk; });
     process.stdin.on("end", () => {
+      try { process.stdin.pause(); } catch {}
       try { resolve(JSON.parse(data || "{}")); }
       catch { resolve({}); }
     });
+    process.stdin.on("error", () => {
+      try { process.stdin.pause(); } catch {}
+      resolve({});
+    });
     process.stdin.resume();
-    setTimeout(() => resolve({}), 80).unref();
+    const timer = setTimeout(() => {
+      try { process.stdin.pause(); } catch {}
+      try { resolve(JSON.parse(data || "{}")); }
+      catch { resolve({}); }
+    }, 200);
+    if (timer.unref) timer.unref();
   });
 }
 
@@ -136,15 +149,18 @@ function extractTaskFromPayload(payload) {
 }
 
 function hookResponse(event) {
-  if (event === "PreToolUse") return { decision: "ask", reason: "Catjang does not approve Antigravity tool calls automatically." };
   if (event === "Stop") return { decision: "allow" };
-  if (event === "PostInvocation") return { injectSteps: [], terminationBehavior: "" };
+  if (event === "PreInvocation" || event === "PostInvocation") return { injectSteps: [] };
   return {};
 }
 
 async function main() {
-  const event = process.argv[2];
-  const payload = await readStdinJson();
+  const event = process.argv[2] || "";
+  let payload = {};
+  try {
+    payload = await readStdinJson();
+  } catch {}
+
   const state = stateForEvent(event, payload);
   if (state) {
     const task = extractTaskFromPayload(payload);
@@ -162,9 +178,15 @@ async function main() {
       });
     } catch {}
   }
-  process.stdout.write(`${JSON.stringify(hookResponse(event))}\n`);
+  try {
+    process.stdout.write(`${JSON.stringify(hookResponse(event))}\n`);
+  } catch {}
+  process.exit(0);
 }
 
 main().catch(() => {
-  process.stdout.write("{}\n");
+  try {
+    process.stdout.write("{}\n");
+  } catch {}
+  process.exit(0);
 });
