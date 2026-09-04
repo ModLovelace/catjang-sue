@@ -2400,6 +2400,29 @@ const N_SEG = 16;
 const DRAG_START_THRESHOLD_PX = 4;
 const PURR_IDLE_TIMEOUT_MS = 420;
 const PURR_LEAVE_GRACE_MS = 260;
+const PETTING_REQUIRED_DURATION_MS = 1400; // ~1.4s of intentional stroking movement
+const PETTING_REQUIRED_DISTANCE_PX = 70;   // accumulated distance in px to simulate strokes
+const PETTING_STROKE_PAUSE_MS = 450;       // max pause between strokes before stroke progress resets
+const PETTING_STROKE_OUT_GRACE_MS = 250;   // grace period when cursor momentarily strays out of head area
+
+let pettingStrokeStartTime = 0;
+let pettingStrokeDistance = 0;
+let pettingStrokeLastX = null;
+let pettingStrokeLastY = null;
+let pettingStrokeLastMoveAt = 0;
+let pettingStrokeOutTimer = null;
+
+function resetPettingStroke() {
+  pettingStrokeStartTime = 0;
+  pettingStrokeDistance = 0;
+  pettingStrokeLastX = null;
+  pettingStrokeLastY = null;
+  pettingStrokeLastMoveAt = 0;
+  if (pettingStrokeOutTimer) {
+    clearTimeout(pettingStrokeOutTimer);
+    pettingStrokeOutTimer = null;
+  }
+}
 const SHAKE_SPEED_THRESHOLD = 11.2;
 const SHAKE_TRIGGER_ENERGY = 2.34;
 const SHAKE_ENERGY_DECAY = 0.82;
@@ -2684,6 +2707,7 @@ function stopPurring() {
   dogPettingSound.pause();
   dogPettingSound.currentTime = 0;
   stopDogPettingAudio();
+  resetPettingStroke();
 }
 
 function currentPoseElement() {
@@ -3345,10 +3369,73 @@ if (pettingHandle) {
 }
 
 function updatePurringAtPoint(clientX, clientY, continuous = false) {
-  if (isIdleHeadPoint(clientX, clientY)) {
-    startPurring(clientX, clientY);
-  } else if (!pendingDrag && (!continuous || !purrStopTimer)) {
-    scheduleStopPurring(PURR_LEAVE_GRACE_MS);
+  const insideHead = isIdleHeadPoint(clientX, clientY);
+  const isCurrentlyPurring = document.body.dataset.purring === "1";
+
+  if (insideHead) {
+    if (pettingStrokeOutTimer) {
+      clearTimeout(pettingStrokeOutTimer);
+      pettingStrokeOutTimer = null;
+    }
+
+    const now = Date.now();
+
+    // If already in petting mode, smoothly follow mouse movement and keep alive
+    if (isCurrentlyPurring) {
+      const offset = purrFaceOffsetForPoint(clientX, clientY);
+      setPurrFaceOffset(offset.x, offset.y);
+      scheduleStopPurring(PURR_IDLE_TIMEOUT_MS);
+      return;
+    }
+
+    // Initialize stroking detection
+    if (pettingStrokeLastX === null || pettingStrokeLastY === null) {
+      pettingStrokeStartTime = now;
+      pettingStrokeDistance = 0;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+      return;
+    }
+
+    // If mouse was idle/paused for too long, reset stroke progress
+    if (now - pettingStrokeLastMoveAt > PETTING_STROKE_PAUSE_MS) {
+      pettingStrokeStartTime = now;
+      pettingStrokeDistance = 0;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+      return;
+    }
+
+    const dist = Math.hypot(clientX - pettingStrokeLastX, clientY - pettingStrokeLastY);
+    if (dist >= 1.5) {
+      pettingStrokeDistance += dist;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+    }
+
+    const strokeDuration = now - pettingStrokeStartTime;
+
+    // Trigger only when intentional petting has taken place:
+    // sustained stroking movement for at least PETTING_REQUIRED_DURATION_MS and accumulated distance
+    if (strokeDuration >= PETTING_REQUIRED_DURATION_MS && pettingStrokeDistance >= PETTING_REQUIRED_DISTANCE_PX) {
+      startPurring(clientX, clientY);
+      resetPettingStroke();
+    }
+  } else {
+    if (isCurrentlyPurring) {
+      if (!pendingDrag && (!continuous || !purrStopTimer)) {
+        scheduleStopPurring(PURR_LEAVE_GRACE_MS);
+      }
+    } else {
+      if (!pettingStrokeOutTimer && pettingStrokeStartTime > 0) {
+        pettingStrokeOutTimer = setTimeout(() => {
+          resetPettingStroke();
+        }, PETTING_STROKE_OUT_GRACE_MS);
+      }
+    }
   }
 }
 
