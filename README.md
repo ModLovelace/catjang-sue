@@ -2,12 +2,11 @@
 
 ![Catjang](assets/screenshot.png)
 
-> **Community Linux/Wayland port:** This branch is an experimental,
-> non-commercial community adaptation of the archived
+> **Community compatibility fork:** this repository continues the archived
 > [`cloud9209/catjang-sue`](https://github.com/cloud9209/catjang-sue)
-> prototype. It is not an official Comnyang release and is not endorsed by the
-> original author. See [NOTICE.md](NOTICE.md) for attribution and the change
-> notice.
+> prototype. It remains a non-commercial community adaptation, is not an
+> official Comnyang release, and preserves the original attribution and
+> CC BY-NC 4.0 license.
 
 ## Community branch model
 
@@ -17,11 +16,24 @@ community/base
 └─ community/windows
 ```
 
-This branch contains Linux/Wayland-specific work. `community/base` is the
-protected shared foundation, while `community/windows` evolves independently.
-`main` is retained only as a historical mirror of the original upstream state:
-it has no fork-specific changes and currently matches `community/base`. Do not
-develop directly on `main`.
+`community/base` is the protected shared foundation. Platform work and future
+features are developed in the corresponding `community/*` branch, so Windows
+and Linux/Wayland can evolve independently. See the platform branches for their
+specific setup, validation, and release notes.
+
+### Reference branch
+
+`main` is kept as a historical mirror of the original upstream state. It has no
+fork-specific changes and currently points to the same commit as
+`community/base`. Do not develop directly on `main`; use `community/base` for
+shared changes and the appropriate platform branch for platform work.
+
+## Roadmap
+
+- Keep platform compatibility work independent while sharing the protected base.
+- Investigate Apple Silicon support for M1-class Macs (macOS).
+- Evaluate an iOS/iPadOS port separately; it requires a dedicated platform
+  adaptation rather than the macOS desktop build.
 
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
@@ -47,7 +59,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 ## Quick start
 
 ```bash
-git clone https://github.com/Mod-zZz/catjang-sue.git catjang
+git clone https://github.com/ModLovelace/catjang-sue.git catjang
 cd catjang
 npm ci
 npm start
