@@ -6,24 +6,20 @@ attribution party is **jan (nerfspeed on Discord)**.
 
 This repository is based on the archived
 [`cloud9209/catjang-sue`](https://github.com/cloud9209/catjang-sue) prototype,
-which was itself published as a fork of `jandev-png/catjang`. The latter is no
-longer publicly available at its former GitHub URL.
+which was itself published as a fork of `jandev-png/catjang`.
 
 ## Community modifications
 
-The Linux/Wayland adaptation was prepared in July 2026 by
-**Enrique Rafael Becerra Bocangel (`@Mod-zZz`)** as a non-commercial community
+Community adaptations were prepared by
+**Enrique Rafael Becerra Bocangel (`@Mod-zZz` / `@ModLovelace`)** as a non-commercial community
 contribution. The modifications include:
 
-- XWayland-by-default startup on Wayland desktops;
-- an optional native Wayland mode using compositor-owned draggable regions;
-- Linux shaped-window input so transparent areas remain click-through without
-  disabling mouse input on the pet and its controls;
-- drag, petting, SVG lazy-load, context-menu, and position-handling fixes;
-- Ubuntu 26.04/Electron 43 rendering compatibility adjustments;
-- opt-in global input and editor/agent integrations for safer testing;
-- Linux AppImage packaging updates and an isolated launcher;
-- a complete Spanish interface and Spanish defaults for the test build.
+- Windows 10/11 compatibility baseline, NVM Node.js policy, x64 NSIS packaging, Windows CI, and Windows icons;
+- Linux/Wayland and XWayland desktop adaptations, click-through shaped-window inputs;
+- Multi-mascot support (Catjang, Toto the Schnauzer, Chisi the Toy Poodle, Milo, and Musubi the Tabby Cat);
+- AI Agent state integrations (Claude Code, Antigravity, Cursor, Kiro, Codex) with custom task completion and conversation topic announcements;
+- Petting and gesture audio feedback for dogs and cats;
+- Spanish interface translation and localized default configurations.
 
 These changes do not imply endorsement by the original author or the archived
 fork owner. This is not an official Comnyang or Catjang release.

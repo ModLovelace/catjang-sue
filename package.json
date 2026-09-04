@@ -7,15 +7,18 @@
   "author": "jandev-png",
   "license": "CC-BY-NC-4.0",
   "licenseFile": "License.md",
-  "homepage": "https://github.com/Mod-zZz/catjang-sue",
+  "homepage": "https://github.com/ModLovelace/catjang-sue",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Mod-zZz/catjang-sue.git"
+    "url": "https://github.com/ModLovelace/catjang-sue.git"
   },
   "bugs": {
-    "url": "https://github.com/Mod-zZz/catjang-sue/issues"
+    "url": "https://github.com/ModLovelace/catjang-sue/issues"
   },
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.12.0 <25"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -66,6 +69,8 @@
       "node_modules/ffmpeg-static/**"
     ],
     "win": {
+      "icon": "assets/catjang-logo.ico",
+      "requestedExecutionLevel": "asInvoker",
       "target": [
         {
           "target": "nsis",

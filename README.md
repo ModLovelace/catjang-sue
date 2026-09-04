@@ -1,15 +1,22 @@
 # Catjang
 
-![Catjang](assets/screenshot.png)
+![Catjang Windows Preview](assets/screenshot-windows-preview.png)
 
-> **Community Linux/Wayland port:** This branch is an experimental,
+> **Community compatibility fork:** This repository is an experimental,
 > non-commercial community adaptation of the archived
 > [`cloud9209/catjang-sue`](https://github.com/cloud9209/catjang-sue)
 > prototype. It is not an official Comnyang release and is not endorsed by the
 > original author. See [NOTICE.md](NOTICE.md) for attribution and the change
 > notice.
 
+> **Windows work:** the active Windows compatibility branch is
+> [`community/windows`](https://github.com/ModLovelace/catjang-sue/tree/community/windows).
+> Its scope, validation status, Node.js policy, and release requirements are in
+> [WINDOWS-COMPATIBILITY-PLAN.md](WINDOWS-COMPATIBILITY-PLAN.md).
+
 ## Community branch model
+
+This fork uses a shared, protected base and independent platform branches:
 
 ```text
 community/base
@@ -17,12 +24,35 @@ community/base
 └─ community/windows
 ```
 
-This branch contains Linux/Wayland-specific work. `community/base` is the
-protected shared foundation, while `community/windows` evolves independently.
-`main` is retained only as a historical mirror of the original upstream state:
-it has no fork-specific changes and currently matches `community/base`. Do not
-develop directly on `main`.
+`community/base` preserves the common project state. Platform work belongs in
+its corresponding `community/*` branch; future features are integrated into the
+relevant platform branch instead of making Windows depend on Linux/Wayland or
+vice versa.
 
+`main` is retained only as a historical mirror of the original upstream state.
+It has no fork-specific changes and currently matches `community/base`; shared
+work belongs in `community/base` and Windows work belongs in `community/windows`.
+
+## Windows Preview
+
+Windows 10/11 support is developed in `community/windows`. The current public
+[Windows Preview 1](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.38-windows.1)
+is free and unsigned; Windows SmartScreen may warn before installation. Download
+only from GitHub Releases and verify the included SHA-256 file. This preview
+predates the independent-branch rebase; the next preview will be built directly
+from `community/windows` after its current CI validation.
+
+For development, install NVM for Windows, select Node `24.18.0` with
+`nvm use 24.18.0`, then run `npm ci` and `npm start`. End users do not need
+Node.js or a repository clone: they install the `.exe` from a release.
+
+## Roadmap
+
+- Maintain separate Windows and Linux/Wayland compatibility branches from the
+  shared base.
+- Investigate Apple Silicon support for M1-class Macs (macOS).
+- Evaluate an iOS/iPadOS port separately; M1 iPads do not run macOS desktop
+  applications directly and require their own platform adaptation.
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
 > **Note:** This is a prototype build. The license flow uses a local prototype endpoint with hardcoded keys (see [Prototype license keys](#prototype-license-keys) below) and is not connected to a real payment backend.
@@ -47,7 +77,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 ## Quick start
 
 ```bash
-git clone https://github.com/Mod-zZz/catjang-sue.git catjang
+git clone https://github.com/ModLovelace/catjang-sue.git catjang
 cd catjang
 npm ci
 npm start
@@ -194,3 +224,23 @@ CC BY-NC 4.0 — free to use and modify, no commercial use, credit
 **jan (nerfspeed on Discord)**, link the license, and identify modifications.
 See [`License.md`](./License.md) and the community change notice in
 [`NOTICE.md`](./NOTICE.md).
+
+### License and Windows signing status
+
+The source is publicly available, but the current **CC BY-NC 4.0** license has
+a non-commercial restriction. It is therefore not an OSI-approved Open Source
+license and this community fork must not be described as OSI Open Source.
+Changing the license of the inherited code requires permission from its
+copyright holder.
+
+The Windows installer is currently unsigned. Signing proves the publisher and
+integrity of a binary; it does not change the source license. A self-signed
+certificate is not trusted by Windows and does not avoid SmartScreen warnings.
+If the complete project is later relicensed by the rights holder under an
+OSI-approved license, the project may apply to SignPath Foundation's free OSS
+signing program, subject to its eligibility and release-policy requirements.
+The selected distribution path is a **free, unsigned GitHub Release**. Each
+release must state that it is unsigned, warn that Windows may show SmartScreen,
+and publish the source commit plus the SHA-256 of the installer. Users do not
+need Node.js or a repository clone to install the `.exe`, but they should only
+download it from the project's official GitHub Release page.
