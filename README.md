@@ -33,14 +33,12 @@ vice versa.
 It has no fork-specific changes and currently matches `community/base`; shared
 work belongs in `community/base` and Windows work belongs in `community/windows`.
 
-## Windows Preview
+## Releases (Windows & macOS Apple Silicon)
 
-Windows 10/11 support is developed in `community/windows`. The current public
-[Windows Preview 1](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.38-windows.1)
-is free and unsigned; Windows SmartScreen may warn before installation. Download
-only from GitHub Releases and verify the included SHA-256 file. This preview
-predates the independent-branch rebase; the next preview will be built directly
-from `community/windows` after its current CI validation.
+The latest public release is
+[Catjang v0.1.39](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.39),
+featuring full multi-mascot support (Catjang, Toto, Chisi, Milo, Musubi), deliberate petting gestures,
+and stable AI agent integration (Antigravity/Gemini, Claude, Cursor) for both Windows (x64) and macOS (Apple Silicon M1/M2/M3/M4 & Intel).
 
 For development, install NVM for Windows, select Node `24.18.0` with
 `nvm use 24.18.0`, then run `npm ci` and `npm start`. End users do not need

@@ -5,6 +5,8 @@ on:
     branches:
       - connect-ia-agent
       - main
+    tags:
+      - "v*"
   pull_request:
     paths:
       - "main.js"
@@ -44,7 +46,7 @@ jobs:
       - name: List generated packages
         run: ls -lh dist/
 
-      - name: Upload macOS installers
+      - name: Upload macOS installers to artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Catjang-macOS-Installers
@@ -52,3 +54,11 @@ jobs:
             dist/*.dmg
             dist/*.zip
           if-no-files-found: error
+
+      - name: Attach macOS installers to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} dist/*.dmg dist/*.zip --clobber
+
