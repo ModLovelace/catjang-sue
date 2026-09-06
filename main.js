@@ -1514,8 +1514,8 @@ function createLicenseWindow(initialReason = "") {
   }
 
   licenseWin = new BrowserWindow({
-    width: 440,
-    height: 420,
+    width: 500,
+    height: 640,
     title: t("licenseWindowTitle"),
     icon: APP_ICON_PATH,
     resizable: false,
@@ -2430,9 +2430,27 @@ ipcMain.handle("license-activate", async (_evt, licenseKey) => {
   };
 });
 
-ipcMain.handle("license-start", async () => {
+ipcMain.handle("license-start", async (_evt, options = {}) => {
   const state = await validateSavedLicense();
   if (!state.ok) throw new Error(String(state.reason || t("licenseActivateFailed")));
+
+  if (options && options.mascot) {
+    setMascot(options.mascot);
+  }
+
+  if (options && typeof options.connectAgents === "boolean") {
+    if (options.connectAgents === false) {
+      agentOnboardingShown = true;
+      saveSettings();
+    } else {
+      agentOnboardingShown = false;
+      saveSettings();
+    }
+  }
+
+  catNamePromptShown = true;
+  saveSettings();
+
   // The renderer paints the activation confirmation before this hand-off.
   startLicensedApp();
   return { ok: true };

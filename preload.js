@@ -115,7 +115,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   svgLoad: (svgName) => ipcRenderer.invoke("svg-load", svgName),
 
   licenseActivate: (licenseKey) => ipcRenderer.invoke("license-activate", licenseKey),
-  licenseStart: () => ipcRenderer.invoke("license-start"),
+  licenseStart: (options) => ipcRenderer.invoke("license-start", options),
   licenseCurrent: () => ipcRenderer.invoke("license-current"),
   onLicenseError: (callback) =>
     ipcRenderer.on("license-error", (_evt, message) => callback(message)),

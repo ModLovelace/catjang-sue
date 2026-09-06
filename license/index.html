@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catjang License</title>
+  <title>Catjang Setup</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="license-shell">
-    <section class="license-panel">
+    <div class="language-row" aria-label="Language" data-i18n-aria-label="language">
+      <button class="language-option" type="button" data-language="es">ES</button>
+      <button class="language-option" type="button" data-language="en">EN</button>
+      <button class="language-option" type="button" data-language="ko">KO</button>
+      <button class="language-option" type="button" data-language="ja">JA</button>
+    </div>
+
+    <!-- PASO 1: Formulario de activación de licencia -->
+    <section id="step-license" class="license-panel">
       <img class="brand-mark" src="../workspace/assets/svg/catjang-logo.svg" alt="" aria-hidden="true">
-      <div class="language-row" aria-label="Language" data-i18n-aria-label="language">
-        <button class="language-option" type="button" data-language="es">ES</button>
-        <button class="language-option" type="button" data-language="en">EN</button>
-        <button class="language-option" type="button" data-language="ko">KO</button>
-        <button class="language-option" type="button" data-language="ja">JA</button>
-      </div>
       <h1>Catjang</h1>
       <p class="intro" data-i18n="intro">Enter a prototype key to activate Catjang. Default keys are listed in the project README.</p>
 
@@ -26,6 +28,88 @@
       </form>
 
       <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- PASO 2: Menú de Configuración Inicial (Mascota + Agentes IA) -->
+    <section id="step-setup" class="setup-panel" style="display: none;">
+      <div class="setup-header">
+        <h2 data-i18n="setupTitle">Configuración Inicial</h2>
+        <p class="setup-subtitle" data-i18n="setupSubtitle">Personaliza a tu compañero antes de comenzar.</p>
+      </div>
+
+      <!-- SECCIÓN 1: Elección de Mascota Inicial -->
+      <div class="setup-section">
+        <label class="section-title" data-i18n="chooseMascotTitle">1. Elige tu mascota inicial</label>
+        <div class="mascot-grid" role="radiogroup" aria-label="Mascotas">
+          
+          <button type="button" class="mascot-card is-selected" data-mascot="cat" role="radio" aria-checked="true">
+            <div class="mascot-avatar">
+              <img src="../svg/cat/idle.svg" alt="Catjang">
+            </div>
+            <span class="mascot-name">Catjang</span>
+            <span class="mascot-tag" data-i18n="catLabel">Gatito 🐱</span>
+          </button>
+
+          <button type="button" class="mascot-card" data-mascot="schnauzer" role="radio" aria-checked="false">
+            <div class="mascot-avatar">
+              <img src="../svg/schnauzer/idle.svg" alt="Toto">
+            </div>
+            <span class="mascot-name">Toto</span>
+            <span class="mascot-tag" data-i18n="schnauzerLabel">Schnauzer 🐶</span>
+          </button>
+
+          <button type="button" class="mascot-card" data-mascot="chisi" role="radio" aria-checked="false">
+            <div class="mascot-avatar">
+              <img src="../svg/chisi/idle.svg" alt="Chisi">
+            </div>
+            <span class="mascot-name">Chisi</span>
+            <span class="mascot-tag" data-i18n="chisiLabel">Caniche Toy 🐩</span>
+          </button>
+
+          <button type="button" class="mascot-card" data-mascot="milo" role="radio" aria-checked="false">
+            <div class="mascot-avatar">
+              <img src="../svg/milo/idle.svg" alt="Milo">
+            </div>
+            <span class="mascot-name">Milo</span>
+            <span class="mascot-tag" data-i18n="miloLabel">Mestizo 🐕</span>
+          </button>
+
+          <button type="button" class="mascot-card" data-mascot="musubi" role="radio" aria-checked="false">
+            <div class="mascot-avatar">
+              <img src="../svg/musubi/idle.svg" alt="Musubi">
+            </div>
+            <span class="mascot-name">Musubi</span>
+            <span class="mascot-tag" data-i18n="musubiLabel">Atigrado 🐱</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: Conectar Agentes de IA -->
+      <div class="setup-section">
+        <label class="section-title" data-i18n="aiConnectTitle">2. ¿Deseas conectar tus agentes de IA?</label>
+        <p class="section-description" data-i18n="aiConnectDesc">Permite que tu mascota reaccione con animaciones cuando uses Gemini, Claude o Cursor.</p>
+        <div class="agent-choice-row" role="radiogroup">
+          <button type="button" class="choice-button is-active" data-choice="yes" role="radio" aria-checked="true">
+            <span class="choice-icon">⚡</span>
+            <div class="choice-text">
+              <strong data-i18n="aiYesTitle">Sí, conectar ahora</strong>
+              <small data-i18n="aiYesSubtitle">Abre la ventana de pruebas y conexión</small>
+            </div>
+          </button>
+          <button type="button" class="choice-button" data-choice="no" role="radio" aria-checked="false">
+            <span class="choice-icon">🐾</span>
+            <div class="choice-text">
+              <strong data-i18n="aiNoTitle">No, más tarde</strong>
+              <small data-i18n="aiNoSubtitle">Iniciar directamente sin pruebas de IA</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <button id="start-button" type="button" class="primary-button" data-i18n="startButton">
+        Comenzar
+      </button>
     </section>
   </main>
   <script src="license.js"></script>
