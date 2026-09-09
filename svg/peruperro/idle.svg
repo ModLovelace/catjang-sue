@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -10 50 50" width="500" height="500" shape-rendering="crispEdges">
+  <defs>
+    <style>
+      :root {
+        --peru-skin: #7A8090;
+        --peru-dark: #565C6B;
+        --peru-light: #9BA3B2;
+        --peru-shadow: #454A57;
+        --peru-nose: #1A1B1F;
+        --peru-wrinkle: #4A5060;
+        --peru-eye: #1A1B1F;
+        --peru-pink: #C47A8A;
+      }
+
+      .breathe-anim { transform-origin: 16px 22px; animation: peru-breathe 2.8s infinite ease-in-out; }
+      .tail-wag { transform-origin: 24px 27px; animation: peru-tail-wag 1.8s infinite ease-in-out; }
+      .ear-twitch-l { transform-origin: 7px 6px; animation: peru-ear-l 6s infinite; }
+      .ear-twitch-r { transform-origin: 21px 6px; animation: peru-ear-r 8s infinite; }
+
+      @keyframes peru-breathe {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.96) translateY(0.4px); }
+      }
+      @keyframes peru-tail-wag {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(14deg); }
+        75% { transform: rotate(-10deg); }
+      }
+      @keyframes peru-ear-l {
+        0%, 90%, 100% { transform: rotate(0deg); }
+        93% { transform: rotate(-6deg); }
+        96% { transform: rotate(3deg); }
+      }
+      @keyframes peru-ear-r {
+        0%, 88%, 100% { transform: rotate(0deg); }
+        92% { transform: rotate(6deg); }
+        95% { transform: rotate(-3deg); }
+      }
+      @keyframes peru-blink {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.1); }
+      }
+
+      .eye-l-blink, .eye-r-blink {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      :root.blinking .eye-l-blink,
+      :root.blinking .eye-r-blink {
+        animation: peru-blink 0.18s ease-in-out forwards;
+      }
+      :root.sleeping .eye-l-blink,
+      :root.sleeping .eye-r-blink {
+        transform: scaleY(0.1);
+      }
+      @keyframes peru-purr-face {
+        0%, 100% { transform: translate(var(--purr-face-x, 0px), var(--purr-face-y, 0px)); }
+        50% { transform: translate(var(--purr-face-x, 0px), calc(var(--purr-face-y, 0px) + 0.4px)); }
+      }
+      :root.purring #face-js {
+        animation: peru-purr-face 1.1s steps(2, end) infinite;
+      }
+      :root.purring .eye-l-blink,
+      :root.purring .eye-r-blink {
+        transform: scaleY(0.18);
+        transition: transform 0.15s ease-out;
+      }
+      :root.purring .ear-twitch-l {
+        transform: rotate(-8deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .ear-twitch-r {
+        transform: rotate(8deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .tail-wag {
+        animation: peru-tail-wag 0.18s infinite ease-in-out;
+      }
+      #dog-tongue {
+        display: none;
+      }
+      :root.purring #dog-tongue {
+        display: block !important;
+      }
+      .pupil-left, .pupil-right {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.22s ease-out;
+      }
+    </style>
+
+    <filter id="peruperro-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="dog-content" filter="url(#peruperro-outline)">
+    <!-- Thin Whippy Tail (Peruvian Hairless signature) -->
+    <g class="tail-wag">
+      <rect x="24" y="26" width="1" height="4" fill="#565C6B"/>
+      <rect x="25" y="23" width="2" height="4" fill="#7A8090"/>
+      <rect x="26" y="20" width="2" height="4" fill="#9BA3B2"/>
+      <rect x="27" y="18" width="1" height="3" fill="#9BA3B2"/>
+    </g>
+
+    <!-- Body Group: Slim, hairless, elegant Peruvian body -->
+    <g class="breathe-anim">
+      <!-- Lean Grey Body -->
+      <rect x="11" y="19" width="14" height="13" fill="#7A8090"/>
+      <rect x="12" y="17" width="10" height="3" fill="#565C6B"/>
+      <rect x="19" y="20" width="6" height="10" fill="#565C6B"/>
+      <rect x="12" y="20" width="2" height="10" fill="#7A8090"/>
+
+      <!-- Skin wrinkle / shadow on flank -->
+      <rect x="14" y="22" width="5" height="1" fill="#4A5060"/>
+      <rect x="14" y="26" width="4" height="1" fill="#4A5060"/>
+
+      <!-- Rear Paws (Sitting, slim) -->
+      <rect x="21" y="31" width="4" height="4" fill="#565C6B"/>
+      <rect x="21" y="34" width="5" height="2" fill="#7A8090"/>
+
+      <!-- Front Paws (slim, elegant) -->
+      <!-- Left Paw -->
+      <rect x="9" y="28" width="4" height="7" fill="#7A8090"/>
+      <rect x="8" y="32" width="5" height="3" fill="#9BA3B2"/>
+      <rect x="8" y="34" width="5" height="2" fill="#B0B6C2"/>
+
+      <!-- Right Paw -->
+      <rect x="16" y="28" width="4" height="7" fill="#7A8090"/>
+      <rect x="16" y="32" width="5" height="3" fill="#9BA3B2"/>
+      <rect x="16" y="34" width="5" height="2" fill="#B0B6C2"/>
+    </g>
+
+    <!-- Head & Distinctive Peruvian Face -->
+    <g id="face-js">
+      <!-- Upright Tall Pointed Ears (Iconic Peruvian Hairless feature) -->
+      <!-- Left Ear -->
+      <g class="ear-twitch-l">
+        <rect x="5" y="0" width="4" height="8" fill="#565C6B"/>
+        <rect x="6" y="1" width="2" height="6" fill="#7A8090"/>
+        <rect x="6" y="5" width="2" height="2" fill="#9BA3B2"/>
+      </g>
+      <!-- Right Ear -->
+      <g class="ear-twitch-r">
+        <rect x="19" y="0" width="4" height="8" fill="#565C6B"/>
+        <rect x="20" y="1" width="2" height="6" fill="#7A8090"/>
+        <rect x="20" y="5" width="2" height="2" fill="#9BA3B2"/>
+      </g>
+
+      <!-- Narrow Wedge-Shaped Head -->
+      <rect x="8" y="5" width="12" height="13" fill="#7A8090"/>
+      <rect x="7" y="8" width="14" height="9" fill="#7A8090"/>
+      <rect x="9" y="5" width="10" height="2" fill="#565C6B"/>
+
+      <!-- Forehead wrinkles (characteristic Peruvian Hairless) -->
+      <rect x="11" y="7" width="6" height="1" fill="#4A5060"/>
+      <rect x="12" y="9" width="4" height="1" fill="#4A5060"/>
+
+      <!-- Almond Eyes (Dark, alert - hallmark of the breed) -->
+      <!-- Left Eye -->
+      <g id="eye-left" class="eye-l-blink">
+        <rect x="9" y="10" width="4" height="3" fill="#1A1B1F" rx="0.5"/>
+        <rect id="pupil-left" class="pupil-left" x="10" y="10" width="2" height="3" fill="#2A2B30"/>
+        <rect x="9" y="10" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
+      </g>
+      <!-- Right Eye -->
+      <g id="eye-right" class="eye-r-blink">
+        <rect x="15" y="10" width="4" height="3" fill="#1A1B1F" rx="0.5"/>
+        <rect id="pupil-right" class="pupil-right" x="16" y="10" width="2" height="3" fill="#2A2B30"/>
+        <rect x="15" y="10" width="1" height="1" fill="#FFFFFF"/><!-- Glint -->
+      </g>
+
+      <!-- Slim Muzzle Bridge -->
+      <rect x="12" y="10" width="4" height="3" fill="#565C6B"/>
+
+      <!-- Skin wrinkle on cheeks -->
+      <rect x="8" y="12" width="2" height="1" fill="#4A5060"/>
+      <rect x="18" y="12" width="2" height="1" fill="#4A5060"/>
+
+      <!-- Small Dark Nose (narrow, Peruvian breed) -->
+      <rect id="dog-nose" x="11" y="13" width="6" height="2" fill="#1A1B1F" rx="1"/>
+      <rect x="12" y="13" width="2" height="1" fill="#2A2B30"/><!-- Specular -->
+
+      <!-- Mouth line -->
+      <rect x="13" y="15" width="2" height="1" fill="#4A5060"/>
+
+      <!-- Tongue (hidden normally, shows on petting) -->
+      <rect id="dog-tongue" x="12" y="17" width="4" height="4" fill="#C47A8A" rx="1"/>
+      <rect x="13" y="19" width="2" height="2" fill="#A85C6E"/>
+    </g>
+  </g>
+</svg>

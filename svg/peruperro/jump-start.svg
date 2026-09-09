@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 50 50" width="50" height="50" shape-rendering="crispEdges">
+  <defs>
+    <filter id="peruperro-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="dog-content" filter="url(#peruperro-outline)" transform="translate(0, 4)">
+    <!-- Tail (Low, coiled ready to spring) -->
+    <rect x="26" y="23" width="2" height="3" fill="#565C6B"/>
+    <rect x="28" y="21" width="2" height="3" fill="#7A8090"/>
+    <rect x="30" y="19" width="2" height="3" fill="#9BA3B2"/>
+
+    <!-- Crouched Body (Peruvian slim body crouching) -->
+    <rect x="12" y="21" width="16" height="12" fill="#565C6B"/>
+    <rect x="15" y="19" width="11" height="3" fill="#4A5060"/>
+    <rect x="10" y="23" width="5" height="9" fill="#9BA3B2"/>
+
+    <!-- Skin wrinkles on crouching back -->
+    <rect x="16" y="24" width="6" height="1" fill="#4A5060"/>
+    <rect x="16" y="27" width="5" height="1" fill="#4A5060"/>
+
+    <!-- Crouched slim legs -->
+    <rect x="9" y="30" width="5" height="5" fill="#565C6B"/>
+    <rect x="8" y="32" width="6" height="3" fill="#9BA3B2"/>
+    <rect x="8" y="34" width="6" height="2" fill="#B0B6C2"/>
+    <rect x="22" y="30" width="5" height="5" fill="#4A5060"/>
+    <rect x="22" y="33" width="5" height="3" fill="#9BA3B2"/>
+
+    <!-- Crouched Head & Peruvian Face -->
+    <!-- Ears (Forward-focused crouching) -->
+    <rect x="5" y="9" width="4" height="7" fill="#565C6B"/>
+    <rect x="6" y="10" width="2" height="5" fill="#7A8090"/>
+
+    <rect x="19" y="9" width="4" height="7" fill="#565C6B"/>
+    <rect x="20" y="10" width="2" height="5" fill="#7A8090"/>
+
+    <!-- Head -->
+    <rect x="8" y="11" width="12" height="11" fill="#7A8090"/>
+    <rect x="7" y="13" width="14" height="9" fill="#7A8090"/>
+    <rect x="9" y="10" width="10" height="2" fill="#565C6B"/>
+    <!-- Wrinkle (concentration) -->
+    <rect x="11" y="12" width="6" height="1" fill="#4A5060"/>
+
+    <!-- Eyes looking up eagerly -->
+    <rect x="9" y="14" width="4" height="3" fill="#1A1B1F" rx="0.5"/>
+    <rect x="10" y="14" width="2" height="2" fill="#2A2B30"/>
+    <rect x="9" y="14" width="1" height="1" fill="#FFFFFF"/>
+
+    <rect x="15" y="14" width="4" height="3" fill="#1A1B1F" rx="0.5"/>
+    <rect x="16" y="14" width="2" height="2" fill="#2A2B30"/>
+    <rect x="15" y="14" width="1" height="1" fill="#FFFFFF"/>
+
+    <!-- Muzzle and nose -->
+    <rect x="11" y="16" width="6" height="2" fill="#1A1B1F" rx="1"/>
+    <!-- Slim neck/throat -->
+    <rect x="10" y="18" width="8" height="4" fill="#7A8090"/>
+    <rect x="11" y="19" width="6" height="3" fill="#9BA3B2"/>
+  </g>
+</svg>

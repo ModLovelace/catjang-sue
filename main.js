@@ -234,6 +234,7 @@ const I18N = {
     mascotChisi: "Poodle Toy (Chisi) 🐩",
     mascotMilo: "Milo (Milongas) 🐕",
     mascotMusubi: "Tabby Cat (Musubi) 🐱",
+    mascotPeruperro: "Peruvian Hairless (Inca) 🐕",
   },
   es: {
     licenseMissingKey: "Introduce tu clave de licencia.",
@@ -323,6 +324,7 @@ const I18N = {
     mascotChisi: "Caniche Toy (Chisi) 🐩",
     mascotMilo: "Milo (Milongas) 🐕",
     mascotMusubi: "Gato Atigrado (Musubi) 🐱",
+    mascotPeruperro: "Perro Peruano Calado (Inca) 🐕",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -412,6 +414,7 @@ const I18N = {
     mascotChisi: "토이푸들 (치시) 🐩",
     mascotMilo: "밀로 (밀롱가스) 🐕",
     mascotMusubi: "줄무늬 고양이 (무스비) 🐱",
+    mascotPeruperro: "페루 무모견 (잉카) 🐕",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -501,6 +504,7 @@ const I18N = {
     mascotChisi: "トイプードル (Chisi) 🐩",
     mascotMilo: "ミロ (Milongas) 🐕",
     mascotMusubi: "トラ猫 (Musubi) 🐱",
+    mascotPeruperro: "ペルーヘアレス (Inca) 🐕",
   },
 };
 
@@ -736,6 +740,7 @@ let mascotNames = {
   chisi: "Chisi",
   milo: "Milo",
   musubi: "Musubi",
+  peruperro: "Inca",
 };
 let catName = "Catjang";
 let userName = "";
@@ -813,10 +818,13 @@ function loadSettings() {
         if (typeof data.mascotNames.musubi === "string" && data.mascotNames.musubi.trim()) {
           mascotNames.musubi = data.mascotNames.musubi.trim().slice(0, 24);
         }
+        if (typeof data.mascotNames.peruperro === "string" && data.mascotNames.peruperro.trim()) {
+          mascotNames.peruperro = data.mascotNames.peruperro.trim().slice(0, 24);
+        }
       } else if (typeof data.catName === "string" && data.catName.trim()) {
         mascotNames.cat = data.catName.trim().slice(0, 24);
       }
-      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer" || data.mascot === "chisi" || data.mascot === "milo" || data.mascot === "musubi")) {
+      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer" || data.mascot === "chisi" || data.mascot === "milo" || data.mascot === "musubi" || data.mascot === "peruperro")) {
         currentMascot = data.mascot;
       }
       catName = mascotNames[currentMascot] || mascotNames.cat;
@@ -887,10 +895,10 @@ function saveSettings() {
 }
 
 function setMascot(mascot) {
-  if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi") return;
+  if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi" && mascot !== "peruperro") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
-  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : "Catjang")));
+  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Inca" : "Catjang"))));
   catName = mascotNames[currentMascot] || defaultName;
   saveSettings();
   if (petWin && !petWin.isDestroyed()) {
@@ -1156,7 +1164,7 @@ function setCatName(value) {
       ? "Chisi"
       : (currentMascot === "milo"
         ? "Milo"
-        : (currentMascot === "musubi" ? "Musubi" : "Catjang")));
+        : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Inca" : "Catjang"))));
   const next = String(value || "").trim().slice(0, 24) || fallback;
   catName = next;
   mascotNames[currentMascot] = catName;
@@ -1671,6 +1679,7 @@ function confirmAndPerformFullReset() {
     chisi: "Chisi",
     milo: "Milo",
     musubi: "Musubi",
+    peruperro: "Inca",
   };
   catName = "Catjang";
   currentMascot = "cat";
@@ -2790,6 +2799,7 @@ function showPetContextMenu() {
         { label: t("mascotChisi"), type: "radio", checked: currentMascot === "chisi", click: () => setMascot("chisi") },
         { label: t("mascotMilo"), type: "radio", checked: currentMascot === "milo", click: () => setMascot("milo") },
         { label: t("mascotMusubi"), type: "radio", checked: currentMascot === "musubi", click: () => setMascot("musubi") },
+        { label: t("mascotPeruperro"), type: "radio", checked: currentMascot === "peruperro", click: () => setMascot("peruperro") },
       ],
     },
     { type: "separator" },

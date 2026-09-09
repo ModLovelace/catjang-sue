@@ -921,10 +921,10 @@ body[data-press="right"] #press-right { display: block; }
 
 body.dragging #stretch-svg-end { animation: sprite-fadein 50ms ease-out; }
 
-body:not([data-mascot="schnauzer"])[data-scroll] #cat,
-body:not([data-mascot="schnauzer"])[data-scroll] #press-left,
-body:not([data-mascot="schnauzer"])[data-scroll] #press-right { display: none; }
-body:not([data-mascot="schnauzer"])[data-scroll] #scroll-unroll { display: block; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #cat,
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #press-left,
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #press-right { display: none; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #scroll-unroll { display: block; }
 body[data-press] #scroll-unroll { display: none; }
 
 body[data-jump] #cat,
@@ -962,6 +962,7 @@ body[data-stretching] #schnauzer,
 body[data-stretching] #chisi,
 body[data-stretching] #milo,
 body[data-stretching] #musubi,
+body[data-stretching] #peruperro,
 body[data-stretching] .mascot-idle,
 body[data-stretching] #press-left,
 body[data-hunting] #press-left,
@@ -973,7 +974,7 @@ body[data-stretching] #jump-start,
 body[data-hunting] #jump-start,
 body[data-stretching] #jump-ing,
 body[data-hunting] #jump-ing { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-stretching] #stretch-pose-default { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-stretching] #stretch-pose-default { display: block !important; }
 
 /* ── 타이핑 heat steam — 머리 위 빨간 김 particle들 ──
    JS가 --steam-opacity 변수로 전체 opacity 조절 (heat > 0.5일 때만 보임) */
@@ -1065,20 +1066,22 @@ body[data-mascot="cat"] .mascot-sprite:not([data-mascot="cat"]),
 body[data-mascot="schnauzer"] .mascot-sprite:not([data-mascot="schnauzer"]),
 body[data-mascot="chisi"] .mascot-sprite:not([data-mascot="chisi"]),
 body[data-mascot="milo"] .mascot-sprite:not([data-mascot="milo"]),
-body[data-mascot="musubi"] .mascot-sprite:not([data-mascot="musubi"]) {
+body[data-mascot="musubi"] .mascot-sprite:not([data-mascot="musubi"]),
+body[data-mascot="peruperro"] .mascot-sprite:not([data-mascot="peruperro"]) {
   display: none !important;
 }
 
 /* Base Idle active mascot */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]) #cat { display: block; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]) #cat { display: block; }
 body[data-mascot="schnauzer"] #schnauzer { display: block; }
 body[data-mascot="chisi"] #chisi { display: block; }
 body[data-mascot="milo"] #milo { display: block; }
 body[data-mascot="musubi"] #musubi { display: block; }
+body[data-mascot="peruperro"] #peruperro { display: block; }
 
 /* Typing Left */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-press="left"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-press="left"] #press-left { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="left"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="left"] #press-left { display: block !important; }
 body[data-mascot="schnauzer"][data-press="left"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display: block !important; }
 body[data-mascot="chisi"][data-press="left"] #chisi { display: none !important; }
@@ -1087,10 +1090,12 @@ body[data-mascot="milo"][data-press="left"] #milo { display: none !important; }
 body[data-mascot="milo"][data-press="left"] #milo-press-left { display: block !important; }
 body[data-mascot="musubi"][data-press="left"] #musubi { display: none !important; }
 body[data-mascot="musubi"][data-press="left"] #musubi-press-left { display: block !important; }
+body[data-mascot="peruperro"][data-press="left"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-press="left"] #peruperro-press-left { display: block !important; }
 
 /* Typing Right */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-press="right"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-press="right"] #press-right { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="right"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="right"] #press-right { display: block !important; }
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block !important; }
 body[data-mascot="chisi"][data-press="right"] #chisi { display: none !important; }
@@ -1099,10 +1104,12 @@ body[data-mascot="milo"][data-press="right"] #milo { display: none !important; }
 body[data-mascot="milo"][data-press="right"] #milo-press-right { display: block !important; }
 body[data-mascot="musubi"][data-press="right"] #musubi { display: none !important; }
 body[data-mascot="musubi"][data-press="right"] #musubi-press-right { display: block !important; }
+body[data-mascot="peruperro"][data-press="right"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-press="right"] #peruperro-press-right { display: block !important; }
 
 /* Scroll Unroll */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-scroll] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-scroll] #scroll-unroll { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-scroll] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-scroll] #scroll-unroll { display: block !important; }
 body[data-mascot="schnauzer"][data-scroll] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-scroll] #schnauzer-scroll-unroll { display: block !important; }
 body[data-mascot="chisi"][data-scroll] #chisi { display: none !important; }
@@ -1111,20 +1118,24 @@ body[data-mascot="milo"][data-scroll] #milo { display: none !important; }
 body[data-mascot="milo"][data-scroll] #milo-scroll-unroll { display: block !important; }
 body[data-mascot="musubi"][data-scroll] #musubi { display: none !important; }
 body[data-mascot="musubi"][data-scroll] #musubi-scroll-unroll { display: block !important; }
+body[data-mascot="peruperro"][data-scroll] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-scroll] #peruperro-scroll-unroll { display: block !important; }
 body[data-press] #scroll-unroll,
 body[data-press] #schnauzer-scroll-unroll,
 body[data-press] #chisi-scroll-unroll,
 body[data-press] #milo-scroll-unroll,
 body[data-press] #musubi-scroll-unroll,
+body[data-press] #peruperro-scroll-unroll,
 body[data-jump] #scroll-unroll,
 body[data-jump] #schnauzer-scroll-unroll,
 body[data-jump] #chisi-scroll-unroll,
 body[data-jump] #milo-scroll-unroll,
-body[data-jump] #musubi-scroll-unroll { display: none !important; }
+body[data-jump] #musubi-scroll-unroll,
+body[data-jump] #peruperro-scroll-unroll { display: none !important; }
 
 /* Jump Start */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-jump="start"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-jump="start"] #jump-start { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="start"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="start"] #jump-start { display: block !important; }
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block !important; }
 body[data-mascot="chisi"][data-jump="start"] #chisi { display: none !important; }
@@ -1133,10 +1144,12 @@ body[data-mascot="milo"][data-jump="start"] #milo { display: none !important; }
 body[data-mascot="milo"][data-jump="start"] #milo-jump-start { display: block !important; }
 body[data-mascot="musubi"][data-jump="start"] #musubi { display: none !important; }
 body[data-mascot="musubi"][data-jump="start"] #musubi-jump-start { display: block !important; }
+body[data-mascot="peruperro"][data-jump="start"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-jump="start"] #peruperro-jump-start { display: block !important; }
 
 /* Jump In Air */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-jump="ing"] #cat { display: none !important; }
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-jump="ing"] #jump-ing { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="ing"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="ing"] #jump-ing { display: block !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
 body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block !important; }
 body[data-mascot="chisi"][data-jump="ing"] #chisi { display: none !important; }
@@ -1145,18 +1158,22 @@ body[data-mascot="milo"][data-jump="ing"] #milo { display: none !important; }
 body[data-mascot="milo"][data-jump="ing"] #milo-jump-ing { display: block !important; }
 body[data-mascot="musubi"][data-jump="ing"] #musubi { display: none !important; }
 body[data-mascot="musubi"][data-jump="ing"] #musubi-jump-ing { display: block !important; }
+body[data-mascot="peruperro"][data-jump="ing"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-jump="ing"] #peruperro-jump-ing { display: block !important; }
 
 /* Dragging */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]).dragging #stretch-svg-end { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]).dragging #stretch-svg-end { display: block !important; }
 body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
 body[data-mascot="chisi"].dragging #chisi-drag { display: block !important; }
 body[data-mascot="milo"].dragging #milo-drag { display: block !important; }
 body[data-mascot="musubi"].dragging #musubi-drag { display: block !important; }
+body[data-mascot="peruperro"].dragging #peruperro-drag { display: block !important; }
 body.dragging #cat,
 body.dragging #schnauzer,
 body.dragging #chisi,
 body.dragging #milo,
 body.dragging #musubi,
+body.dragging #peruperro,
 body.dragging .mascot-idle,
 body.dragging .mascot-press-left,
 body.dragging .mascot-press-right,
@@ -1166,16 +1183,18 @@ body.dragging .mascot-jump-ing,
 body.dragging .mascot-stretch { display: none !important; }
 
 /* Stretching */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"])[data-stretching] #stretch-pose-default { display: block !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-stretching] #stretch-pose-default { display: block !important; }
 body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch { display: block !important; }
 body[data-mascot="chisi"][data-stretching] #chisi-stretch { display: block !important; }
 body[data-mascot="milo"][data-stretching] #milo-stretch { display: block !important; }
 body[data-mascot="musubi"][data-stretching] #musubi-stretch { display: block !important; }
+body[data-mascot="peruperro"][data-stretching] #peruperro-stretch { display: block !important; }
 body[data-stretching] #cat,
 body[data-stretching] #schnauzer,
 body[data-stretching] #chisi,
 body[data-stretching] #milo,
 body[data-stretching] #musubi,
+body[data-stretching] #peruperro,
 body[data-stretching] .mascot-idle,
 body[data-stretching] .mascot-press-left,
 body[data-stretching] .mascot-press-right,
@@ -1189,7 +1208,8 @@ body[data-sleeping="1"] #cat,
 body[data-sleeping="1"] #schnauzer,
 body[data-sleeping="1"] #chisi,
 body[data-sleeping="1"] #milo,
-body[data-sleeping="1"] #musubi {
+body[data-sleeping="1"] #musubi,
+body[data-sleeping="1"] #peruperro {
   animation: pet-sleep-breathe 2.4s infinite ease-in-out;
 }
 

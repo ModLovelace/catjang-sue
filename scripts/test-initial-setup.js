@@ -96,15 +96,15 @@ app.whenReady().then(async () => {
           details: \`step1Display=\${step1After}, step2Display=\${step2After}\`
         });
 
-        // 4. Verificar que existen las 5 mascotas con sus imágenes y nombres
+        // 4. Verificar que existen las 6 mascotas con sus imágenes y nombres
         const cards = document.querySelectorAll(".mascot-card");
         const mascotsFound = Array.from(cards).map(c => c.dataset.mascot);
-        const expectedMascots = ["cat", "schnauzer", "chisi", "milo", "musubi"];
+        const expectedMascots = ["cat", "schnauzer", "chisi", "milo", "musubi", "peruperro"];
         const allMascotsPresent = expectedMascots.every(m => mascotsFound.includes(m));
 
         logs.push({
-          test: "All 5 mascot cards are rendered",
-          pass: cards.length === 5 && allMascotsPresent,
+          test: "All 6 mascot cards are rendered",
+          pass: cards.length === 6 && allMascotsPresent,
           details: \`found=\${mascotsFound.join(", ")}\`
         });
 

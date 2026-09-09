@@ -80,8 +80,8 @@ app.whenReady().then(async () => {
         const logs = [];
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-        // PRUEBA 1: Ciclo de las 5 mascotas
-        const mascots = ["cat", "schnauzer", "chisi", "milo", "musubi"];
+        // PRUEBA 1: Ciclo de las 6 mascotas
+        const mascots = ["cat", "schnauzer", "chisi", "milo", "musubi", "peruperro"];
 
         for (const m of mascots) {
           applyMascot(m);

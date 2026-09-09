@@ -146,6 +146,34 @@ const MASCOTS = {
       stretch: "svg/musubi/stretch.svg",
     },
   },
+  peruperro: {
+    id: "peruperro",
+    defaultName: "Inca",
+    label: "Perro Peruano Calado (Inca) 🐕",
+    soundType: "bark",
+    folder: "svg/peruperro",
+    petting: { cx: 0.50, cy: 0.33, rx: 0.26, ry: 0.24 },
+    elements: {
+      idle: "peruperro",
+      pressLeft: "peruperro-press-left",
+      pressRight: "peruperro-press-right",
+      scroll: "peruperro-scroll-unroll",
+      jumpStart: "peruperro-jump-start",
+      jumpIng: "peruperro-jump-ing",
+      drag: "peruperro-drag",
+      stretch: "peruperro-stretch",
+    },
+    svgFiles: {
+      idle: "svg/peruperro/idle.svg",
+      pressLeft: "svg/peruperro/press-left.svg",
+      pressRight: "svg/peruperro/press-right.svg",
+      scroll: "svg/peruperro/scroll.svg",
+      jumpStart: "svg/peruperro/jump-start.svg",
+      jumpIng: "svg/peruperro/jump-ing.svg",
+      drag: "svg/peruperro/drag.svg",
+      stretch: "svg/peruperro/stretch.svg",
+    },
+  },
 };
 
 function getMascot(id) {
