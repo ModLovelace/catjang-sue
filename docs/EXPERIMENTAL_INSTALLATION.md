@@ -37,12 +37,12 @@ open /Applications/Catjang.app
 
 ## Windows 10/11 x64
 
-1. Descarga `Catjang Setup 0.1.40-experimental.1.exe` desde la misma versión de
+1. Descarga `Catjang.Setup.0.1.40-experimental.1.exe` desde la misma versión de
    GitHub.
 2. Opcionalmente, verifica el archivo con `SHA256SUMS-Windows.txt`:
 
    ```powershell
-   Get-FileHash "$HOME\Downloads\Catjang Setup 0.1.40-experimental.1.exe" -Algorithm SHA256
+   Get-FileHash "$HOME\Downloads\Catjang.Setup.0.1.40-experimental.1.exe" -Algorithm SHA256
    ```
 
 3. Ejecuta el instalador. Si Microsoft Defender SmartScreen muestra
