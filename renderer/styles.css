@@ -25,6 +25,43 @@ html, body {
   aspect-ratio: 1;
   cursor: grab;
 }
+
+/* Chromium does not dispatch pointer events inside a native draggable region.
+   This small no-drag island leaves the cat's head available for petting while
+   the rest of the character continues to move through the Wayland compositor. */
+#petting-handle {
+  display: none;
+}
+
+/* Native Wayland must delegate moving to the compositor. Electron's drag
+   region maps to xdg_toplevel.move, which is allowed after a pointer press. */
+body[data-window-backend="wayland"] #drag-handle {
+  app-region: drag;
+  -webkit-app-region: drag;
+  z-index: 7;
+}
+
+body[data-window-backend="wayland"] #petting-handle {
+  position: absolute;
+  display: block;
+  left: 15%;
+  top: 10%;
+  width: 50%;
+  height: 46%;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+  cursor: default;
+}
+
+body[data-window-backend="wayland"].native-dragging #cat,
+body[data-window-backend="wayland"].native-dragging #press-left,
+body[data-window-backend="wayland"].native-dragging #press-right,
+body[data-window-backend="wayland"].native-dragging #scroll-unroll,
+body[data-window-backend="wayland"].native-dragging #jump-start,
+body[data-window-backend="wayland"].native-dragging #jump-ing {
+  scale: 1 1.06;
+  transform-origin: 50% 20%;
+}
 #drag-handle:active {
   cursor: grabbing;
 }
@@ -200,9 +237,10 @@ body[data-speech="reminder"] #cat-speech-bubble::after {
 body[data-speech="complete"] #cat-speech-bubble {
   color: #fff;
   background: #23a35b;
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: normal;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  max-width: min(92vw, 360px);
 }
 
 body[data-speech="complete"] #cat-speech-bubble::after {
@@ -883,10 +921,10 @@ body[data-press="right"] #press-right { display: block; }
 
 body.dragging #stretch-svg-end { animation: sprite-fadein 50ms ease-out; }
 
-body[data-scroll] #cat,
-body[data-scroll] #press-left,
-body[data-scroll] #press-right { display: none; }
-body[data-scroll] #scroll-unroll { display: block; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #cat,
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #press-left,
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #press-right { display: none; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #scroll-unroll { display: block; }
 body[data-press] #scroll-unroll { display: none; }
 
 body[data-jump] #cat,
@@ -920,6 +958,12 @@ body[data-jump="ing"] #jump-ing { display: block; }
 #stretch-pose-ing { display: none; }
 
 body[data-stretching] #cat,
+body[data-stretching] #schnauzer,
+body[data-stretching] #chisi,
+body[data-stretching] #milo,
+body[data-stretching] #musubi,
+body[data-stretching] #peruperro,
+body[data-stretching] .mascot-idle,
 body[data-stretching] #press-left,
 body[data-hunting] #press-left,
 body[data-stretching] #press-right,
@@ -929,8 +973,8 @@ body[data-hunting] #scroll-unroll,
 body[data-stretching] #jump-start,
 body[data-hunting] #jump-start,
 body[data-stretching] #jump-ing,
-body[data-hunting] #jump-ing { display: none; }
-body[data-stretching] #stretch-pose-default { display: block; }
+body[data-hunting] #jump-ing { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-stretching] #stretch-pose-default { display: block !important; }
 
 /* ── 타이핑 heat steam — 머리 위 빨간 김 particle들 ──
    JS가 --steam-opacity 변수로 전체 opacity 조절 (heat > 0.5일 때만 보임) */
@@ -980,13 +1024,308 @@ body[data-press] #purr-hearts,
 body[data-scroll] #purr-hearts,
 body[data-jump] #purr-hearts { display: none; }
 
-/* Drag stretch(stretch-end) 모드는 typing/break stretching보다 우선 */
+/* ── UNIVERSAL MASCOT SPRITE ARCHITECTURE ── */
+.mascot-sprite {
+  position: absolute;
+  left: 50%;
+  top: var(--cat-top);
+  transform: translateX(-50%);
+  width: var(--cat-size);
+  aspect-ratio: 1;
+  display: none;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  z-index: 2;
+}
+
+.mascot-sprite.mascot-press-left,
+.mascot-sprite.mascot-press-right,
+.mascot-sprite.mascot-scroll {
+  width: calc(var(--cat-size) * 0.98);
+}
+
+.mascot-sprite.mascot-jump-start,
+.mascot-sprite.mascot-jump-ing {
+  width: calc(var(--cat-size) * 1.12);
+}
+
+.mascot-sprite.mascot-drag {
+  top: calc(var(--cat-top) - 10px);
+  width: calc(var(--cat-size) * 1.1);
+  aspect-ratio: 50 / 64;
+}
+
+.mascot-sprite.mascot-stretch {
+  width: 77.1%;
+  aspect-ratio: 72 / 56;
+}
+
+/* Inactive mascot isolation */
+body[data-mascot="cat"] .mascot-sprite:not([data-mascot="cat"]),
+body[data-mascot="schnauzer"] .mascot-sprite:not([data-mascot="schnauzer"]),
+body[data-mascot="chisi"] .mascot-sprite:not([data-mascot="chisi"]),
+body[data-mascot="milo"] .mascot-sprite:not([data-mascot="milo"]),
+body[data-mascot="musubi"] .mascot-sprite:not([data-mascot="musubi"]),
+body[data-mascot="peruperro"] .mascot-sprite:not([data-mascot="peruperro"]) {
+  display: none !important;
+}
+
+/* Base Idle active mascot */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]) #cat { display: block; }
+body[data-mascot="schnauzer"] #schnauzer { display: block; }
+body[data-mascot="chisi"] #chisi { display: block; }
+body[data-mascot="milo"] #milo { display: block; }
+body[data-mascot="musubi"] #musubi { display: block; }
+body[data-mascot="peruperro"] #peruperro { display: block; }
+
+/* Typing Left */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="left"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="left"] #press-left { display: block !important; }
+body[data-mascot="schnauzer"][data-press="left"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-press="left"] #schnauzer-press-left { display: block !important; }
+body[data-mascot="chisi"][data-press="left"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-press="left"] #chisi-press-left { display: block !important; }
+body[data-mascot="milo"][data-press="left"] #milo { display: none !important; }
+body[data-mascot="milo"][data-press="left"] #milo-press-left { display: block !important; }
+body[data-mascot="musubi"][data-press="left"] #musubi { display: none !important; }
+body[data-mascot="musubi"][data-press="left"] #musubi-press-left { display: block !important; }
+body[data-mascot="peruperro"][data-press="left"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-press="left"] #peruperro-press-left { display: block !important; }
+
+/* Typing Right */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="right"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-press="right"] #press-right { display: block !important; }
+body[data-mascot="schnauzer"][data-press="right"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-press="right"] #schnauzer-press-right { display: block !important; }
+body[data-mascot="chisi"][data-press="right"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-press="right"] #chisi-press-right { display: block !important; }
+body[data-mascot="milo"][data-press="right"] #milo { display: none !important; }
+body[data-mascot="milo"][data-press="right"] #milo-press-right { display: block !important; }
+body[data-mascot="musubi"][data-press="right"] #musubi { display: none !important; }
+body[data-mascot="musubi"][data-press="right"] #musubi-press-right { display: block !important; }
+body[data-mascot="peruperro"][data-press="right"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-press="right"] #peruperro-press-right { display: block !important; }
+
+/* Scroll Unroll */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-scroll] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-scroll] #scroll-unroll { display: block !important; }
+body[data-mascot="schnauzer"][data-scroll] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-scroll] #schnauzer-scroll-unroll { display: block !important; }
+body[data-mascot="chisi"][data-scroll] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-scroll] #chisi-scroll-unroll { display: block !important; }
+body[data-mascot="milo"][data-scroll] #milo { display: none !important; }
+body[data-mascot="milo"][data-scroll] #milo-scroll-unroll { display: block !important; }
+body[data-mascot="musubi"][data-scroll] #musubi { display: none !important; }
+body[data-mascot="musubi"][data-scroll] #musubi-scroll-unroll { display: block !important; }
+body[data-mascot="peruperro"][data-scroll] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-scroll] #peruperro-scroll-unroll { display: block !important; }
+body[data-press] #scroll-unroll,
+body[data-press] #schnauzer-scroll-unroll,
+body[data-press] #chisi-scroll-unroll,
+body[data-press] #milo-scroll-unroll,
+body[data-press] #musubi-scroll-unroll,
+body[data-press] #peruperro-scroll-unroll,
+body[data-jump] #scroll-unroll,
+body[data-jump] #schnauzer-scroll-unroll,
+body[data-jump] #chisi-scroll-unroll,
+body[data-jump] #milo-scroll-unroll,
+body[data-jump] #musubi-scroll-unroll,
+body[data-jump] #peruperro-scroll-unroll { display: none !important; }
+
+/* Jump Start */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="start"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="start"] #jump-start { display: block !important; }
+body[data-mascot="schnauzer"][data-jump="start"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-jump="start"] #schnauzer-jump-start { display: block !important; }
+body[data-mascot="chisi"][data-jump="start"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-jump="start"] #chisi-jump-start { display: block !important; }
+body[data-mascot="milo"][data-jump="start"] #milo { display: none !important; }
+body[data-mascot="milo"][data-jump="start"] #milo-jump-start { display: block !important; }
+body[data-mascot="musubi"][data-jump="start"] #musubi { display: none !important; }
+body[data-mascot="musubi"][data-jump="start"] #musubi-jump-start { display: block !important; }
+body[data-mascot="peruperro"][data-jump="start"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-jump="start"] #peruperro-jump-start { display: block !important; }
+
+/* Jump In Air */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="ing"] #cat { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-jump="ing"] #jump-ing { display: block !important; }
+body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer { display: none !important; }
+body[data-mascot="schnauzer"][data-jump="ing"] #schnauzer-jump-ing { display: block !important; }
+body[data-mascot="chisi"][data-jump="ing"] #chisi { display: none !important; }
+body[data-mascot="chisi"][data-jump="ing"] #chisi-jump-ing { display: block !important; }
+body[data-mascot="milo"][data-jump="ing"] #milo { display: none !important; }
+body[data-mascot="milo"][data-jump="ing"] #milo-jump-ing { display: block !important; }
+body[data-mascot="musubi"][data-jump="ing"] #musubi { display: none !important; }
+body[data-mascot="musubi"][data-jump="ing"] #musubi-jump-ing { display: block !important; }
+body[data-mascot="peruperro"][data-jump="ing"] #peruperro { display: none !important; }
+body[data-mascot="peruperro"][data-jump="ing"] #peruperro-jump-ing { display: block !important; }
+
+/* Dragging */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]).dragging #stretch-svg-end { display: block !important; }
+body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
+body[data-mascot="chisi"].dragging #chisi-drag { display: block !important; }
+body[data-mascot="milo"].dragging #milo-drag { display: block !important; }
+body[data-mascot="musubi"].dragging #musubi-drag { display: block !important; }
+body[data-mascot="peruperro"].dragging #peruperro-drag { display: block !important; }
 body.dragging #cat,
-body.dragging #press-left,
-body.dragging #press-right,
-body.dragging #scroll-unroll,
-body.dragging #jump-start,
-body.dragging #jump-ing,
-body.dragging #stretch-pose-default,
-body.dragging #stretch-pose-ing { display: none; }
-body.dragging #stretch-svg-end { display: block; }
+body.dragging #schnauzer,
+body.dragging #chisi,
+body.dragging #milo,
+body.dragging #musubi,
+body.dragging #peruperro,
+body.dragging .mascot-idle,
+body.dragging .mascot-press-left,
+body.dragging .mascot-press-right,
+body.dragging .mascot-scroll,
+body.dragging .mascot-jump-start,
+body.dragging .mascot-jump-ing,
+body.dragging .mascot-stretch { display: none !important; }
+
+/* Stretching */
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-stretching] #stretch-pose-default { display: block !important; }
+body[data-mascot="schnauzer"][data-stretching] #schnauzer-stretch { display: block !important; }
+body[data-mascot="chisi"][data-stretching] #chisi-stretch { display: block !important; }
+body[data-mascot="milo"][data-stretching] #milo-stretch { display: block !important; }
+body[data-mascot="musubi"][data-stretching] #musubi-stretch { display: block !important; }
+body[data-mascot="peruperro"][data-stretching] #peruperro-stretch { display: block !important; }
+body[data-stretching] #cat,
+body[data-stretching] #schnauzer,
+body[data-stretching] #chisi,
+body[data-stretching] #milo,
+body[data-stretching] #musubi,
+body[data-stretching] #peruperro,
+body[data-stretching] .mascot-idle,
+body[data-stretching] .mascot-press-left,
+body[data-stretching] .mascot-press-right,
+body[data-stretching] .mascot-scroll,
+body[data-stretching] .mascot-jump-start,
+body[data-stretching] .mascot-jump-ing,
+body[data-stretching] .mascot-drag { display: none !important; }
+
+/* ── SLEEP / NAP ANIMATION ── */
+body[data-sleeping="1"] #cat,
+body[data-sleeping="1"] #schnauzer,
+body[data-sleeping="1"] #chisi,
+body[data-sleeping="1"] #milo,
+body[data-sleeping="1"] #musubi,
+body[data-sleeping="1"] #peruperro {
+  animation: pet-sleep-breathe 2.4s infinite ease-in-out;
+}
+
+@keyframes pet-sleep-breathe {
+  0%, 100% { transform: translateX(-50%) scale(1, 1); }
+  50% { transform: translateX(-50%) scale(1.03, 0.94) translateY(2px); }
+}
+
+#sleep-bubble {
+  position: absolute;
+  left: calc(50% + var(--cat-size) * 0.28);
+  top: calc(var(--cat-top) - 14px);
+  display: none;
+  font: 700 13px/1 "Galmuri11", "Press Start 2P", monospace;
+  color: #3b82f6;
+  text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+
+body[data-sleeping="1"] #sleep-bubble {
+  display: flex;
+  gap: 3px;
+}
+
+#sleep-bubble span {
+  display: inline-block;
+  animation: zzz-float 1.8s infinite ease-in-out;
+}
+#sleep-bubble span:nth-child(1) { font-size: 11px; animation-delay: 0s; }
+#sleep-bubble span:nth-child(2) { font-size: 14px; animation-delay: 0.35s; }
+#sleep-bubble span:nth-child(3) { font-size: 17px; animation-delay: 0.7s; }
+
+@keyframes zzz-float {
+  0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+  30% { opacity: 1; }
+  80% { transform: translate(6px, -18px) scale(1.2); opacity: 0.9; }
+  100% { transform: translate(10px, -24px) scale(1.3); opacity: 0; }
+}
+
+/* ── ALERT EXCLAMATION ── */
+#alert-exclamation {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--cat-top) - 22px);
+  transform: translateX(-50%);
+  display: none;
+  width: 20px;
+  height: 20px;
+  background: #e33b3b;
+  color: #fff;
+  font: 700 14px/20px "Press Start 2P", monospace;
+  text-align: center;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff;
+  z-index: 12;
+  animation: alert-pop 0.6s ease-out infinite alternate;
+}
+
+body[data-alert="1"] #alert-exclamation {
+  display: block;
+}
+
+body[data-alert="1"] #cat,
+body[data-alert="1"] #schnauzer {
+  animation: alert-wiggle 0.3s ease-in-out infinite;
+}
+
+@keyframes alert-pop {
+  0% { transform: translateX(-50%) translateY(0) scale(1); }
+  100% { transform: translateX(-50%) translateY(-6px) scale(1.2); }
+}
+
+@keyframes alert-wiggle {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(-4deg); }
+  75% { transform: translateX(-50%) rotate(4deg); }
+}
+
+/* ── COMPLETION CONFETTI PARTICLES ── */
+#completion-confetti {
+  position: absolute;
+  left: 50%;
+  top: var(--cat-top);
+  transform: translateX(-50%);
+  width: var(--cat-size);
+  height: var(--cat-size);
+  pointer-events: none;
+  display: none;
+  z-index: 15;
+}
+
+body[data-confetti="1"] #completion-confetti {
+  display: block;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  opacity: 0;
+  animation: confetti-burst 1.6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes confetti-burst {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--cf-x), var(--cf-y)) rotate(var(--cf-rot)) scale(1);
+    opacity: 0;
+  }
+}
+

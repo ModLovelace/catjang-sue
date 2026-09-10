@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -10 50 50" width="500" height="500" shape-rendering="crispEdges">
+  <defs>
+    <style>
+      :root {
+        --dog-color: #FAF6ED;
+        --dog-dark: #E6D8BF;
+        --dog-light: #FFFFFF;
+        --dog-nose: #2B1D16;
+        --dog-outline: #FFFFFF;
+        --dog-toasted: #DAB984;
+        --dog-toasted-dark: #C6A166;
+      }
+
+      .breathe-anim { transform-origin: 16px 22px; animation: dog-breathe 2.8s infinite ease-in-out; }
+      .tail-wag { transform-origin: 24px 28px; animation: dog-tail-wag 1.8s infinite ease-in-out; }
+      .ear-twitch-l { transform-origin: 6px 8px; animation: chisi-ear-l 6.5s infinite; }
+      .ear-twitch-r { transform-origin: 22px 8px; animation: chisi-ear-r 7.2s infinite; }
+
+      @keyframes dog-breathe {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.96) translateY(0.3px); }
+      }
+      @keyframes dog-tail-wag {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(16deg); }
+        75% { transform: rotate(-14deg); }
+      }
+      @keyframes chisi-ear-l {
+        0%, 92%, 100% { transform: rotate(0deg); }
+        94% { transform: rotate(-6deg); }
+        97% { transform: rotate(3deg); }
+      }
+      @keyframes chisi-ear-r {
+        0%, 90%, 100% { transform: rotate(0deg); }
+        93% { transform: rotate(6deg); }
+        96% { transform: rotate(-3deg); }
+      }
+      @keyframes dog-blink {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.1); }
+      }
+
+      .eye-l-blink, .eye-r-blink {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      :root.blinking .eye-l-blink,
+      :root.blinking .eye-r-blink {
+        animation: dog-blink 0.18s ease-in-out forwards;
+      }
+      :root.sleeping .eye-l-blink,
+      :root.sleeping .eye-r-blink {
+        transform: scaleY(0.1);
+      }
+      @keyframes dog-purr-face {
+        0%, 100% { transform: translate(var(--purr-face-x, 0px), var(--purr-face-y, 0px)); }
+        50% { transform: translate(var(--purr-face-x, 0px), calc(var(--purr-face-y, 0px) + 0.4px)); }
+      }
+      :root.purring #face-js {
+        animation: dog-purr-face 1.1s steps(2, end) infinite;
+      }
+      :root.purring .eye-l-blink,
+      :root.purring .eye-r-blink {
+        transform: scaleY(0.18);
+        transition: transform 0.15s ease-out;
+      }
+      :root.purring .ear-twitch-l {
+        transform: rotate(-12deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .ear-twitch-r {
+        transform: rotate(12deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .tail-wag {
+        animation: dog-tail-wag 0.16s infinite ease-in-out;
+      }
+      #dog-tongue {
+        display: none;
+      }
+      :root.purring #dog-tongue {
+        display: block !important;
+      }
+      .pupil-left, .pupil-right {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.22s ease-out;
+      }
+    </style>
+
+    <filter id="chisi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="dog-content" filter="url(#chisi-outline)">
+    <!-- Fluffy Pompom Tail -->
+    <g class="tail-wag">
+      <rect x="23" y="27" width="2" height="3" fill="#E6D8BF"/>
+      <rect x="24" y="25" width="4" height="4" fill="#FAF6ED" rx="1"/>
+      <rect x="25" y="24" width="3" height="4" fill="#FFFFFF"/>
+      <rect x="27" y="26" width="2" height="2" fill="#DAB984"/>
+    </g>
+
+    <!-- Fluffy Curly Body -->
+    <g class="breathe-anim">
+      <!-- Body Base -->
+      <rect x="9" y="20" width="14" height="11" fill="#FAF6ED"/>
+      <rect x="8" y="22" width="16" height="8" fill="#FAF6ED"/>
+      <!-- Body Curls and Shadows -->
+      <rect x="10" y="28" width="12" height="3" fill="#E6D8BF"/>
+      <rect x="8" y="25" width="2" height="4" fill="#E6D8BF"/>
+      <rect x="22" y="24" width="2" height="5" fill="#E6D8BF"/>
+      <rect x="11" y="21" width="3" height="2" fill="#FFFFFF"/>
+      <rect x="18" y="22" width="3" height="2" fill="#FFFFFF"/>
+
+      <!-- Front Curly Paws -->
+      <rect x="9" y="30" width="4" height="3" fill="#FFFFFF"/>
+      <rect x="9" y="32" width="4" height="1" fill="#E6D8BF"/>
+      <rect x="15" y="30" width="4" height="3" fill="#FFFFFF"/>
+      <rect x="15" y="32" width="4" height="1" fill="#E6D8BF"/>
+    </g>
+
+    <!-- Face & Head Group -->
+    <g id="face-js">
+      <!-- Fluffy Head Base -->
+      <rect x="8" y="6" width="12" height="14" fill="#FAF6ED"/>
+      <rect x="6" y="8" width="16" height="11" fill="#FAF6ED"/>
+      
+      <!-- Topknot / Curly Afro Puff on top of head -->
+      <rect x="8" y="3" width="12" height="4" fill="#FFFFFF"/>
+      <rect x="9" y="2" width="10" height="3" fill="#FAF6ED"/>
+      <rect x="11" y="1" width="6" height="2" fill="#FFFFFF"/>
+      <!-- Topknot curl details -->
+      <rect x="7" y="4" width="3" height="3" fill="#FAF6ED"/>
+      <rect x="18" y="4" width="3" height="3" fill="#FAF6ED"/>
+      <rect x="9" y="5" width="2" height="2" fill="#E6D8BF"/>
+      <rect x="17" y="5" width="2" height="2" fill="#E6D8BF"/>
+      <rect x="13" y="4" width="2" height="2" fill="#E6D8BF"/>
+
+      <!-- Floppy Curly Ears with Toasted Champagne Tips -->
+      <!-- Left Ear -->
+      <g class="ear-twitch-l">
+        <rect x="4" y="6" width="4" height="4" fill="#FAF6ED"/>
+        <rect x="3" y="9" width="4" height="6" fill="#F0E5D0"/>
+        <rect x="2" y="12" width="5" height="6" fill="#E2CCA1"/>
+        <rect x="3" y="16" width="4" height="4" fill="#D4BE96"/>
+        <rect x="4" y="19" width="3" height="2" fill="#C5AE84"/>
+      </g>
+      <!-- Right Ear -->
+      <g class="ear-twitch-r">
+        <rect x="20" y="6" width="4" height="4" fill="#FAF6ED"/>
+        <rect x="21" y="9" width="4" height="6" fill="#F0E5D0"/>
+        <rect x="21" y="12" width="5" height="6" fill="#E2CCA1"/>
+        <rect x="21" y="16" width="4" height="4" fill="#D4BE96"/>
+        <rect x="21" y="19" width="3" height="2" fill="#C5AE84"/>
+      </g>
+
+      <!-- Eyes (Big, Round, Glossy Dark Espresso) -->
+      <!-- Left Eye -->
+      <g id="eye-left" class="eye-l-blink">
+        <rect x="8" y="10" width="3" height="3" fill="#20150F" rx="1"/>
+        <rect id="pupil-left" class="pupil-left" x="8" y="10" width="2" height="2" fill="#120A06"/>
+        <rect x="8" y="10" width="1" height="1" fill="#FFFFFF"/>
+      </g>
+      <!-- Right Eye -->
+      <g id="eye-right" class="eye-r-blink">
+        <rect x="17" y="10" width="3" height="3" fill="#20150F" rx="1"/>
+        <rect id="pupil-right" class="pupil-right" x="18" y="10" width="2" height="2" fill="#120A06"/>
+        <rect x="17" y="10" width="1" height="1" fill="#FFFFFF"/>
+      </g>
+
+      <!-- Snout / Muzzle Area -->
+      <rect x="11" y="12" width="6" height="5" fill="#FAF6ED"/>
+      <rect x="10" y="14" width="8" height="4" fill="#FFFFFF"/>
+      <!-- Button Nose -->
+      <rect id="dog-nose" x="12" y="13" width="4" height="2" fill="#2B1D16" rx="0.5"/>
+      <rect x="13" y="13" width="1" height="1" fill="#5A4338"/>
+      <!-- Cute Mouth / Lip line -->
+      <rect x="13" y="16" width="2" height="1" fill="#887060"/>
+
+      <!-- Tongue (Revealed on Petting / Happiness) -->
+      <rect id="dog-tongue" x="12" y="16" width="4" height="4" fill="#FF7799" rx="1"/>
+      <rect x="13" y="18" width="2" height="2" fill="#FF5580"/>
+    </g>
+  </g>
+</svg>

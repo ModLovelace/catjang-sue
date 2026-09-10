@@ -33,14 +33,12 @@ vice versa.
 It has no fork-specific changes and currently matches `community/base`; shared
 work belongs in `community/base` and Windows work belongs in `community/windows`.
 
-## Windows Preview
+## Releases (Windows & macOS Apple Silicon)
 
-Windows 10/11 support is developed in `community/windows`. The current public
-[Windows Preview 1](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.38-windows.1)
-is free and unsigned; Windows SmartScreen may warn before installation. Download
-only from GitHub Releases and verify the included SHA-256 file. This preview
-predates the independent-branch rebase; the next preview will be built directly
-from `community/windows` after its current CI validation.
+The latest public release is
+[Catjang v0.1.39](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.39),
+featuring full multi-mascot support (Catjang, Toto, Chisi, Milo, Musubi), deliberate petting gestures,
+and stable AI agent integration (Antigravity/Gemini, Claude, Cursor) for both Windows (x64) and macOS (Apple Silicon M1/M2/M3/M4 & Intel).
 
 For development, install NVM for Windows, select Node `24.18.0` with
 `nvm use 24.18.0`, then run `npm ci` and `npm start`. End users do not need
@@ -53,7 +51,6 @@ Node.js or a repository clone: they install the `.exe` from a release.
 - Investigate Apple Silicon support for M1-class Macs (macOS).
 - Evaluate an iOS/iPadOS port separately; M1 iPads do not run macOS desktop
   applications directly and require their own platform adaptation.
-
 A small companion cat that lives on your desktop while you work — pomodoro timer, reminders, AI-agent awareness, and a tiny pattern editor so you can paint the cat the way you like.
 
 > **Note:** This is a prototype build. The license flow uses a local prototype endpoint with hardcoded keys (see [Prototype license keys](#prototype-license-keys) below) and is not connected to a real payment backend.
@@ -66,7 +63,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 - **AI-agent awareness** — hook scripts for **Claude Code**, **Antigravity (Gemini)**, and **Cursor** so the pet notices when an agent is thinking, working, idle, or waiting for approval.
 - **Pattern editor** for painting the cat's spots, base color, eye color (incl. odd-eye), and saving / exporting presets.
 - **Share video** capture (mp4) of a screen crop with the pet in frame.
-- **Multi-language** UI: English, 한국어, 日本語.
+- **Multi-language** UI: Español, English, 한국어, 日本語.
 
 ## Stack
 
@@ -80,7 +77,7 @@ A small companion cat that lives on your desktop while you work — pomodoro tim
 ```bash
 git clone https://github.com/ModLovelace/catjang-sue.git catjang
 cd catjang
-npm install
+npm ci
 npm start
 ```
 
@@ -97,6 +94,49 @@ On first launch the app will show the license window. Enter one of the [prototyp
 | `npm run dist:win` | Windows-only `.exe` installer (NSIS). |
 | `npm run dist:mac` | macOS-only `.dmg`. |
 | `npm run dist:linux` | Linux-only `AppImage`. |
+
+## Linux and Wayland
+
+The community launcher builds on Electron's two Linux backends:
+
+- **XWayland (default in a Wayland desktop):** full elastic dragging, global
+  cursor following, click-through transparent regions, and saved position.
+- **Native Wayland (optional):** compositor-owned dragging and shaped input
+  regions. Wayland does not expose global window coordinates, so the final
+  position cannot be persisted and cursor tracking is more limited.
+
+Build and start the isolated AppImage:
+
+```bash
+npm ci
+npm run dist:linux
+./run-linux.sh
+```
+
+Test native Wayland explicitly:
+
+```bash
+CATJANG_NATIVE_WAYLAND=1 ./run-linux.sh
+```
+
+`run-linux.sh` stores configuration, cache, data, and logs below the ignored
+`runtime/` directory instead of changing the normal user profile. It never
+enables global input monitoring or editor/agent integrations by default.
+
+> **Security limitation:** on the tested Ubuntu 26.04 installation, AppArmor
+> blocks unprivileged user namespaces and electron-builder's AppImage launcher
+> consequently starts Electron with `--no-sandbox`. That disables Chromium's
+> renderer sandbox. Treat the AppImage as a local experimental build; do not
+> publish it as a general-purpose binary until a sandboxed launch is verified.
+
+On the tested Ubuntu 26.04 GNOME Wayland environment, hardware acceleration
+and Vulkan are disabled for stability. Rendering therefore uses CPU/system
+RAM, while the desktop compositor may still use the GPU to compose the final
+window.
+
+See [LINUX-WAYLAND.md](LINUX-WAYLAND.md) for the supported modes, limitations,
+security notes, and validation matrix. A Spanish guide is available in
+[PRUEBA-LINUX.md](PRUEBA-LINUX.md).
 
 ## Prototype license keys
 
@@ -141,7 +181,17 @@ assets/                       # catjang-logo.{png,ico} for the OS window icon
 
 ## AI-agent hook integration
 
-On first run the main process copies the three hook scripts into your user-data `hooks/` directory and registers them with each editor's settings file:
+These integrations are disabled by default in the community Linux build
+because enabling them writes editor configuration and reads local session
+logs. To opt in deliberately, start with:
+
+```bash
+CATJANG_ENABLE_AGENT_INTEGRATIONS=1 ./run-linux.sh
+```
+
+When enabled, the main process copies the three hook scripts into the
+user-data `hooks/` directory and registers them with each editor's settings
+file:
 
 | Agent | Settings file | Events |
 | --- | --- | --- |
@@ -161,11 +211,13 @@ Hook scripts POST events to the local agent-state server bound to `127.0.0.1:234
 
 - **macOS** — first time the pet reacts to global typing, you will be prompted for **Accessibility** (and sometimes **Input Monitoring**). Both can be granted in `System Settings → Privacy & Security`.
 - **Windows** — security software can block the global hook; if typing reactions never start, look for a prompt from your AV product.
-- **Linux** — works as a normal Electron app, but global keyboard hooks may require additional udev rules depending on the distro.
+- **Linux** — global keyboard and wheel monitoring is disabled by default.
+  `CATJANG_ENABLE_GLOBAL_INPUT=1 ./run-linux.sh` opts in, but the optional
+  `uiohook-napi` module may require X11 development packages and does not have
+  complete native Wayland support.
 
 ## License
 
-CC BY-NC 4.0 — free to use and modify, no commercial use, credit **jan (nerfspeed on Discord)**. See [`License.md`](./License.md).
 CC BY-NC 4.0 — free to use and modify, no commercial use, credit
 **jan (nerfspeed on Discord)**, link the license, and identify modifications.
 See [`License.md`](./License.md) and the community change notice in

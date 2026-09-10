@@ -139,7 +139,9 @@ function registerClaudeHooks(options = {}) {
       settings.hooks[event] = existing && typeof existing === "object" ? [existing] : [];
       changed = true;
     }
-    const expectedCommand = `"${nodeBin}" "${hookScript}" ${event}`;
+    const expectedCommand = process.platform === "win32"
+      ? `node "${hookScript}" ${event}`
+      : `"${nodeBin}" "${hookScript}" ${event}`;
     const sync = syncCommandHook(settings.hooks[event], expectedCommand, CLAUDE_HOOK_MARKER);
     if (sync.found) {
       if (sync.changed) {
@@ -189,7 +191,9 @@ function registerAntigravityHooks(options = {}) {
   }
 
   for (const event of ANTIGRAVITY_HOOK_EVENTS) {
-    const expectedCommand = `"${nodeBin}" "${hookScript}" ${event}`;
+    const expectedCommand = process.platform === "win32"
+      ? `node "${hookScript}" ${event}`
+      : `"${nodeBin}" "${hookScript}" ${event}`;
     if (event === "PreToolUse" || event === "PostToolUse") {
       hookConfig[event] = ensureCommandHandlerList(hookConfig[event]);
       const sync = syncCommandHook(hookConfig[event], expectedCommand, ANTIGRAVITY_HOOK_MARKER);
@@ -202,7 +206,7 @@ function registerAntigravityHooks(options = {}) {
       }
       hookConfig[event].push({
         matcher: "",
-        hooks: [{ type: "command", command: expectedCommand, timeout: 1 }],
+        hooks: [{ type: "command", command: expectedCommand, timeout: 5 }],
       });
       added++;
       changed = true;
@@ -218,7 +222,7 @@ function registerAntigravityHooks(options = {}) {
       }
       continue;
     }
-    hookConfig[event].push({ type: "command", command: expectedCommand, timeout: 1 });
+    hookConfig[event].push({ type: "command", command: expectedCommand, timeout: 5 });
     added++;
     changed = true;
   }
@@ -245,7 +249,9 @@ function registerCursorHooks(options = {}) {
       settings.hooks[event] = existing && typeof existing === "object" ? [existing] : [];
       changed = true;
     }
-    const expectedCommand = `"${nodeBin}" "${hookScript}" ${event}`;
+    const expectedCommand = process.platform === "win32"
+      ? `node "${hookScript}" ${event}`
+      : `"${nodeBin}" "${hookScript}" ${event}`;
     const sync = syncCommandHook(settings.hooks[event], expectedCommand, CURSOR_HOOK_MARKER);
     if (sync.found) {
       if (sync.changed) {

@@ -1,0 +1,158 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <filter id="musubi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <clipPath id="paper-strip-clip">
+      <rect id="paper-strip-mask" x="5" y="13" width="11" height="17"/>
+    </clipPath>
+
+    <style>
+      @keyframes speed-line-a {
+        0% { opacity: 0; transform: translateY(-2px); }
+        20%, 65% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(5px); }
+      }
+      @keyframes speed-line-b {
+        0% { opacity: 0; transform: translateY(1px); }
+        20%, 70% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(7px); }
+      }
+      .speed-a {
+        animation: speed-line-a 0.34s steps(3, end) infinite;
+      }
+      .speed-b {
+        animation: speed-line-b 0.34s steps(3, end) infinite;
+        animation-delay: 0.08s;
+      }
+      @keyframes scroll-ear-left {
+        0%, 100% { transform: rotate(-3deg); }
+        50% { transform: rotate(6deg) translateY(-1px); }
+      }
+      @keyframes scroll-ear-right {
+        0%, 100% { transform: rotate(3deg); }
+        50% { transform: rotate(-6deg) translateY(-1px); }
+      }
+      .scroll-ear-l {
+        transform-origin: 21px 8px;
+        animation: scroll-ear-left 0.22s steps(2, end) infinite;
+      }
+      .scroll-ear-r {
+        transform-origin: 37px 8px;
+        animation: scroll-ear-right 0.22s steps(2, end) infinite;
+      }
+      @keyframes scroll-paws-alternating {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+      }
+      .scroll-paw-l {
+        animation: scroll-paws-alternating 0.16s steps(2, end) infinite;
+      }
+      .scroll-paw-r {
+        animation: scroll-paws-alternating 0.16s steps(2, end) infinite;
+        animation-delay: 0.08s;
+      }
+    </style>
+  </defs>
+
+  <g id="cat-content" filter="url(#musubi-outline)">
+    <!-- Unrolling Paper Roll (Bottom Left) -->
+    <g id="paper-roll">
+      <g clip-path="url(#paper-strip-clip)">
+        <rect x="5" y="13" width="11" height="28" fill="#F4F4F4"/>
+        <rect x="5" y="13" width="2" height="28" fill="#E0E0E0"/>
+        <rect x="14" y="13" width="2" height="28" fill="#FFFFFF"/>
+        <line x1="7" y1="18" x2="13" y2="18" stroke="#D0D0D0" stroke-width="1"/>
+        <line x1="7" y1="23" x2="13" y2="23" stroke="#D0D0D0" stroke-width="1"/>
+        <line x1="7" y1="28" x2="13" y2="28" stroke="#D0D0D0" stroke-width="1"/>
+        <line x1="7" y1="33" x2="13" y2="33" stroke="#D0D0D0" stroke-width="1"/>
+      </g>
+      <rect x="4" y="9" width="13" height="6" fill="#EEEEEE" rx="2"/>
+      <rect x="4" y="9" width="4" height="6" fill="#DDDDDD"/>
+      <ellipse cx="6" cy="12" rx="1.5" ry="2.5" fill="#AAAAAA"/>
+      <rect x="7" y="10" width="9" height="2" fill="#FFFFFF"/>
+    </g>
+
+    <!-- Speed Action Lines -->
+    <g class="speed-a">
+      <rect x="3" y="17" width="1" height="5" fill="#B0B0B0"/>
+      <rect x="17" y="20" width="1" height="4" fill="#B0B0B0"/>
+    </g>
+    <g class="speed-b">
+      <rect x="2" y="23" width="1" height="6" fill="#888888"/>
+      <rect x="18" y="14" width="1" height="5" fill="#888888"/>
+    </g>
+
+    <!-- Musubi Body (Leaning forward over roll) -->
+    <!-- Bushy Tail swishing -->
+    <rect x="42" y="16" width="4" height="4" fill="#261910" rx="1"/>
+    <rect x="43" y="15" width="3" height="3" fill="#8B6846"/>
+    <rect x="39" y="20" width="4" height="5" fill="#261910"/>
+
+    <!-- Fluffy Tabby Body with Stripes -->
+    <rect x="23" y="18" width="18" height="15" fill="#8B6846"/>
+    <rect x="29" y="18" width="3" height="8" fill="#261910"/>
+    <rect x="34" y="19" width="3" height="8" fill="#261910"/>
+    <rect x="38" y="22" width="3" height="6" fill="#261910"/>
+
+    <!-- Mane / Ruff Fluff -->
+    <rect x="20" y="16" width="14" height="5" fill="#B8956E"/>
+    <rect x="21" y="18" width="12" height="4" fill="#D4BA99"/>
+
+    <!-- Head & Face (Focused intensely on roll) -->
+    <rect x="21" y="6" width="15" height="13" fill="#8B6846"/>
+    <rect x="19" y="8" width="18" height="10" fill="#8B6846"/>
+
+    <!-- Pointed Ears with Lynx Tufts -->
+    <g class="scroll-ear-l">
+      <rect x="18" y="6" width="4" height="4" fill="#6B4E33"/>
+      <rect x="19" y="4" width="3" height="3" fill="#6B4E33"/>
+      <rect x="20" y="2" width="1" height="2" fill="#1A1009"/>
+    </g>
+    <g class="scroll-ear-r">
+      <rect x="33" y="6" width="4" height="4" fill="#6B4E33"/>
+      <rect x="34" y="4" width="3" height="3" fill="#6B4E33"/>
+      <rect x="35" y="2" width="1" height="2" fill="#1A1009"/>
+    </g>
+
+    <!-- Forehead "M" Marking -->
+    <rect x="24" y="6" width="2" height="3" fill="#1A1009"/>
+    <rect x="30" y="6" width="2" height="3" fill="#1A1009"/>
+    <rect x="27" y="7" width="2" height="2" fill="#1A1009"/>
+    <rect x="25" y="8" width="6" height="1" fill="#1A1009"/>
+
+    <!-- Intense Emerald Green Eyes Looking Down -->
+    <rect x="22" y="11" width="4" height="3" fill="#1A1009" rx="0.5"/>
+    <rect x="22" y="11" width="3" height="3" fill="#43A047"/>
+    <rect x="23" y="12" width="2" height="2" fill="#111811"/>
+    <rect x="22" y="12" width="1" height="1" fill="#A5D6A7"/>
+
+    <rect x="30" y="11" width="4" height="3" fill="#1A1009" rx="0.5"/>
+    <rect x="30" y="11" width="3" height="3" fill="#43A047"/>
+    <rect x="31" y="12" width="2" height="2" fill="#111811"/>
+    <rect x="30" y="12" width="1" height="1" fill="#A5D6A7"/>
+
+    <!-- Terracotta Nose -->
+    <rect x="25" y="13" width="6" height="5" fill="#B8956E"/>
+    <rect x="26" y="14" width="4" height="2" fill="#B85D52" rx="0.5"/>
+
+    <!-- Alternating Paws Rolling the Paper -->
+    <g class="scroll-paw-l">
+      <rect x="12" y="10" width="5" height="5" fill="#8B6846"/>
+      <rect x="11" y="12" width="6" height="4" fill="#B8956E"/>
+      <rect x="11" y="14" width="6" height="2" fill="#705234"/>
+    </g>
+    <g class="scroll-paw-r">
+      <rect x="16" y="13" width="5" height="5" fill="#8B6846"/>
+      <rect x="15" y="15" width="6" height="4" fill="#B8956E"/>
+      <rect x="15" y="17" width="6" height="2" fill="#705234"/>
+    </g>
+  </g>
+</svg>

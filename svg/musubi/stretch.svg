@@ -1,0 +1,99 @@
+<svg width="72" height="56" viewBox="-6 -2 72 56" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <filter id="musubi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <style>
+      @keyframes stretch-tail-swish {
+        0%, 100% { transform: rotate(-6deg); }
+        50% { transform: rotate(12deg); }
+      }
+      @keyframes stretch-breathe {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(1px); }
+      }
+      .stretch-tail {
+        transform-origin: 48px 23px;
+        animation: stretch-tail-swish 0.35s ease-in-out infinite alternate;
+      }
+      .stretch-body-anim {
+        animation: stretch-breathe 2.5s ease-in-out infinite;
+      }
+    </style>
+  </defs>
+
+  <g id="cat-content" class="stretch-body-anim" filter="url(#musubi-outline)">
+    <!-- Bushy Tail held high in elegant arch -->
+    <g class="stretch-tail">
+      <rect x="47" y="20" width="4" height="4" fill="#261910"/>
+      <rect x="49" y="16" width="5" height="4" fill="#8B6846" rx="1"/>
+      <rect x="50" y="12" width="4" height="4" fill="#261910"/>
+      <rect x="51" y="8" width="3" height="4" fill="#8B6846"/>
+    </g>
+
+    <!-- Hindquarters (Arched high in feline downward stretch) with Stripes -->
+    <rect x="33" y="21" width="16" height="19" fill="#8B6846"/>
+    <rect x="37" y="21" width="3" height="14" fill="#261910"/>
+    <rect x="43" y="22" width="3" height="15" fill="#261910"/>
+
+    <!-- Hind Legs Standing Strong -->
+    <rect x="41" y="38" width="5" height="11" fill="#8B6846"/>
+    <rect x="41" y="49" width="6" height="3" fill="#B8956E"/>
+    <rect x="46" y="37" width="5" height="12" fill="#8B6846"/>
+    <rect x="46" y="49" width="6" height="3" fill="#B8956E"/>
+
+    <!-- Slanted Mid-Back (Sloping down to floor) with Tabby Stripes -->
+    <rect x="23" y="25" width="12" height="17" fill="#8B6846"/>
+    <rect x="25" y="24" width="10" height="3" fill="#8B6846"/>
+    <rect x="25" y="26" width="3" height="12" fill="#261910"/>
+    <rect x="31" y="25" width="3" height="13" fill="#261910"/>
+
+    <!-- Chest Low to the Floor with Fluffy Mane Spreading -->
+    <rect x="17" y="31" width="10" height="13" fill="#8B6846"/>
+    <rect x="18" y="33" width="8" height="9" fill="#B8956E"/>
+    <rect x="19" y="35" width="6" height="6" fill="#D4BA99"/>
+
+    <!-- Front Paws and Claws Stretched Straight Out Forward on Floor -->
+    <rect x="3" y="44" width="18" height="4" fill="#8B6846"/>
+    <rect x="2" y="46" width="12" height="3" fill="#B8956E"/>
+    <rect x="2" y="48" width="12" height="1" fill="#705234"/>
+    <!-- Claws extended slightly on floor -->
+    <rect x="1" y="48" width="2" height="1" fill="#FFFFFF"/>
+    <rect x="4" y="48" width="1" height="1" fill="#FFFFFF"/>
+    <rect x="7" y="48" width="1" height="1" fill="#FFFFFF"/>
+
+    <!-- Head Resting Low (Enjoying the deep feline stretch) -->
+    <rect x="8" y="30" width="14" height="14" fill="#8B6846"/>
+    <rect x="9" y="29" width="12" height="14" fill="#8B6846"/>
+
+    <!-- Ears Back with Lynx Tufts -->
+    <rect x="5" y="30" width="4" height="4" fill="#6B4E33"/>
+    <rect x="4" y="33" width="4" height="5" fill="#6B4E33"/>
+    <rect x="3" y="38" width="2" height="3" fill="#1A1009"/>
+
+    <rect x="19" y="30" width="4" height="4" fill="#6B4E33"/>
+    <rect x="20" y="33" width="4" height="5" fill="#6B4E33"/>
+    <rect x="21" y="38" width="2" height="3" fill="#1A1009"/>
+
+    <!-- Blissful Eyes Closed in Deep Stretch -->
+    <rect x="9" y="34" width="4" height="1" fill="#1A1009"/>
+    <rect x="10" y="35" width="2" height="1" fill="#1A1009"/>
+    <rect x="16" y="34" width="4" height="1" fill="#1A1009"/>
+    <rect x="16" y="35" width="2" height="1" fill="#1A1009"/>
+
+    <!-- Snout & Terracotta Nose -->
+    <rect x="11" y="36" width="7" height="5" fill="#B8956E"/>
+    <rect x="12" y="37" width="4" height="2" fill="#B85D52" rx="0.5"/>
+
+    <!-- Whiskers on floor -->
+    <line x1="3" y1="38" x2="10" y2="38" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+    <line x1="17" y1="38" x2="24" y2="38" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+  </g>
+</svg>

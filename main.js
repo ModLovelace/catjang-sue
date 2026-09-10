@@ -20,12 +20,31 @@ const os = require("os");
 const http = require("http");
 const vm = require("vm");
 const { spawn } = require("child_process");
-const bundledFfmpegPath = require("ffmpeg-static");
 
 const IS_MAC = process.platform === "darwin";
 const IS_WINDOWS = process.platform === "win32";
+const IS_LINUX = process.platform === "linux";
 const IS_SMOKE_TEST = process.argv.includes("--catjang-smoke-test");
-const ENABLE_GLOBAL_INPUT_HOOK = !IS_WINDOWS || process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
+const IS_LINUX_WAYLAND_SESSION = IS_LINUX && process.env.XDG_SESSION_TYPE === "wayland";
+const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().toLowerCase();
+const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
+const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
+// Agent integrations are opt-in. An explicit environment override remains
+// available for automated setups, but normal installations use settings.json.
+const AGENT_INTEGRATIONS_ENV = process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS;
+const AGENT_INTEGRATIONS_OVERRIDE = AGENT_INTEGRATIONS_ENV === "0" || AGENT_INTEGRATIONS_ENV === "1"
+  ? AGENT_INTEGRATIONS_ENV === "1"
+  : null;
+let agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === true;
+// Typing and wheel gestures are core pet interactions. Keep them enabled when
+// uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
+// for installations that do not want a global input hook.
+const ENABLE_GLOBAL_INPUT_HOOK = process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
+
+if (IS_LINUX_WAYLAND_SESSION) {
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch("disable-features", "Vulkan");
+}
 
 if (IS_WINDOWS && !process.env.PREBUILDS_ONLY) {
   process.env.PREBUILDS_ONLY = "1";
@@ -86,10 +105,12 @@ let petWin = null;
 let patternWin = null;
 let mappingWin = null;
 let licenseWin = null;
+let agentConnectWin = null;
 let shareOverlayWin = null;
 let shareControlsWin = null;
 let shareCaptureSession = null;
 let cursorPollTimer = null;
+let nativeMoveEndTimer = null;
 let keyHookStarted = false;
 let keyHookListenersAttached = false;
 let keyHookRetryTimer = null;
@@ -107,18 +128,25 @@ let updateInstallPending = false;
 let pendingManualUpdateCheck = false;
 
 const PROTOTYPE_LICENSE_ENDPOINT = require("./prototype-license/endpoint");
-const SUPPORTED_LANGUAGES = ["en", "ko", "ja"];
+const SUPPORTED_LANGUAGES = ["es", "en", "ko", "ja"];
 const SHARE_VIDEO_CROP_GUARD_X_PX = 48;
 const SHARE_VIDEO_CROP_GUARD_TOP_PX = 96;
 const SHARE_VIDEO_CROP_GUARD_BOTTOM_PX = 48;
 const SHARE_VIDEO_KEYFRAME_INTERVAL_SEC = 1 / 30;
 const REGULAR_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
-let currentLanguage = "en";
+let currentLanguage = "es";
+let currentMascot = "cat";
 
 function resolveFfmpegPath() {
-  if (!bundledFfmpegPath) return null;
-  const unpackedPath = bundledFfmpegPath.replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`);
-  return unpackedPath;
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "ffmpeg", IS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
+  }
+  try {
+    const developmentPath = require("ffmpeg-static");
+    return developmentPath || null;
+  } catch {
+    return null;
+  }
 }
 
 const ffmpegPath = resolveFfmpegPath();
@@ -130,6 +158,8 @@ const I18N = {
     licenseWindowTitle: "Catjang License",
     patternEditorTitle: "Catjang Pattern Editor",
     mappingEditorTitle: "Catjang Cell Mapping Editor",
+    aiAgentsSetup: "Connect AI Agents...",
+    aiAgentsSetupTitle: "Connect AI Agents - Catjang",
     appMenuAbout: "About Catjang",
     appMenuQuit: "Quit",
     checkForUpdates: "Check for Updates",
@@ -146,8 +176,8 @@ const I18N = {
     jumpNow: "Jump now",
     shareCat: "Show off my Catjang",
     setUserName: "Tell my name",
-    setCatName: "Set Catjang name",
-    showCatName: "Show Catjang name",
+    setCatName: "Set pet name",
+    showCatName: "Show pet name",
     fixedMessage: "Fixed message",
     reminders: "Reminders",
     remindersOpen: "Open reminders",
@@ -178,6 +208,7 @@ const I18N = {
     everyHourAndHalf: "Every 1 hour 30 minutes",
     everyTwoHours: "Every 2 hours",
     language: "Language",
+    spanish: "Spanish",
     english: "English",
     korean: "Korean",
     japanese: "Japanese",
@@ -199,6 +230,107 @@ const I18N = {
     clear: "Clear",
     delete: "Delete",
     later: "Later",
+    fullReset: "Full Reset (Factory Reset)",
+    fullResetTitle: "Catjang Full Reset",
+    fullResetConfirm: "Are you sure you want to completely reset Catjang?\n\nAll settings will be deleted, and you will need to re-enter your activation key / token.",
+    confirmReset: "Yes, Reset All",
+    mascot: "Mascot",
+    mascotCat: "Cat (Catjang) 🐱",
+    mascotSchnauzer: "Puppy (Schnauzer) 🐶",
+    mascotChisi: "Poodle Toy (Chisi) 🐩",
+    mascotMilo: "Milo (Milongas) 🐕",
+    mascotMusubi: "Tabby Cat (Musubi) 🐱",
+    mascotPeruperro: "Peruvian Hairless (Chuño) 🐕",
+  },
+  es: {
+    licenseMissingKey: "Introduce tu clave de licencia.",
+    licenseActivateFailed: "No se pudo activar esta clave de licencia.",
+    licenseWindowTitle: "Licencia de Catjang",
+    patternEditorTitle: "Editor de patrones de Catjang",
+    mappingEditorTitle: "Editor de celdas de Catjang",
+    aiAgentsSetup: "Conectar Agentes IA...",
+    aiAgentsSetupTitle: "Conectar con Agentes de IA - Catjang",
+    appMenuAbout: "Acerca de Catjang",
+    appMenuQuit: "Salir",
+    checkForUpdates: "Buscar actualizaciones",
+    editMenu: "Editar",
+    contextTitle: "Catjang",
+    size: "Tamaño",
+    smaller: "Más pequeño (-20)",
+    larger: "Más grande (+20)",
+    resetSize: "Restablecer tamaño (100 × 100)",
+    petSizePixels: (size) => `${size} × ${size}`,
+    stretch: "Estiramiento de descanso",
+    stretchNow: "Estirarse ahora",
+    jump: "Salto",
+    jumpNow: "Saltar ahora",
+    shareCat: "Presumir a mi Catjang",
+    setUserName: "Indicar mi nombre",
+    setCatName: "Cambiar nombre de la mascota",
+    showCatName: "Mostrar nombre de la mascota",
+    fixedMessage: "Mensaje fijo",
+    reminders: "Recordatorios",
+    remindersOpen: "Abrir recordatorios",
+    showReminderButtonOutside: "Mostrar botón exterior",
+    pomodoro: "Pomodoro",
+    pomodoroStart: "Iniciar",
+    pomodoroPause: "Pausar",
+    pomodoroResume: "Reanudar",
+    pomodoroReset: "Restablecer",
+    pomodoroFocusTime: "Tiempo de concentración",
+    pomodoroRestTime: "Tiempo de descanso",
+    pomodoroFocusLabel: "Concentración",
+    pomodoroRestLabel: "Descanso",
+    pomodoroMinutes: (min) => `${min} min`,
+    pomodoroCustom: "Personalizado",
+    patternEditor: "Editor de patrones",
+    mappingEditor: "Editor de celdas",
+    taskCompleteSound: "Sonido al completar tareas",
+    soundOff: "Desactivado",
+    soundLow: "Bajo",
+    soundNormal: "Normal",
+    soundHigh: "Alto",
+    autoStretch: "Estiramiento automático",
+    off: "Desactivado",
+    everyMinuteTest: "Cada minuto (prueba)",
+    everyMinutes: (min) => `Cada ${min} minutos`,
+    everyHour: "Cada hora",
+    everyHourAndHalf: "Cada hora y 30 minutos",
+    everyTwoHours: "Cada 2 horas",
+    language: "Idioma",
+    spanish: "Español",
+    english: "Inglés",
+    korean: "Coreano",
+    japanese: "Japonés",
+    accessibilityPermissionTitle: "Se necesita permiso de accesibilidad",
+    accessibilityPermissionMessage: "Permite que Catjang reaccione al escribir",
+    accessibilityPermissionDetail: "Activa Catjang en Accesibilidad y reinícialo si no comienza a reaccionar al teclado.",
+    inputPermissionTitle: "Puede necesitarse supervisión de entrada",
+    inputPermissionMessage: "Catjang todavía no puede detectar el teclado",
+    inputPermissionDetail: "Algunos entornos de macOS también requieren Supervisión de entrada. Añade Catjang y reinícialo.",
+    openInputMonitoring: "Abrir Supervisión de entrada",
+    openAccessibility: "Abrir Accesibilidad",
+    shareVideoTitle: "Compartir vídeo",
+    shareVideoSaveTitle: "Guardar vídeo",
+    shareRecordingFailed: "No se pudo crear el vídeo.",
+    globalInputPermissionTitle: "Supervisión de entrada no disponible",
+    globalInputPermissionMessage: "Catjang no puede detectar el teclado ni la rueda del mouse",
+    globalInputPermissionDetail: "Reinicia Catjang y comprueba si el software de seguridad o las políticas del sistema bloquean la captura global.",
+    reset: "Restablecer",
+    clear: "Limpiar",
+    delete: "Eliminar",
+    later: "Más tarde",
+    fullReset: "Reinicio total (Restablecer)",
+    fullResetTitle: "Reinicio Total de Catjang",
+    fullResetConfirm: "¿Estás seguro de que deseas restablecer Catjang por completo?\n\nSe borrará toda la configuración y deberás ingresar nuevamente tu token de activación.",
+    confirmReset: "Sí, reiniciar todo",
+    mascot: "Mascota",
+    mascotCat: "Gatito (Catjang) 🐱",
+    mascotSchnauzer: "Perrito (Schnauzer) 🐶",
+    mascotChisi: "Caniche Toy (Chisi) 🐩",
+    mascotMilo: "Milo (Milongas) 🐕",
+    mascotMusubi: "Gato Atigrado (Musubi) 🐱",
+    mascotPeruperro: "Perro Peruano Calado (Chuño) 🐕",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -206,6 +338,8 @@ const I18N = {
     licenseWindowTitle: "Catjang 라이선스",
     patternEditorTitle: "캣짱 패턴 편집기",
     mappingEditorTitle: "캣짱 셀 매핑 편집기",
+    aiAgentsSetup: "AI 에이전트 연결...",
+    aiAgentsSetupTitle: "AI 에이전트 연결 - Catjang",
     appMenuAbout: "Catjang에 관하여",
     appMenuQuit: "종료",
     checkForUpdates: "업데이트 확인",
@@ -222,8 +356,8 @@ const I18N = {
     jumpNow: "지금 점프",
     shareCat: "내 캣짱 자랑 영상찍기",
     setUserName: "내 이름 알려주기",
-    setCatName: "캣짱 이름 지정",
-    showCatName: "캣짱 이름 표시",
+    setCatName: "반려동물 이름 지정",
+    showCatName: "반려동물 이름 표시",
     fixedMessage: "고정 메시지",
     reminders: "알림",
     remindersOpen: "알림 열기",
@@ -254,6 +388,7 @@ const I18N = {
     everyHourAndHalf: "1시간 30분마다",
     everyTwoHours: "2시간마다",
     language: "언어",
+    spanish: "스페인어",
     english: "영어",
     korean: "한국어",
     japanese: "일본어",
@@ -275,6 +410,17 @@ const I18N = {
     clear: "지우기",
     delete: "삭제",
     later: "나중에",
+    fullReset: "완전 초기화 (공장 초기화)",
+    fullResetTitle: "Catjang 완전 초기화",
+    fullResetConfirm: "Catjang을 완전히 초기화하시겠습니까?\n\n모든 설정이 삭제되며 활성화 토큰을 다시 입력해야 합니다.",
+    confirmReset: "예, 모두 초기화",
+    mascot: "반려동물",
+    mascotCat: "고양이 (캣짱) 🐱",
+    mascotSchnauzer: "강아지 (슈나우저) 🐶",
+    mascotChisi: "토이푸들 (치시) 🐩",
+    mascotMilo: "밀로 (밀롱가스) 🐕",
+    mascotMusubi: "줄무늬 고양이 (무스비) 🐱",
+    mascotPeruperro: "페루 무모견 (추뇨) 🐕",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -282,6 +428,8 @@ const I18N = {
     licenseWindowTitle: "Catjang ライセンス",
     patternEditorTitle: "Catjang パターンエディター",
     mappingEditorTitle: "Catjang セルマッピングエディター",
+    aiAgentsSetup: "AIエージェントの接続...",
+    aiAgentsSetupTitle: "AIエージェントの接続 - Catjang",
     appMenuAbout: "Catjang について",
     appMenuQuit: "終了",
     checkForUpdates: "アップデートを確認",
@@ -298,8 +446,8 @@ const I18N = {
     jumpNow: "今すぐジャンプ",
     shareCat: "Catjang を自慢する動画を撮る",
     setUserName: "自分の名前を教える",
-    setCatName: "Catjang の名前を設定",
-    showCatName: "Catjang の名前を表示",
+    setCatName: "ペットの名前を設定",
+    showCatName: "ペットの名前を表示",
     fixedMessage: "固定メッセージ",
     reminders: "通知",
     remindersOpen: "通知を開く",
@@ -330,6 +478,7 @@ const I18N = {
     everyHourAndHalf: "1時間30分ごと",
     everyTwoHours: "2時間ごと",
     language: "言語",
+    spanish: "スペイン語",
     english: "英語",
     korean: "韓国語",
     japanese: "日本語",
@@ -351,6 +500,17 @@ const I18N = {
     clear: "クリア",
     delete: "削除",
     later: "後で",
+    fullReset: "完全リセット (初期化)",
+    fullResetTitle: "Catjang 完全リセット",
+    fullResetConfirm: "Catjang を完全にリセットしますか？\n\nすべての設定が削除され、アクティベーショントークンを再入力する必要があります。",
+    confirmReset: "はい、すべてリセット",
+    mascot: "ペット",
+    mascotCat: "子猫 (Catjang) 🐱",
+    mascotSchnauzer: "子犬 (シュナウザー) 🐶",
+    mascotChisi: "トイプードル (Chisi) 🐩",
+    mascotMilo: "ミロ (Milongas) 🐕",
+    mascotMusubi: "トラ猫 (Musubi) 🐱",
+    mascotPeruperro: "ペルーヘアレス (Chuño) 🐕",
   },
 };
 
@@ -362,11 +522,11 @@ function t(key, ...args) {
 
 function normalizeLanguage(language) {
   const lang = String(language || "").toLowerCase().split("-")[0];
-  return SUPPORTED_LANGUAGES.includes(lang) ? lang : "en";
+  return SUPPORTED_LANGUAGES.includes(lang) ? lang : "es";
 }
 
 function defaultLanguage() {
-  return normalizeLanguage(app.getLocale && app.getLocale());
+  return "es";
 }
 
 function licensePath() {
@@ -456,13 +616,13 @@ let currentPattern = {
   earL: [], earR: [],
 };
 const PATTERN_PRESETS = [
-  { id: "black-cat", label: { en: "Black cat", ko: "검은냥이" }, file: "black-cat.json", image: "../workspace/assets/img/presets/black.png" },
-  { id: "white-cat", label: { en: "White cat", ko: "하얀냥이" }, file: "white-cat.json", image: "../workspace/assets/img/presets/white.png" },
-  { id: "cheese-cat", label: { en: "Cheese cat", ko: "치즈냥이" }, file: "cheese-cat.json", image: "../workspace/assets/img/presets/orange.png" },
-  { id: "siamese-cat", label: { en: "Siamese cat", ko: "샴고양이" }, file: "siamese-cat.json", image: "../workspace/assets/img/presets/siamese.png" },
-  { id: "mackerel-tabby", label: { en: "Mackerel tabby", ko: "고등어냥이" }, file: "mackerel-tabby.json", image: "../workspace/assets/img/presets/mackerel.png" },
-  { id: "calico-cat", label: { en: "Calico cat", ko: "삼색냥이" }, file: "calico-cat.json", image: "../workspace/assets/img/presets/calico.png" },
-  { id: "russian-blue", label: { en: "Russian Blue", ko: "러시안블루" }, file: "rusian-blue.json", image: "../workspace/assets/img/presets/rusian-blue.png" },
+  { id: "black-cat", label: { es: "Gato negro", en: "Black cat", ko: "검은냥이" }, file: "black-cat.json", image: "../workspace/assets/img/presets/black.png" },
+  { id: "white-cat", label: { es: "Gato blanco", en: "White cat", ko: "하얀냥이" }, file: "white-cat.json", image: "../workspace/assets/img/presets/white.png" },
+  { id: "cheese-cat", label: { es: "Gato naranja", en: "Cheese cat", ko: "치즈냥이" }, file: "cheese-cat.json", image: "../workspace/assets/img/presets/orange.png" },
+  { id: "siamese-cat", label: { es: "Gato siamés", en: "Siamese cat", ko: "샴고양이" }, file: "siamese-cat.json", image: "../workspace/assets/img/presets/siamese.png" },
+  { id: "mackerel-tabby", label: { es: "Gato atigrado", en: "Mackerel tabby", ko: "고등어냥이" }, file: "mackerel-tabby.json", image: "../workspace/assets/img/presets/mackerel.png" },
+  { id: "calico-cat", label: { es: "Gato calicó", en: "Calico cat", ko: "삼색냥이" }, file: "calico-cat.json", image: "../workspace/assets/img/presets/calico.png" },
+  { id: "russian-blue", label: { es: "Azul ruso", en: "Russian Blue", ko: "러시안블루" }, file: "rusian-blue.json", image: "../workspace/assets/img/presets/rusian-blue.png" },
 ];
 
 function patternPath() {
@@ -580,6 +740,14 @@ let stretchIntervalMin = DEFAULT_STRETCH_INTERVAL_MIN; // 0 = 끔
 let stretchTimer = null;
 let reminders = [];
 let reminderTimer = null;
+let mascotNames = {
+  cat: "Catjang",
+  schnauzer: "Toto",
+  chisi: "Chisi",
+  milo: "Milo",
+  musubi: "Musubi",
+  peruperro: "Chuño",
+};
 let catName = "Catjang";
 let userName = "";
 let showCatName = true;
@@ -595,7 +763,9 @@ let pomodoroTimer = null;
 let accessibilityPermissionGuideShown = false;
 let inputPermissionGuideShown = false;
 let catNamePromptShown = false;
-let taskCompleteSoundVolume = 0.1;
+let agentOnboardingShown = false;
+const DEFAULT_TASK_COMPLETE_SOUND_VOLUME = 0.1;
+let taskCompleteSoundVolume = DEFAULT_TASK_COMPLETE_SOUND_VOLUME;
 
 function releaseBuildExcludesDevOptions() {
   return app.isPackaged;
@@ -617,6 +787,7 @@ function normalizePetSize(size) {
 }
 
 function normalizePetPosition(position) {
+  if (IS_NATIVE_WAYLAND) return null;
   if (!position || typeof position !== "object") return null;
   const x = Math.round(Number(position.x));
   const y = Math.round(Number(position.y));
@@ -636,8 +807,41 @@ function loadSettings() {
       if (typeof data.language === "string") {
         currentLanguage = normalizeLanguage(data.language);
       }
-      if (typeof data.catName === "string" && data.catName.trim()) {
-        catName = data.catName.trim().slice(0, 24);
+      if (data.mascotNames && typeof data.mascotNames === "object") {
+        if (typeof data.mascotNames.cat === "string" && data.mascotNames.cat.trim()) {
+          mascotNames.cat = data.mascotNames.cat.trim().slice(0, 24);
+        }
+        if (typeof data.mascotNames.schnauzer === "string" && data.mascotNames.schnauzer.trim()) {
+          const sName = data.mascotNames.schnauzer.trim().slice(0, 24);
+          mascotNames.schnauzer = (sName === "Otto") ? "Toto" : sName;
+        }
+        if (typeof data.mascotNames.chisi === "string" && data.mascotNames.chisi.trim()) {
+          mascotNames.chisi = data.mascotNames.chisi.trim().slice(0, 24);
+        }
+        if (typeof data.mascotNames.milo === "string" && data.mascotNames.milo.trim()) {
+          mascotNames.milo = data.mascotNames.milo.trim().slice(0, 24);
+        }
+        if (typeof data.mascotNames.musubi === "string" && data.mascotNames.musubi.trim()) {
+          mascotNames.musubi = data.mascotNames.musubi.trim().slice(0, 24);
+        }
+        if (typeof data.mascotNames.peruperro === "string" && data.mascotNames.peruperro.trim()) {
+          const pName = data.mascotNames.peruperro.trim().slice(0, 24);
+          mascotNames.peruperro = (pName === "Inca") ? "Chuño" : pName;
+        }
+      } else if (typeof data.catName === "string" && data.catName.trim()) {
+        mascotNames.cat = data.catName.trim().slice(0, 24);
+      }
+      if (typeof data.mascot === "string" && (data.mascot === "cat" || data.mascot === "schnauzer" || data.mascot === "chisi" || data.mascot === "milo" || data.mascot === "musubi" || data.mascot === "peruperro")) {
+        currentMascot = data.mascot;
+      }
+      catName = mascotNames[currentMascot] || mascotNames.cat;
+      if (catName === "Otto" && currentMascot === "schnauzer") {
+        catName = "Toto";
+        mascotNames.schnauzer = "Toto";
+      }
+      if (catName === "Inca" && currentMascot === "peruperro") {
+        catName = "Chuño";
+        mascotNames.peruperro = "Chuño";
       }
       if (typeof data.userName === "string") {
         userName = data.userName.trim().slice(0, 24);
@@ -653,6 +857,12 @@ function loadSettings() {
       }
       if (typeof data.catNamePromptShown === "boolean") {
         catNamePromptShown = data.catNamePromptShown;
+      }
+      if (typeof data.agentOnboardingShown === "boolean") {
+        agentOnboardingShown = data.agentOnboardingShown;
+      }
+      if (AGENT_INTEGRATIONS_OVERRIDE === null && typeof data.agentIntegrationsEnabled === "boolean") {
+        agentIntegrationsEnabled = data.agentIntegrationsEnabled;
       }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
@@ -680,12 +890,16 @@ function saveSettings() {
       stretchIntervalMin,
       reminders,
       language: currentLanguage,
+      mascot: currentMascot,
+      mascotNames,
       catName,
       userName,
       showCatName,
       fixedMessage,
       showReminderButtonOutside,
       catNamePromptShown,
+      agentOnboardingShown,
+      agentIntegrationsEnabled,
       taskCompleteSoundVolume,
       petSize: currentPetSize,
       petPosition: currentPetPosition,
@@ -693,6 +907,19 @@ function saveSettings() {
       pomodoroRestSec,
     }, null, 2));
   } catch {}
+}
+
+function setMascot(mascot) {
+  if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi" && mascot !== "peruperro") return;
+  mascotNames[currentMascot] = catName;
+  currentMascot = mascot;
+  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Chuño" : "Catjang"))));
+  catName = mascotNames[currentMascot] || defaultName;
+  saveSettings();
+  if (petWin && !petWin.isDestroyed()) {
+    petWin.webContents.send("mascot-changed", currentMascot);
+    broadcastCatNameSettings();
+  }
 }
 
 function startStretchTimer() {
@@ -857,8 +1084,10 @@ function formatReminderSpeech(message, time) {
   const koName = name || "집사야";
   const enName = name || "Human";
   const jaName = name ? `${name}さん` : "ご主人";
+  const esName = name || "Humano";
   if (currentLanguage === "ko") return `${koName}, ${timeText} "${text}"`;
   if (currentLanguage === "ja") return `${jaName}、${timeText}「${text}」`;
+  if (currentLanguage === "es") return `${esName}, ${timeText}: "${text}"`;
   return `${enName}, ${timeText} "${text}"`;
 }
 
@@ -917,6 +1146,9 @@ function setLanguage(language) {
   if (mappingWin && !mappingWin.isDestroyed()) {
     mappingWin.setTitle(t("mappingEditorTitle"));
   }
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.setTitle(t("aiAgentsSetupTitle"));
+  }
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("language-changed", currentLanguage);
   }
@@ -941,8 +1173,16 @@ function broadcastFixedMessageSettings() {
 }
 
 function setCatName(value) {
-  const next = String(value || "").trim().slice(0, 24) || "Catjang";
+  const fallback = currentMascot === "schnauzer"
+    ? "Toto"
+    : (currentMascot === "chisi"
+      ? "Chisi"
+      : (currentMascot === "milo"
+        ? "Milo"
+        : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Chuño" : "Catjang"))));
+  const next = String(value || "").trim().slice(0, 24) || fallback;
   catName = next;
+  mascotNames[currentMascot] = catName;
   saveSettings();
   broadcastCatNameSettings();
   return { name: catName, visible: showCatName };
@@ -972,6 +1212,12 @@ function setFixedMessage(value) {
 function markCatNamePromptShown() {
   if (catNamePromptShown) return;
   catNamePromptShown = true;
+  saveSettings();
+}
+
+function markAgentOnboardingShown() {
+  if (agentOnboardingShown) return;
+  agentOnboardingShown = true;
   saveSettings();
 }
 
@@ -1192,6 +1438,7 @@ function createPetWindow() {
     height: H,
     x: initialPosition.x,
     y: initialPosition.y,
+    show: false,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -1213,6 +1460,33 @@ function createPetWindow() {
 
   attachWindowDiagnostics(petWin, "pet");
   keepWindowOnTop(petWin);
+  petWin.once("ready-to-show", () => {
+    if (!petWin || petWin.isDestroyed()) return;
+    keepWindowOnTop(petWin);
+    petWin.showInactive();
+    logInfo("[Catjang] pet window shown", {
+      bounds: petWin.getBounds(),
+      visible: petWin.isVisible(),
+    });
+  });
+  petWin.on("system-context-menu", (event) => {
+    event.preventDefault();
+    showPetContextMenu();
+  });
+  if (IS_NATIVE_WAYLAND) {
+    petWin.on("move", () => {
+      if (!petWin || petWin.isDestroyed()) return;
+      lastPetDragAt = Date.now();
+      petWin.webContents.send("native-window-drag-state", true);
+      if (nativeMoveEndTimer) clearTimeout(nativeMoveEndTimer);
+      nativeMoveEndTimer = setTimeout(() => {
+        nativeMoveEndTimer = null;
+        if (petWin && !petWin.isDestroyed()) {
+          petWin.webContents.send("native-window-drag-state", false);
+        }
+      }, 140);
+    });
+  }
   petWin.loadFile(path.join(__dirname, "renderer", "index.html"));
   petWin.webContents.on("did-finish-load", () => {
     broadcastPattern();
@@ -1229,24 +1503,43 @@ function createPetWindow() {
         petWin.webContents.send("cat-name-edit", catName);
       }, 1000);
     }
+    if (!agentOnboardingShown) {
+      setTimeout(() => {
+        if (!petWin || petWin.isDestroyed() || agentOnboardingShown) return;
+        openAgentConnectWindow();
+      }, 1400);
+    }
   });
   if (!app.isPackaged) petWin.webContents.openDevTools({ mode: "detach" });
 
-  // 60Hz 마우스 위치 폴링 → renderer로 dx/dy 전송
-  cursorPollTimer = setInterval(() => {
-    if (!petWin || petWin.isDestroyed()) return;
-    const cursor = screen.getCursorScreenPoint();
-    const b = petWin.getBounds();
-    const cx = b.x + b.width / 2;
-    const cy = b.y + b.height / 2;
-    petWin.webContents.send("cursor-pos", {
-      dx: cursor.x - cx,
-      dy: cursor.y - cy,
-    });
-  }, 16);
+  // X11/XWayland exposes global coordinates. The renderer uses this poll for
+  // eye tracking and petting even before the window receives a DOM mousemove.
+  if (!IS_NATIVE_WAYLAND) {
+    let lastCursorDx = null;
+    let lastCursorDy = null;
+    cursorPollTimer = setInterval(() => {
+      if (!petWin || petWin.isDestroyed()) return;
+      const cursor = screen.getCursorScreenPoint();
+      const b = petWin.getBounds();
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      const dx = cursor.x - cx;
+      const dy = cursor.y - cy;
+      if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;
+      lastCursorDx = dx;
+      lastCursorDy = dy;
+      petWin.webContents.send("cursor-pos", {
+        dx,
+        dy,
+      });
+    }, 32);
+  }
 
   petWin.on("closed", () => {
     if (cursorPollTimer) clearInterval(cursorPollTimer);
+    if (nativeMoveEndTimer) clearTimeout(nativeMoveEndTimer);
+    cursorPollTimer = null;
+    nativeMoveEndTimer = null;
     petWin = null;
   });
 }
@@ -1261,19 +1554,26 @@ function createLicenseWindow(initialReason = "") {
   }
 
   licenseWin = new BrowserWindow({
-    width: 440,
-    height: 420,
+    width: 500,
+    height: 640,
     title: t("licenseWindowTitle"),
     icon: APP_ICON_PATH,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
+    center: true,
+    alwaysOnTop: true,
     backgroundColor: "#f7f4ef",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+  licenseWin.once("ready-to-show", () => {
+    if (!licenseWin || licenseWin.isDestroyed()) return;
+    licenseWin.show();
+    licenseWin.focus();
   });
   licenseWin.setMenu(null);
   attachWindowDiagnostics(licenseWin, "license");
@@ -1307,13 +1607,22 @@ function createLicenseWindow(initialReason = "") {
   });
 }
 
-function startLicensedApp() {
+function startLicensedApp(options = {}) {
+  const closeLicenseWindow = options.closeLicenseWindow !== false;
   createPetWindow();
-  if (ENABLE_GLOBAL_INPUT_HOOK) startKeyHook();
-  startAgentIntegrations();
+  if (ENABLE_GLOBAL_INPUT_HOOK) {
+    startKeyHook();
+  } else {
+    logInfo("[Catjang] global input hook disabled by CATJANG_ENABLE_GLOBAL_INPUT=0");
+  }
+  if (agentIntegrationsEnabled) {
+    startAgentIntegrations();
+  } else {
+    logInfo("[Catjang] agent integrations disabled until the user opts in");
+  }
   startStretchTimer();
   startReminderTimer();
-  if (licenseWin && !licenseWin.isDestroyed()) {
+  if (closeLicenseWindow && licenseWin && !licenseWin.isDestroyed()) {
     licenseWin.close();
   }
 }
@@ -1344,7 +1653,121 @@ function returnToLicenseWindow(reason = "invalid") {
   createLicenseWindow(String(reason || "invalid"));
   if (patternWin && !patternWin.isDestroyed()) patternWin.close();
   if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
   if (petWin && !petWin.isDestroyed()) petWin.close();
+}
+
+function confirmAndPerformFullReset() {
+  const choice = dialog.showMessageBoxSync(petWin || null, {
+    type: "warning",
+    buttons: [t("confirmReset") || "Sí, reiniciar todo", t("cancel") || "Cancelar"],
+    defaultId: 1,
+    cancelId: 1,
+    title: t("fullResetTitle") || "Reinicio Total de Catjang",
+    message: t("fullResetConfirm") || "¿Estás seguro de que deseas restablecer Catjang por completo?\n\nSe borrará toda la configuración y deberás ingresar nuevamente tu token de activación.",
+  });
+
+  if (choice !== 0) return;
+
+  logInfo("[Catjang] Performing full factory reset...");
+
+  stopKeyHook();
+  stopAgentIntegrations();
+  if (stretchTimer) {
+    clearInterval(stretchTimer);
+    stretchTimer = null;
+  }
+  stopReminderTimer();
+  stopPomodoroTimer();
+  hideShareCaptureOverlay();
+
+  removeLicense();
+  try {
+    const lic = licensePath();
+    if (fs.existsSync(lic)) fs.unlinkSync(lic);
+  } catch (err) {
+    logWarn("[Catjang] Failed to delete license file:", err && err.message);
+  }
+
+  try {
+    const st = settingsPath();
+    if (fs.existsSync(st)) fs.unlinkSync(st);
+  } catch (err) {
+    logWarn("[Catjang] Failed to delete settings file:", err && err.message);
+  }
+
+  try {
+    const pt = patternPath();
+    if (fs.existsSync(pt)) fs.unlinkSync(pt);
+  } catch {}
+  try {
+    const cp = customPresetsPath();
+    if (fs.existsSync(cp)) fs.unlinkSync(cp);
+  } catch {}
+
+  mascotNames = {
+    cat: "Catjang",
+    schnauzer: "Toto",
+    chisi: "Chisi",
+    milo: "Milo",
+    musubi: "Musubi",
+    peruperro: "Chuño",
+  };
+  catName = "Catjang";
+  currentMascot = "cat";
+  userName = "";
+  showCatName = true;
+  fixedMessage = "";
+  catNamePromptShown = false;
+  agentOnboardingShown = false;
+  reminders = [];
+  stretchIntervalMin = 30;
+  currentPetSize = DEFAULT_SIZE;
+  currentPetPosition = null;
+  taskCompleteSoundVolume = DEFAULT_TASK_COMPLETE_SOUND_VOLUME;
+
+  if (patternWin && !patternWin.isDestroyed()) patternWin.close();
+  if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
+  if (petWin && !petWin.isDestroyed()) petWin.close();
+
+  createLicenseWindow("");
+}
+
+function openAgentConnectWindow() {
+  logInfo("[Catjang] openAgentConnectWindow called");
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.show();
+    agentConnectWin.focus();
+    return;
+  }
+  agentConnectWin = new BrowserWindow({
+    width: 520,
+    height: 640,
+    title: t("aiAgentsSetupTitle") || "Conectar con Agentes de IA",
+    backgroundColor: "#f7f4ef",
+    icon: APP_ICON_PATH,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    alwaysOnTop: true,
+    center: true,
+    show: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  agentConnectWin.setMenu(null);
+  attachWindowDiagnostics(agentConnectWin, "agent-connect");
+  agentConnectWin.loadFile(path.join(__dirname, "agents-setup", "index.html"));
+  agentConnectWin.once("ready-to-show", () => {
+    if (!agentConnectWin || agentConnectWin.isDestroyed()) return;
+    agentConnectWin.show();
+    agentConnectWin.focus();
+  });
+  agentConnectWin.on("closed", () => { agentConnectWin = null; });
 }
 
 // ── 패턴 에디터 윈도우 ──
@@ -1371,6 +1794,11 @@ function openPatternEditor() {
 }
 
 function openMappingEditor() {
+  const mappingHtml = path.join(__dirname, "mapping-editor", "index.html");
+  if (!fs.existsSync(mappingHtml)) {
+    logWarn("[Catjang] mapping editor HTML not found, skipping");
+    return;
+  }
   if (mappingWin && !mappingWin.isDestroyed()) {
     mappingWin.focus();
     return;
@@ -2036,12 +2464,40 @@ ipcMain.handle("share-video-save", async (_evt, payload) => {
 
 ipcMain.handle("license-activate", async (_evt, licenseKey) => {
   const license = await activateLicenseKey(licenseKey);
-  startLicensedApp();
   return {
     ok: true,
     productName: license.productName || null,
     customerEmail: license.customerEmail || null,
   };
+});
+
+ipcMain.handle("license-start", async (_evt, options = {}) => {
+  const state = await validateSavedLicense();
+  if (!state.ok) throw new Error(String(state.reason || t("licenseActivateFailed")));
+
+  if (options && options.mascot) {
+    setMascot(options.mascot);
+  }
+
+  if (options && typeof options.connectAgents === "boolean") {
+    agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === null
+      ? options.connectAgents
+      : AGENT_INTEGRATIONS_OVERRIDE;
+    if (options.connectAgents === false) {
+      agentOnboardingShown = true;
+      saveSettings();
+    } else {
+      agentOnboardingShown = false;
+      saveSettings();
+    }
+  }
+
+  catNamePromptShown = true;
+  saveSettings();
+
+  // The renderer paints the activation confirmation before this hand-off.
+  startLicensedApp();
+  return { ok: true };
 });
 
 ipcMain.handle("license-current", () => {
@@ -2055,6 +2511,39 @@ ipcMain.handle("license-current", () => {
 });
 ipcMain.handle("open-landing-page", () => {
   return { ok: true, removed: true };
+});
+
+ipcMain.handle("window-capabilities", () => ({
+  backend: WINDOW_BACKEND,
+  nativeWayland: IS_NATIVE_WAYLAND,
+  supportsProgrammaticMove: !IS_NATIVE_WAYLAND,
+  supportsMouseForwarding: IS_MAC || IS_WINDOWS,
+  supportsWindowShape: IS_LINUX && !!petWin && typeof petWin.setShape === "function",
+}));
+
+ipcMain.handle("mascot-get", () => currentMascot);
+ipcMain.on("mascot-set", (_evt, mascot) => setMascot(mascot));
+
+ipcMain.on("set-window-shape", (_evt, requestedRects) => {
+  if (!IS_LINUX || !petWin || petWin.isDestroyed() || typeof petWin.setShape !== "function") return;
+  const [windowWidth, windowHeight] = petWin.getSize();
+  const rects = (Array.isArray(requestedRects) ? requestedRects : [])
+    .slice(0, 64)
+    .map((rect) => {
+      const x1 = Math.max(0, Math.min(windowWidth, Math.floor(Number(rect?.x) || 0)));
+      const y1 = Math.max(0, Math.min(windowHeight, Math.floor(Number(rect?.y) || 0)));
+      const x2 = Math.max(x1, Math.min(windowWidth, Math.ceil((Number(rect?.x) || 0) + (Number(rect?.width) || 0))));
+      const y2 = Math.max(y1, Math.min(windowHeight, Math.ceil((Number(rect?.y) || 0) + (Number(rect?.height) || 0))));
+      return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    })
+    .filter((rect) => rect.width > 0 && rect.height > 0);
+  if (rects.length > 0) {
+    try {
+      petWin.setShape(rects);
+    } catch (error) {
+      logWarn("[Catjang] Linux window shaping is unavailable:", error && error.message);
+    }
+  }
 });
 
 ipcMain.handle("language-get", () => currentLanguage);
@@ -2072,6 +2561,56 @@ ipcMain.handle("fixed-message-set", (_evt, value) => setFixedMessage(value));
 ipcMain.handle("cat-name-prompt-shown", () => {
   markCatNamePromptShown();
   return { ok: true };
+});
+ipcMain.handle("agent-status-get", () => {
+  const geminiHookPath = path.join(os.homedir(), ".gemini", "config", "hooks.json");
+  const claudeSettingsPath = path.join(os.homedir(), ".claude", "settings.json");
+  const cursorHooksPath = path.join(os.homedir(), ".cursor", "hooks.json");
+  const codexDir = path.join(os.homedir(), ".codex", "sessions");
+
+  return {
+    enabled: agentIntegrationsEnabled,
+    serverActive: !!agentStateServer,
+    port: AGENT_STATE_PORT,
+    antigravityInstalled: fs.existsSync(geminiHookPath),
+    claudeInstalled: fs.existsSync(claudeSettingsPath),
+    cursorInstalled: fs.existsSync(cursorHooksPath),
+    codexDetected: fs.existsSync(codexDir),
+  };
+});
+ipcMain.handle("agent-hooks-install", () => {
+  try {
+    agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === null
+      ? true
+      : AGENT_INTEGRATIONS_OVERRIDE;
+    saveSettings();
+    if (!agentIntegrationsEnabled) {
+      return { ok: false, error: "Agent integrations are disabled by environment policy." };
+    }
+    startAgentIntegrations();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err && err.message };
+  }
+});
+ipcMain.handle("agent-test-notify", (_evt, payload) => {
+  handleAgentStateEvent({
+    agentId: "test",
+    sessionId: "test",
+    state: "complete",
+    text: (payload && payload.text) || "¡Hola! Tu agente está conectado a Catjang.",
+  });
+  return { ok: true };
+});
+ipcMain.handle("agent-onboarding-complete", () => {
+  markAgentOnboardingShown();
+  if (agentConnectWin && !agentConnectWin.isDestroyed()) {
+    agentConnectWin.close();
+  }
+  return { ok: true };
+});
+ipcMain.on("open-agent-connect", () => {
+  openAgentConnectWindow();
 });
 ipcMain.handle("task-complete-sound-volume-get", () => taskCompleteSoundVolume);
 ipcMain.handle("task-complete-sound-volume-set", (_evt, volume) => setTaskCompleteSoundVolume(volume));
@@ -2121,7 +2660,7 @@ ipcMain.handle("update-install", () => {
 
 // 윈도우 드래그 (relative pixel delta)
 ipcMain.on("drag-window", (_evt, dx, dy) => {
-  if (!petWin || petWin.isDestroyed()) return;
+  if (IS_NATIVE_WAYLAND || !petWin || petWin.isDestroyed()) return;
   lastPetDragAt = Date.now();
   const b = petWin.getBounds();
   const { width, height } = windowDims(currentPetSize);
@@ -2132,7 +2671,7 @@ ipcMain.on("drag-window", (_evt, dx, dy) => {
 });
 
 ipcMain.on("drag-window-ended", () => {
-  if (!petWin || petWin.isDestroyed()) return;
+  if (IS_NATIVE_WAYLAND || !petWin || petWin.isDestroyed()) return;
   const b = petWin.getBounds();
   currentPetPosition = { x: b.x, y: b.y };
   saveSettings();
@@ -2140,6 +2679,14 @@ ipcMain.on("drag-window-ended", () => {
 
 ipcMain.on("set-mouse-events-enabled", (_evt, enabled) => {
   if (!petWin || petWin.isDestroyed()) return;
+  // Linux can shape the native window to its visible controls. Keeping mouse
+  // input enabled avoids the unrecoverable click-through state caused by
+  // setIgnoreMouseEvents(true), whose forwarding option is not implemented
+  // by Electron on Linux.
+  if (IS_LINUX) {
+    petWin.setIgnoreMouseEvents(false);
+    return;
+  }
   if (enabled) {
     petWin.setIgnoreMouseEvents(false);
   } else {
@@ -2159,8 +2706,9 @@ ipcMain.on("set-hunting-mode", () => {
   // renderer calls never trigger BrowserWindow bounds changes on Windows.
 });
 
-// 우클릭 컨텍스트 메뉴
-ipcMain.on("show-context-menu", () => {
+// 우클릭 컨텍스트 메뉴. Native Wayland emits system-context-menu for a
+// compositor-owned drag region, while X11 uses the renderer IPC.
+function showPetContextMenu() {
   if (!petWin || petWin.isDestroyed()) return;
   if (Date.now() - lastPetDragAt < 500) return;
 
@@ -2281,10 +2829,27 @@ ipcMain.on("show-context-menu", () => {
     },
     { type: "separator" },
     {
+      label: t("aiAgentsSetup"),
+      click: () => openAgentConnectWindow(),
+    },
+    {
+      label: t("mascot"),
+      submenu: [
+        { label: t("mascotCat"), type: "radio", checked: currentMascot === "cat", click: () => setMascot("cat") },
+        { label: t("mascotSchnauzer"), type: "radio", checked: currentMascot === "schnauzer", click: () => setMascot("schnauzer") },
+        { label: t("mascotChisi"), type: "radio", checked: currentMascot === "chisi", click: () => setMascot("chisi") },
+        { label: t("mascotMilo"), type: "radio", checked: currentMascot === "milo", click: () => setMascot("milo") },
+        { label: t("mascotMusubi"), type: "radio", checked: currentMascot === "musubi", click: () => setMascot("musubi") },
+        { label: t("mascotPeruperro"), type: "radio", checked: currentMascot === "peruperro", click: () => setMascot("peruperro") },
+      ],
+    },
+    { type: "separator" },
+    {
       label: t("patternEditor"),
+      visible: false,
       click: () => openPatternEditor(),
     },
-    ...(!releaseBuildExcludesDevOptions() ? [{
+    ...(fs.existsSync(path.join(__dirname, "mapping-editor", "index.html")) && !releaseBuildExcludesDevOptions() ? [{
       label: t("mappingEditor"),
       click: () => openMappingEditor(),
     }] : []),
@@ -2326,10 +2891,16 @@ ipcMain.on("show-context-menu", () => {
     {
       label: t("language"),
       submenu: [
+        { label: t("spanish"), type: "radio", checked: currentLanguage === "es", click: () => setLanguage("es") },
         { label: t("english"), type: "radio", checked: currentLanguage === "en", click: () => setLanguage("en") },
         { label: t("korean"), type: "radio", checked: currentLanguage === "ko", click: () => setLanguage("ko") },
         { label: t("japanese"), type: "radio", checked: currentLanguage === "ja", click: () => setLanguage("ja") },
       ],
+    },
+    { type: "separator" },
+    {
+      label: t("fullReset"),
+      click: () => confirmAndPerformFullReset(),
     },
     { type: "separator" },
     {
@@ -2340,7 +2911,9 @@ ipcMain.on("show-context-menu", () => {
   ]);
 
   menu.popup({ window: petWin });
-});
+}
+
+ipcMain.on("show-context-menu", showPetContextMenu);
 
 // ── 스트레칭 시퀀스: 윈도우 확대 + 중앙으로 → SVG 애니메이션 → 복원 ──
 const STRETCH_DURATION_MS = 3000;
@@ -2355,6 +2928,11 @@ let savedFocusStartBounds = null;
 function triggerStretchSequence() {
   if (!petWin || petWin.isDestroyed() || stretchInProgress) return;
   stretchInProgress = true;
+  if (IS_NATIVE_WAYLAND) {
+    petWin.webContents.send("do-stretch");
+    setTimeout(() => { stretchInProgress = false; }, STRETCH_DURATION_MS + STRETCH_SHRINK_DELAY_MS);
+    return;
+  }
   savedStretchBounds = petWin.getBounds();
 
   // 캣짱이 현재 있는 디스플레이에서 실행한다. 커서 기준이면 자동 스트레칭이
@@ -2391,6 +2969,11 @@ function triggerStretchSequence() {
 function triggerPomodoroFocusStartSequence() {
   if (!petWin || petWin.isDestroyed() || focusStartInProgress || stretchInProgress) return;
   focusStartInProgress = true;
+  if (IS_NATIVE_WAYLAND) {
+    petWin.webContents.send("pomodoro-focus-start");
+    setTimeout(() => { focusStartInProgress = false; }, 1400);
+    return;
+  }
   savedFocusStartBounds = petWin.getBounds();
   const display = screen.getDisplayMatching(savedFocusStartBounds);
   const { x: dispX, y: dispY, width: dispW, height: dispH } = display.workArea;
@@ -2457,8 +3040,16 @@ function handleAgentStateEvent(event) {
   const state = typeof event.state === "string" ? event.state : "";
   if (!state) return;
   const agentId = event.agentId || "agent";
+  const agentName = typeof event.agentName === "string" ? event.agentName : "";
   const sessionId = event.sessionId || agentId;
   const sessionKey = `${agentId}:${sessionId}`;
+  const task = typeof event.task === "string" ? event.task : "";
+  const conversationName = typeof event.conversationName === "string" ? event.conversationName.trim() :
+    (typeof event.conversationTitle === "string" ? event.conversationTitle.trim() :
+    (typeof event.conversation === "string" ? event.conversation.trim() :
+    (typeof event.topic === "string" ? event.topic.trim() :
+    (typeof event.title === "string" ? event.title.trim() : ""))));
+  const text = typeof event.text === "string" ? event.text : (typeof event.message === "string" ? event.message : "");
   const now = Date.now();
   for (const [key, active] of activeAgentSessions) {
     if (!active || now - active.lastActiveAt > AGENT_ACTIVE_TTL_MS) activeAgentSessions.delete(key);
@@ -2466,10 +3057,6 @@ function handleAgentStateEvent(event) {
   if (state === "thinking" || state === "working") {
     activeAgentSessions.set(sessionKey, { lastActiveAt: now });
   } else if (state === "complete") {
-    if (!activeAgentSessions.has(sessionKey)) {
-      console.warn(`[Catjang] ignored agent complete without active task: ${agentId} ${event.event || ""}`);
-      return;
-    }
     activeAgentSessions.delete(sessionKey);
   } else if (state === "idle" || state === "error") {
     activeAgentSessions.delete(sessionKey);
@@ -2477,25 +3064,37 @@ function handleAgentStateEvent(event) {
   if (petWin && !petWin.isDestroyed()) {
     petWin.webContents.send("ai-task-state", {
       agentId,
+      agentName,
       sessionId,
+      conversationName,
       event: event.event || "",
       state,
+      task,
+      text,
     });
   }
   if (state === "complete") {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("ai-task-complete", {
         agentId,
+        agentName,
         sessionId,
+        conversationName,
         event: event.event || "",
+        task,
+        text,
       });
     }
   } else if (state === "notification") {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("ai-task-notification", {
         agentId,
+        agentName,
         sessionId,
+        conversationName,
         event: event.event || "",
+        task,
+        text,
       });
     }
   }
@@ -2504,9 +3103,9 @@ function handleAgentStateEvent(event) {
 function startAgentStateServer() {
   if (agentStateServer) return;
   agentStateServer = http.createServer((req, res) => {
-    if (req.method !== "POST" || req.url !== "/agent-state") {
-      res.writeHead(404);
-      res.end("not found");
+    if (req.method !== "POST" || (req.url !== "/agent-state" && req.url !== "/agent-reminder" && req.url !== "/reminder")) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "not found" }));
       return;
     }
     let body = "";
@@ -2517,17 +3116,36 @@ function startAgentStateServer() {
     });
     req.on("end", () => {
       if (size > 8192) {
-        res.writeHead(413);
-        res.end("too large");
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "too large" }));
         return;
       }
       try {
-        handleAgentStateEvent(JSON.parse(body || "{}"));
-        res.writeHead(200);
-        res.end("ok");
+        const payload = JSON.parse(body || "{}");
+        if (req.url === "/agent-reminder" || req.url === "/reminder") {
+          if (payload.triggerNow) {
+            const text = typeof payload.text === "string" ? payload.text : (typeof payload.message === "string" ? payload.message : "");
+            if (petWin && !petWin.isDestroyed()) {
+              petWin.webContents.send("reminder-triggered", {
+                id: `agent-reminder-${Date.now()}`,
+                text: text || "¡Recordatorio!",
+              });
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true, triggered: true }));
+            return;
+          }
+          const result = addReminder(payload);
+          res.writeHead(result && result.ok ? 200 : 400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(result || { ok: false }));
+          return;
+        }
+        handleAgentStateEvent(payload);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
       } catch {
-        res.writeHead(400);
-        res.end("bad json");
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "bad json" }));
       }
     });
   });
@@ -2631,13 +3249,18 @@ function startCursorAgentMonitor() {
 }
 
 function startAgentIntegrations() {
+  if (!agentIntegrationsEnabled) return;
   startAgentStateServer();
   installClaudeCodeHooks();
   installAntigravityHooks();
   installCursorHooks();
   startCodexMonitor();
-  startKiroMonitor();
-  startCursorAgentMonitor();
+  // Cursor is covered by its hook on Windows. The current log paths for
+  // Cursor and Kiro are macOS-specific, so do not poll nonexistent trees.
+  if (IS_MAC) {
+    startKiroMonitor();
+    startCursorAgentMonitor();
+  }
 }
 
 function stopAgentIntegrations() {
@@ -2859,6 +3482,8 @@ app.whenReady().then(async () => {
       arch: process.arch,
       electron: process.versions.electron,
       node: process.versions.node,
+      windowBackend: WINDOW_BACKEND,
+      ozonePlatform: OZONE_PLATFORM || "auto",
       logPath: STARTUP_LOG_PATH,
       smokeTest: IS_SMOKE_TEST,
     });

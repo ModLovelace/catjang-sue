@@ -5,6 +5,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
   onCursorPos: (callback) =>
     ipcRenderer.on("cursor-pos", (_evt, data) => callback(data)),
+  windowCapabilities: () => ipcRenderer.invoke("window-capabilities"),
+  setWindowShape: (rects) => ipcRenderer.send("set-window-shape", rects),
+  onNativeWindowDragState: (callback) =>
+    ipcRenderer.on("native-window-drag-state", (_evt, active) => callback(active)),
   onKeyPressed: (callback) =>
     ipcRenderer.on("key-pressed", () => callback()),
   onMouseWheel: (callback) =>
@@ -111,6 +115,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   svgLoad: (svgName) => ipcRenderer.invoke("svg-load", svgName),
 
   licenseActivate: (licenseKey) => ipcRenderer.invoke("license-activate", licenseKey),
+  licenseStart: (options) => ipcRenderer.invoke("license-start", options),
   licenseCurrent: () => ipcRenderer.invoke("license-current"),
   onLicenseError: (callback) =>
     ipcRenderer.on("license-error", (_evt, message) => callback(message)),
@@ -118,4 +123,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   languageSet: (language) => ipcRenderer.invoke("language-set", language),
   onLanguageChanged: (callback) =>
     ipcRenderer.on("language-changed", (_evt, language) => callback(language)),
+  openAgentConnect: () => ipcRenderer.send("open-agent-connect"),
+  agentStatusGet: () => ipcRenderer.invoke("agent-status-get"),
+  agentHooksInstall: () => ipcRenderer.invoke("agent-hooks-install"),
+  agentTestNotify: (payload) => ipcRenderer.invoke("agent-test-notify", payload),
+  agentOnboardingComplete: () => ipcRenderer.invoke("agent-onboarding-complete"),
+  mascotGet: () => ipcRenderer.invoke("mascot-get"),
+  mascotSet: (mascot) => ipcRenderer.send("mascot-set", mascot),
+  onMascotChanged: (callback) =>
+    ipcRenderer.on("mascot-changed", (_evt, mascot) => callback(mascot)),
 });

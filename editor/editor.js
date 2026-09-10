@@ -6,63 +6,63 @@ const CELL_PX = 10;
 
 const PARTS = {
   head: {
-    labels: { en: "Head", ko: "머리", ja: "頭" },
+    labels: { es: "Cabeza", en: "Head", ko: "머리", ja: "頭" },
     icon: "🐱",
     cells: { x: 22, y: 18 },
     silhouettePath: "M4 3H2V5H1V7H0V12H1V16H3V17H4V18H6V19H16V18H18V17H19V16H20V15H21V12H22V8H21V5H20V4H19V3H17V2H15V1H7V2H4V3Z",
     silhouetteTransform: "translate(0 -1)",
   },
   body: {
-    labels: { en: "Body", ko: "몸통", ja: "胴体" },
+    labels: { es: "Cuerpo", en: "Body", ko: "몸통", ja: "胴体" },
     icon: "🟫",
     cells: { x: 22, y: 15 },
     silhouettePath: "M15 0V1H18V2H20V3H21V6H22V11H21V14H19V15H3V14H1V11H0V6H1V3H2V2H4V1H7V0H15Z",
     silhouetteTransform: "translate(0 0)",
   },
   tail: {
-    labels: { en: "Tail", ko: "꼬리", ja: "しっぽ" },
+    labels: { es: "Cola", en: "Tail", ko: "꼬리", ja: "しっぽ" },
     icon: "〰️",
     cells: { x: 13, y: 10 },
     silhouettePath: "M0 8V7H6V6H8V5H9V4H8V1H9V0H11V1H12V2H13V7H12V8H11V9H9V10H4V9H1V8H0Z",
     silhouetteTransform: "translate(0 0)",
   },
   legFl: {
-    labels: { en: "Left arm", ko: "왼팔", ja: "左腕" },
+    labels: { es: "Pata delantera izquierda", en: "Left arm", ko: "왼팔", ja: "左腕" },
     icon: "🦶",
     cells: { x: 8, y: 11 },
     silhouettePath: "M6 29V26H7V25H10V26H11V28H12V31H13V32H14V35H13V36H9V35H8V31H7V29H6Z",
     silhouetteTransform: "translate(-6 -25)",
   },
   legFr: {
-    labels: { en: "Right arm", ko: "오른팔", ja: "右腕" },
+    labels: { es: "Pata delantera derecha", en: "Right arm", ko: "오른팔", ja: "右腕" },
     icon: "🦶",
     cells: { x: 8, y: 11 },
     silhouettePath: "M23 29V26H22V25H19V26H18V28H17V31H16V32H15V35H16V36H20V35H21V31H22V29H23Z",
     silhouetteTransform: "translate(-15 -25)",
   },
   legRl: {
-    labels: { en: "Left foot", ko: "왼발", ja: "左足" },
+    labels: { es: "Pata trasera izquierda", en: "Left foot", ko: "왼발", ja: "左足" },
     icon: "🦶",
     cells: { x: 8, y: 8 },
     silhouettePath: "M10 138V134H18V138H17V140H16V142H12V140H11V138H10Z",
     silhouetteTransform: "translate(-10 -134)",
   },
   legRr: {
-    labels: { en: "Right foot", ko: "오른발", ja: "右足" },
+    labels: { es: "Pata trasera derecha", en: "Right foot", ko: "오른발", ja: "右足" },
     icon: "🦶",
     cells: { x: 8, y: 8 },
     silhouettePath: "M22 138V134H30V138H29V140H28V142H24V140H23V138H22Z",
     silhouetteTransform: "translate(-22 -134)",
   },
   earL: {
-    labels: { en: "Left ear", ko: "왼쪽 귀", ja: "左耳" },
+    labels: { es: "Oreja izquierda", en: "Left ear", ko: "왼쪽 귀", ja: "左耳" },
     icon: "👂",
     cells: { x: 6, y: 8 },
     silhouettePath: "M0 7V4H1V2H2V1H3V0H4V2H5V3H6V7H5V8H1V7H0Z",
     silhouetteTransform: "translate(0 0)",
   },
   earR: {
-    labels: { en: "Right ear", ko: "오른쪽 귀", ja: "右耳" },
+    labels: { es: "Oreja derecha", en: "Right ear", ko: "오른쪽 귀", ja: "右耳" },
     icon: "👂",
     cells: { x: 5, y: 8 },
     silhouettePath: "M1 3H0V7H1V8H4V7H5V2H4V1H3V0H2V1H1V3Z",
@@ -124,6 +124,53 @@ const I18N = {
     paint: "Paint",
     erase: "Eraser",
     spots: "spots",
+  },
+  es: {
+    title: "Editor de patrones de Catjang",
+    help: "Ayuda",
+    hint: "Pinta todas las partes desde un solo espacio. Los cambios se aplican inmediatamente al gato.",
+    caveat: "El pincel pinta un área cuadrada. Algunas manchas solo aparecen en determinadas poses.",
+    baseColor: "Color base del cuerpo",
+    reset: "Restablecer",
+    eyeColor: "Color de ojos",
+    eyeBgColor: "Fondo de los ojos",
+    oddEye: "Heterocromía",
+    bodyColor: "Color del cuerpo",
+    left: "Izquierdo",
+    right: "Derecho",
+    spotColor: "Color de la mancha",
+    custom: "Personalizado",
+    brush: "Pincel",
+    tools: "Herramientas",
+    presets: "Preajustes",
+    currentPreset: "Preajuste seleccionado",
+    changePreset: "Cambiar",
+    backToEdit: "Volver",
+    builtinPresets: "Preajustes incluidos",
+    customPresets: "Mis preajustes",
+    customPresetEmpty: "Todavía no hay preajustes personalizados.",
+    exportCustomPresets: "Exportar",
+    importCustomPresets: "Importar",
+    renameCustomPreset: "Cambiar nombre",
+    renameCustomPresetPrompt: "Nombre del preajuste",
+    morePresetActions: "Más",
+    customPresetsExported: (count) => `Se exportaron ${count} preajuste${count === 1 ? "" : "s"}.`,
+    customPresetsImported: (count) => `Se importaron ${count} preajuste${count === 1 ? "" : "s"}.`,
+    customPresetsImportFailed: "No se pudieron importar los preajustes.",
+    saveCustomPreset: "Nuevo preajuste",
+    updateCustomPreset: "Guardar cambios",
+    discardChanges: "Descartar",
+    deleteCustomPreset: "Eliminar preajuste",
+    customPresetNamePrompt: "Nombre del preajuste",
+    save: "Guardar",
+    cancel: "Cancelar",
+    delete: "Eliminar",
+    deleteCustomPresetConfirm: "¿Eliminar este preajuste?",
+    discardChangesConfirm: "¿Descartar los cambios no guardados?",
+    totalSpots: "Manchas totales",
+    paint: "Pintar",
+    erase: "Borrador",
+    spots: "manchas",
   },
   ko: {
     title: "캣짱 패턴 편집기",
@@ -262,7 +309,7 @@ const partSpots = {};
 const partViews = {};
 for (const partName of Object.keys(PARTS)) partSpots[partName] = new Map();
 
-let currentLanguage = "en";
+let currentLanguage = "es";
 let activeColor = SWATCH_COLORS[0];
 let mode = "paint";
 let brushSize = 1;
@@ -293,7 +340,7 @@ function partLabel(partName) {
 }
 
 function applyLanguage(language) {
-  currentLanguage = I18N[language] ? language : "en";
+  currentLanguage = I18N[language] ? language : "es";
   document.documentElement.lang = currentLanguage;
   document.title = t("title");
   for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
