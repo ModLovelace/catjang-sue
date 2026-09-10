@@ -411,6 +411,82 @@ app.whenReady().then(async () => {
   }
   console.log("PASS 10: Musubi petting stopped cleanly, hearts hidden, purr stopped.");
 
-  console.log("=== ALL PETTING ANIMATIONS AND SOUND TESTS PASSED! ===");
+  // 6. Test Chuño Petting (dog audio / tongue)
+  const chunoPetState = await win.webContents.executeJavaScript(`
+    (async () => {
+      document.body.dataset.mascot = "peruperro";
+      currentMascot = "peruperro";
+      const chuno = document.getElementById("peruperro");
+      if (!chuno.contentDocument || !chuno.contentDocument.querySelector("svg")) {
+        await new Promise(r => {
+          chuno.addEventListener("load", r, { once: true });
+          setTimeout(r, 600);
+        });
+      }
+      await new Promise(r => setTimeout(r, 200));
+      const rect = chuno.getBoundingClientRect();
+      const headX = rect.left + rect.width * 0.50;
+      const headY = rect.top + rect.height * 0.30;
+
+      startPurring(headX, headY);
+
+      const hearts = document.getElementById("purr-hearts");
+      const chunoDoc = chuno.contentDocument;
+      const chunoRoot = chunoDoc && chunoDoc.documentElement;
+      const tongue = chunoDoc ? chunoDoc.getElementById("dog-tongue") : null;
+      const tongueDisplay = tongue && chunoDoc.defaultView
+        ? chunoDoc.defaultView.getComputedStyle(tongue).display
+        : "none";
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        chunoHasPurringClass: chunoRoot ? chunoRoot.classList.contains("purring") : false,
+        tongueDisplay,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Chuño Petting State:", chunoPetState);
+  if (
+    chunoPetState.purringDataset !== "1" ||
+    chunoPetState.heartsDisplay === "none" ||
+    !chunoPetState.chunoHasPurringClass ||
+    chunoPetState.tongueDisplay === "none" ||
+    !chunoPetState.dogPettingNodesActive
+  ) {
+    console.error("FAIL: Chuño petting did not trigger dog visuals and audio properly!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 11: Chuño petting active, hearts visible, tongue shown and dog audio active.");
+
+  const chunoStopState = await win.webContents.executeJavaScript(`
+    (() => {
+      stopPurring();
+      const hearts = document.getElementById("purr-hearts");
+      const chuno = document.getElementById("peruperro");
+      const chunoRoot = chuno.contentDocument && chuno.contentDocument.documentElement;
+      return {
+        purringDataset: document.body.dataset.purring,
+        heartsDisplay: window.getComputedStyle(hearts).display,
+        chunoHasPurringClass: chunoRoot ? chunoRoot.classList.contains("purring") : false,
+        dogPettingNodesActive: !!dogPettingNodes,
+      };
+    })()
+  `);
+  console.log("Chuño Stop Petting State:", chunoStopState);
+  if (
+    chunoStopState.purringDataset ||
+    chunoStopState.heartsDisplay !== "none" ||
+    chunoStopState.chunoHasPurringClass ||
+    chunoStopState.dogPettingNodesActive
+  ) {
+    console.error("FAIL: Chuño petting did not stop cleanly!");
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 12: Chuño petting stopped cleanly, hearts hidden and audio stopped.");
+
+  console.log("=== ALL 6 MASCOT PETTING ANIMATIONS AND SOUND TESTS PASSED! ===");
   app.exit(0);
 });

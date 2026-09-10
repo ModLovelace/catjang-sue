@@ -37,8 +37,8 @@ async function refreshStatus() {
       badgeCursor.classList.remove("is-active");
     }
 
-    badgeCodex.textContent = "Monitoreo Activo";
-    badgeCodex.classList.add("is-active");
+    badgeCodex.textContent = status.enabled ? "Monitoreo Activo" : "Desactivado";
+    badgeCodex.classList.toggle("is-active", !!status.enabled);
   } catch (err) {
     console.error("Error al obtener estado de agentes:", err);
   }
@@ -64,7 +64,8 @@ btnSync.addEventListener("click", async () => {
   btnSync.disabled = true;
   btnSync.textContent = "Sincronizando...";
   try {
-    await window.electronAPI.agentHooksInstall();
+    const result = await window.electronAPI.agentHooksInstall();
+    if (!result || result.ok === false) throw new Error(result && result.error || "No se pudieron sincronizar los hooks");
     await refreshStatus();
     btnSync.textContent = "✓ Sincronizados";
   } catch (err) {

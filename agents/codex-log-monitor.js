@@ -6,6 +6,7 @@ const os = require("os");
 
 const MAX_TRACKED_FILES = 50;
 const MAX_PARTIAL_BYTES = 65536;
+const MAX_READ_BYTES = 256 * 1024;
 
 class CodexLogMonitor {
   constructor(onStateChange) {
@@ -85,7 +86,9 @@ class CodexLogMonitor {
       if (!sessionId) return;
       if (this._tracked.size >= MAX_TRACKED_FILES) this._cleanStaleFiles(true);
       tracked = {
-        offset: 0,
+        // A recently touched session can already be very large when Catjang
+        // starts. Tail it instead of allocating and parsing the whole file.
+        offset: Math.max(0, stat.size - MAX_READ_BYTES),
         partial: "",
         sessionId: `codex:${sessionId}`,
         cwd: "",
@@ -100,13 +103,18 @@ class CodexLogMonitor {
     if (stat.size <= tracked.offset) return;
 
     let buf;
+    let fd = null;
     try {
-      const fd = fs.openSync(filePath, "r");
-      buf = Buffer.alloc(stat.size - tracked.offset);
-      fs.readSync(fd, buf, 0, buf.length, tracked.offset);
-      fs.closeSync(fd);
+      const readOffset = Math.max(tracked.offset, stat.size - MAX_READ_BYTES);
+      fd = fs.openSync(filePath, "r");
+      buf = Buffer.alloc(stat.size - readOffset);
+      fs.readSync(fd, buf, 0, buf.length, readOffset);
     } catch {
       return;
+    } finally {
+      if (fd !== null) {
+        try { fs.closeSync(fd); } catch {}
+      }
     }
     tracked.offset = stat.size;
 

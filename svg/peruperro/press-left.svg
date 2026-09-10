@@ -13,58 +13,90 @@
 
   <g id="dog-content" filter="url(#peruperro-outline)">
     <!-- Tail (Raised, excited) -->
-    <rect x="28" y="14" width="1" height="3" fill="#565C6B"/>
-    <rect x="29" y="16" width="2" height="4" fill="#7A8090"/>
-    <rect x="30" y="20" width="2" height="4" fill="#9BA3B2"/>
-    <rect x="31" y="12" width="1" height="3" fill="#9BA3B2"/>
+    <g id="press-tail" data-heat-overlay="true">
+      <rect x="28" y="14" width="1" height="3" fill="#565C6B"/>
+      <rect x="29" y="16" width="2" height="4" fill="#7A8090"/>
+      <rect x="30" y="20" width="2" height="4" fill="#9BA3B2"/>
+      <rect x="31" y="12" width="1" height="3" fill="#9BA3B2"/>
+    </g>
 
     <!-- Body (Lean Peruvian body) -->
-    <rect x="14" y="18" width="16" height="14" fill="#565C6B"/>
-    <rect x="18" y="17" width="12" height="3" fill="#565C6B"/>
-    <rect x="20" y="20" width="8" height="11" fill="#4A5060"/>
-    <rect x="13" y="20" width="4" height="10" fill="#9BA3B2"/>
-    <rect x="25" y="31" width="5" height="4" fill="#565C6B"/>
-    <rect x="25" y="34" width="5" height="2" fill="#9BA3B2"/>
+    <g id="press-torso" data-heat-overlay="true">
+      <rect x="14" y="18" width="16" height="14" fill="#565C6B"/>
+      <rect x="18" y="17" width="12" height="3" fill="#565C6B"/>
+      <rect x="20" y="20" width="8" height="11" fill="#4A5060"/>
+      <rect x="13" y="20" width="4" height="10" fill="#9BA3B2"/>
+      <rect x="25" y="31" width="5" height="4" fill="#565C6B"/>
+      <rect x="25" y="34" width="5" height="2" fill="#9BA3B2"/>
+    </g>
 
     <!-- Keyboards (Dual keyboard setup) -->
-    <!-- Left keyboard -->
+    <!-- Left keyboard (PRESSED DOWN) -->
     <path d="M4 33V32H5V31H18V32H19V35H18V38H17V40H16V42H1V41H0V39H1V37H2V35H3V33H4Z" fill="#999797"/>
     <path d="M0 41H1V42H16V44H15H2V43H1V42H0V41Z" fill="#605E5E"/>
+    <path d="M16 44H15V42H16V40H17V38H18V35H19V33H20V35.5H19V38.5H18V41H17V43H16V44Z" fill="#222222"/>
     <rect x="2" y="41" width="13" height="1" fill="#D7D6D6"/>
-    <!-- Right keyboard -->
+    <rect y="39" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="1" y="40" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="15" y="40" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="16" y="39" width="1" height="1" fill="#D9D9D9"/>
+    <!-- Right keyboard (RAISED / UNPRESSED) -->
     <path d="M24 29V28H25V27H38V28H39V31H38V34H37V36H36V38H21V37H20V35H21V33H22V31H23V29H24Z" fill="#999797"/>
+    <path d="M20 37H21V38H36V44H35H22V43H21V42H20V37Z" fill="#605E5E"/>
+    <path d="M36 44H35V42H36V36H37V34H38V31H39V29H40V35.5H39V38.5H38V41H37V43H36V44Z" fill="#222222"/>
+    <rect x="22" y="37" width="13" height="1" fill="#D7D6D6"/>
+    <rect x="20" y="35" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="21" y="36" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="35" y="36" width="1" height="1" fill="#D9D9D9"/>
+    <rect x="36" y="35" width="1" height="1" fill="#D9D9D9"/>
 
-    <!-- Left Paw DOWN (Typing on left keyboard) -->
-    <rect x="8" y="26" width="4" height="8" fill="#565C6B"/>
-    <rect x="7" y="31" width="5" height="4" fill="#9BA3B2"/>
-    <rect x="7" y="34" width="5" height="4" fill="#B0B6C2"/>
-    <rect x="7" y="37" width="5" height="2" fill="#CECFD4"/>
+    <!-- Left Paw DOWN (Typing on pressed left keyboard) -->
+    <g id="press-paw-l" data-heat-overlay="true">
+      <rect x="8" y="26" width="4" height="8" fill="#565C6B"/>
+      <rect x="7" y="31" width="5" height="4" fill="#9BA3B2"/>
+      <rect x="7" y="34" width="5" height="4" fill="#B0B6C2"/>
+      <rect x="7" y="37" width="5" height="2" fill="#CECFD4"/>
+    </g>
 
     <!-- Right Paw UP (Raised) -->
-    <rect x="21" y="20" width="5" height="7" fill="#565C6B"/>
-    <rect x="21" y="17" width="5" height="4" fill="#9BA3B2"/>
-    <rect x="22" y="16" width="4" height="3" fill="#B0B6C2"/>
-    <rect x="22" y="15" width="4" height="2" fill="#CECFD4"/>
+    <g id="press-paw-r" data-heat-overlay="true">
+      <rect x="21" y="20" width="5" height="7" fill="#565C6B"/>
+      <rect x="21" y="17" width="5" height="4" fill="#9BA3B2"/>
+      <rect x="22" y="16" width="4" height="3" fill="#B0B6C2"/>
+      <rect x="22" y="15" width="4" height="2" fill="#CECFD4"/>
+    </g>
 
     <!-- Head & Peruvian Face -->
     <g transform="translate(1, 1)">
-      <!-- Upright Pointed Ears -->
-      <!-- Left Ear -->
-      <rect x="5" y="0" width="4" height="7" fill="#565C6B"/>
-      <rect x="6" y="1" width="2" height="5" fill="#7A8090"/>
+      <!-- Head Base & Ears -->
+      <g id="press-head-base" data-heat-overlay="true">
+        <!-- Upright Pointed Ears -->
+        <rect x="5" y="0" width="4" height="7" fill="#565C6B"/>
+        <rect x="6" y="1" width="2" height="5" fill="#7A8090"/>
 
-      <!-- Right Ear -->
-      <rect x="19" y="0" width="4" height="7" fill="#565C6B"/>
-      <rect x="20" y="1" width="2" height="5" fill="#7A8090"/>
+        <rect x="19" y="0" width="4" height="7" fill="#565C6B"/>
+        <rect x="20" y="1" width="2" height="5" fill="#7A8090"/>
 
-      <!-- Narrow Wedge Head -->
-      <rect x="8" y="5" width="12" height="12" fill="#7A8090"/>
-      <rect x="7" y="8" width="14" height="9" fill="#7A8090"/>
-      <rect x="9" y="5" width="10" height="2" fill="#565C6B"/>
-      <!-- Forehead wrinkle -->
-      <rect x="11" y="7" width="6" height="1" fill="#4A5060"/>
+        <!-- Narrow Wedge Head -->
+        <rect x="8" y="5" width="12" height="12" fill="#7A8090"/>
+        <rect x="7" y="8" width="14" height="9" fill="#7A8090"/>
+        <rect x="9" y="5" width="10" height="2" fill="#565C6B"/>
+        <!-- Forehead wrinkle -->
+        <rect x="11" y="7" width="6" height="1" fill="#4A5060"/>
 
-      <!-- Almond Eyes -->
+        <!-- Muzzle bridge -->
+        <rect x="12" y="10" width="4" height="2" fill="#565C6B"/>
+
+        <!-- Happy tongue (typing excitement) -->
+        <rect x="12" y="16" width="4" height="3" fill="#C47A8A" rx="1"/>
+        <rect x="13" y="18" width="2" height="1" fill="#A85C6E"/>
+
+        <!-- Slim throat / neck -->
+        <rect x="10" y="14" width="8" height="4" fill="#7A8090"/>
+        <rect x="11" y="16" width="6" height="3" fill="#9BA3B2"/>
+      </g>
+
+      <!-- Almond Eyes (Kept expressive) -->
       <rect x="9" y="10" width="4" height="3" fill="#1A1B1F" rx="0.5"/>
       <rect x="10" y="10" width="2" height="3" fill="#2A2B30"/>
       <rect x="9" y="10" width="1" height="1" fill="#FFFFFF"/>
@@ -73,20 +105,9 @@
       <rect x="16" y="10" width="2" height="3" fill="#2A2B30"/>
       <rect x="15" y="10" width="1" height="1" fill="#FFFFFF"/>
 
-      <!-- Muzzle bridge -->
-      <rect x="12" y="10" width="4" height="2" fill="#565C6B"/>
-
       <!-- Small Nose -->
       <rect x="11" y="12" width="6" height="2" fill="#1A1B1F" rx="1"/>
       <rect x="12" y="12" width="2" height="1" fill="#2A2B30"/>
-
-      <!-- Happy tongue (typing excitement) -->
-      <rect x="12" y="16" width="4" height="3" fill="#C47A8A" rx="1"/>
-      <rect x="13" y="18" width="2" height="1" fill="#A85C6E"/>
-
-      <!-- Slim throat / neck -->
-      <rect x="10" y="14" width="8" height="4" fill="#7A8090"/>
-      <rect x="11" y="16" width="6" height="3" fill="#9BA3B2"/>
     </g>
   </g>
 </svg>

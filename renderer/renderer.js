@@ -57,6 +57,7 @@ const trackingInitializedDocs = new WeakSet();
 let layers = null;
 let targetDx = 0;
 let targetDy = 0;
+let trackingRafId = null;
 let currentCatName = "Catjang";
 let currentUserName = "";
 let isCatNameVisible = false;
@@ -74,25 +75,35 @@ let windowBackend = "x11";
 let windowShapeSupported = false;
 let currentPomodoroState = null;
 let updateCtaState = null;
-const completionMeow = new Audio("../workspace/assets/sound/meow.m4a");
-const reminderMeow = new Audio("../workspace/assets/sound/meow-alert.m4a");
-const purringSound = new Audio("../workspace/assets/sound/purring.m4a");
-const dogBarkSound = new Audio("../workspace/assets/sound/dog-bark.m4a");
-const dogPettingSound = new Audio("../workspace/assets/sound/dog-panting.m4a");
 let completionMeowVolume = 0.1;
 const reminderMeowVolumeBoost = 2.4;
-completionMeow.volume = completionMeowVolume;
-completionMeow.preload = "auto";
-reminderMeow.volume = getReminderMeowVolume();
-reminderMeow.preload = "auto";
-purringSound.loop = true;
-purringSound.preload = "auto";
-purringSound.volume = 0.28;
-dogBarkSound.preload = "auto";
-dogBarkSound.volume = 0.45;
-dogPettingSound.loop = true;
-dogPettingSound.preload = "auto";
-dogPettingSound.volume = 0.40;
+const audioCache = new Map();
+const AUDIO_CONFIG = {
+  completion: { src: "../workspace/assets/sound/meow.m4a" },
+  reminder: { src: "../workspace/assets/sound/meow-alert.m4a" },
+  purring: { src: "../workspace/assets/sound/purring.m4a", loop: true, volume: 0.28 },
+  dogBark: { src: "../workspace/assets/sound/dog-bark.m4a", volume: 0.45 },
+  dogPetting: { src: "../workspace/assets/sound/dog-panting.m4a", loop: true, volume: 0.40 },
+};
+
+function getAudio(name) {
+  if (audioCache.has(name)) return audioCache.get(name);
+  const config = AUDIO_CONFIG[name];
+  if (!config) return null;
+  const audio = new Audio(config.src);
+  audio.preload = "none";
+  audio.loop = !!config.loop;
+  if (typeof config.volume === "number") audio.volume = config.volume;
+  audioCache.set(name, audio);
+  return audio;
+}
+
+function resetAudio(name) {
+  const audio = audioCache.get(name);
+  if (!audio) return;
+  audio.pause();
+  audio.currentTime = 0;
+}
 
 const I18N = {
   en: {
@@ -680,8 +691,8 @@ function installHeatOverlays(doc) {
   const bounds = getSvgViewBoxRect(doc);
   if (!bounds) return;
 
-  const catContent = doc.getElementById("cat-content") || doc.documentElement;
-  const maskId = "cat-heat-mask";
+  const catContent = doc.getElementById("cat-content") || doc.getElementById("dog-content") || doc.documentElement;
+  const maskId = doc.getElementById("dog-content") ? "dog-heat-mask" : "cat-heat-mask";
   let defs = doc.querySelector("defs");
   if (!defs) {
     defs = doc.createElementNS(SVG_NS, "defs");
@@ -784,17 +795,19 @@ function installHeatOverlays(doc) {
 
   for (const source of Array.from(doc.querySelectorAll("[data-heat-overlay]"))) {
     const parent = source.parentNode;
-    if (!parent) continue;
+    if (!parent || source.classList.contains("heat-overlay")) continue;
 
-    const legacyOverlay = doc.createElementNS(SVG_NS, "g");
-    legacyOverlay.setAttribute("class", "heat-overlay legacy-heat-overlay");
+    const legacyOverlay = source.cloneNode(true);
+    legacyOverlay.removeAttribute("id");
+    legacyOverlay.removeAttribute("data-heat-overlay");
+    legacyOverlay.classList.add("heat-overlay", "legacy-heat-overlay");
     legacyOverlay.setAttribute("pointer-events", "none");
-    for (const child of Array.from(source.children)) {
-      const clone = child.cloneNode(true);
-      for (const painted of [clone, ...Array.from(clone.querySelectorAll("[fill]"))]) {
-        if (painted.hasAttribute("fill")) painted.setAttribute("fill", "var(--heat-overlay-color, #dc2828)");
-      }
-      legacyOverlay.appendChild(clone);
+    for (const el of Array.from(legacyOverlay.querySelectorAll("[id]"))) {
+      el.removeAttribute("id");
+    }
+    for (const painted of [legacyOverlay, ...Array.from(legacyOverlay.querySelectorAll("[fill],[stroke]"))]) {
+      if (painted.hasAttribute("fill")) painted.setAttribute("fill", "var(--heat-overlay-color, #dc2828)");
+      if (painted.hasAttribute("stroke")) painted.setAttribute("stroke", "var(--heat-overlay-color, #dc2828)");
     }
     legacyOverlay.style.setProperty("opacity", "var(--legacy-heat-overlay-opacity, 0)");
     parent.insertBefore(legacyOverlay, source.nextSibling);
@@ -958,7 +971,7 @@ function initTracking() {
     for (const id of cfg.ids) {
       const el = svgDoc.getElementById(id);
       if (!el) continue;
-      wrappers.push(wrapElement(el));
+      wrappers.push(wrapElement(el, "cat"));
     }
     layers[name] = {
       wrappers,
@@ -970,7 +983,7 @@ function initTracking() {
     };
   }
 
-  requestAnimationFrame(tick);
+  scheduleTrackingTick();
   startBlinkLoop();
 }
 
@@ -979,10 +992,8 @@ function startBlinkLoop() {
   if (blinkTimer) clearTimeout(blinkTimer);
   function schedule() {
     blinkTimer = setTimeout(() => {
-      const roots = [
-        svgDoc && svgDoc.documentElement,
-        dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
-      ];
+      const idle = currentIdleElement();
+      const roots = [idle && idle.contentDocument && idle.contentDocument.documentElement];
       for (const root of roots) {
         if (root && !root.classList.contains("purring") && !root.classList.contains("sleeping")) {
           root.classList.add("blinking");
@@ -995,17 +1006,18 @@ function startBlinkLoop() {
   schedule();
 }
 
-function wrapElement(el) {
+function wrapElement(el, mascotId = "cat") {
   const ns = "http://www.w3.org/2000/svg";
   const doc = el.ownerDocument || svgDoc;
   const wrapper = doc.createElementNS(ns, "g");
   wrapper.setAttribute("data-tracking-wrapper", "1");
+  wrapper.setAttribute("data-tracking-mascot", mascotId);
   el.parentNode.insertBefore(wrapper, el);
   wrapper.appendChild(el);
   return wrapper;
 }
 
-function initDogTracking(specificDoc) {
+function initDogTracking(specificDoc, mascotId = currentMascot) {
   const currentEl = typeof currentIdleElement === "function" ? currentIdleElement() : null;
   const dogDoc = specificDoc || (currentEl && currentEl.contentDocument) || (dogObj && dogObj.contentDocument);
   if (!dogDoc || trackingInitializedDocs.has(dogDoc)) return;
@@ -1026,7 +1038,7 @@ function initDogTracking(specificDoc) {
     for (const id of cfg.ids) {
       const el = dogDoc.getElementById(id);
       if (!el) continue;
-      layers[name].wrappers.push(wrapElement(el));
+      layers[name].wrappers.push(wrapElement(el, mascotId));
     }
   }
 }
@@ -1079,6 +1091,7 @@ function updateCursorTracking({ dx, dy }) {
     targetDy = 0;
     lastCursorSample = null;
     shakeEnergy = 0;
+    scheduleTrackingTick();
     return;
   }
   updateShakeDetection(dx, dy);
@@ -1086,19 +1099,32 @@ function updateCursorTracking({ dx, dy }) {
   if (dist === 0) {
     targetDx = 0;
     targetDy = 0;
+    scheduleTrackingTick();
     return;
   }
   const clamped = Math.min(dist, MAX_RAW_DIST_PX) / MAX_RAW_DIST_PX;
   targetDx = (dx / dist) * clamped;
   targetDy = (dy / dist) * clamped;
+  if (!document.body.dataset.sleeping) scheduleTrackingTick();
 }
 window.electronAPI.onCursorPos(updateCursorTracking);
 
+function scheduleTrackingTick() {
+  if (trackingRafId !== null || !layers) return;
+  trackingRafId = requestAnimationFrame(tick);
+}
+
 function tick() {
-  if (!layers) return;
+  trackingRafId = null;
+  if (!layers || document.body.dataset.sleeping) return;
+  let needsAnotherFrame = false;
   for (const layer of Object.values(layers)) {
     const tx = targetDx * layer.maxOffset;
     const ty = targetDy * layer.maxOffset;
+
+    if (Math.abs(tx - layer.x) > 0.005 || Math.abs(ty - layer.y) > 0.005) {
+      needsAnotherFrame = true;
+    }
 
     layer.x += (tx - layer.x) * layer.ease;
     layer.y += (ty - layer.y) * layer.ease;
@@ -1112,6 +1138,7 @@ function tick() {
     const qy = Math.round(layer.y * 8) / 8;
 
     for (const w of layer.wrappers) {
+      if (w.getAttribute("data-tracking-mascot") !== currentMascot) continue;
       if (layer.stretchAxis === "x") {
         const stretch = 1 + Math.abs(targetDx) * 0.08;
         w.setAttribute("transform", `translate(${qx} 0) scale(${stretch.toFixed(3)} 1)`);
@@ -1120,7 +1147,7 @@ function tick() {
       }
     }
   }
-  requestAnimationFrame(tick);
+  if (needsAnotherFrame) scheduleTrackingTick();
 }
 
 function applyCatNameSettings(settings) {
@@ -1846,6 +1873,7 @@ function playCompletionMeow() {
     playPuppyBark();
     return;
   }
+  const completionMeow = getAudio("completion");
   completionMeow.volume = completionMeowVolume;
   completionMeow.currentTime = 0;
   completionMeow.play().catch(() => {});
@@ -1864,6 +1892,7 @@ function playReminderMeow(options = {}) {
   }
   const repeat = Math.max(1, Math.min(3, Math.round(Number(options.repeat) || 3)));
   const play = () => {
+    const reminderMeow = getAudio("reminder");
     reminderMeow.volume = getReminderMeowVolume();
     reminderMeow.currentTime = 0;
     reminderMeow.play().catch(() => {});
@@ -1982,6 +2011,7 @@ function stopDogPettingAudio() {
 
 function playPuppyBark() {
   try {
+    const dogBarkSound = getAudio("dogBark");
     dogBarkSound.volume = Math.max(0.18, completionMeowVolume * 2.5);
     dogBarkSound.currentTime = 0;
     dogBarkSound.play().catch(() => {});
@@ -2115,6 +2145,7 @@ function formatAiCompleteText(event) {
 }
 
 function playAiComplete(event) {
+  registerUserActivity();
   setThinkingDotsVisible(false);
   playCompletionJump();
   const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
@@ -2129,6 +2160,7 @@ function playAiComplete(event) {
 }
 
 function playAiNotification(event) {
+  registerUserActivity();
   setThinkingDotsVisible(false);
   playReminderAlertOnce();
   triggerAlertAnimation();
@@ -2180,6 +2212,7 @@ function applyAiTaskState(event) {
   clearAiTaskStaleTimer();
 
   if (active) {
+    registerUserActivity();
     const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName) || "Gemini";
     let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
     if (conversation.length > 28) conversation = conversation.slice(0, 25) + "...";
@@ -2202,8 +2235,10 @@ window.electronAPI.onAiTaskState(applyAiTaskState);
 window.electronAPI.onAiTaskNotification(playAiNotification);
 function applyTaskCompleteSoundVolume(volume) {
   completionMeowVolume = Math.max(0, Math.min(1, Number(volume) || 0));
-  completionMeow.volume = completionMeowVolume;
-  reminderMeow.volume = getReminderMeowVolume();
+  const completionMeow = audioCache.get("completion");
+  const reminderMeow = audioCache.get("reminder");
+  if (completionMeow) completionMeow.volume = completionMeowVolume;
+  if (reminderMeow) reminderMeow.volume = getReminderMeowVolume();
 }
 window.electronAPI.taskCompleteSoundVolumeGet().then(applyTaskCompleteSoundVolume).catch(() => {});
 window.electronAPI.onTaskCompleteSoundVolume(applyTaskCompleteSoundVolume);
@@ -2521,7 +2556,7 @@ window.electronAPI.onNativeWindowDragState((active) => {
       { screenX: 0, screenY: 0 },
     );
   } else {
-    finishDragStretch(false);
+    if (!pendingDrag) finishDragStretch(false);
   }
 });
 
@@ -2667,8 +2702,8 @@ function startPurring(clientX, clientY) {
   const isDogSound = m && m.soundType === "bark";
 
   if (isDogSound) {
-    purringSound.pause();
-    purringSound.currentTime = 0;
+    resetAudio("purring");
+    const dogPettingSound = getAudio("dogPetting");
     if (dogPettingSound.paused && !dogPetPlayPromise) {
       dogPettingSound.currentTime = 0;
       dogPetPlayPromise = dogPettingSound.play()
@@ -2682,9 +2717,9 @@ function startPurring(clientX, clientY) {
     }
     startDogPettingAudio();
   } else {
-    dogPettingSound.pause();
-    dogPettingSound.currentTime = 0;
+    resetAudio("dogPetting");
     stopDogPettingAudio();
+    const purringSound = getAudio("purring");
     if (purringSound.paused && !purrPlayPromise) {
       purringSound.currentTime = 0;
       purrPlayPromise = purringSound.play()
@@ -2712,10 +2747,8 @@ function stopPurring() {
   setPurrFaceOffset(0, 0);
   clearTimeout(purrStopTimer);
   purrStopTimer = null;
-  purringSound.pause();
-  purringSound.currentTime = 0;
-  dogPettingSound.pause();
-  dogPettingSound.currentTime = 0;
+  resetAudio("purring");
+  resetAudio("dogPetting");
   stopDogPettingAudio();
   resetPettingStroke();
 }
@@ -2764,7 +2797,8 @@ function isCatHitPoint(x, y) {
       pointInEllipse(nx, ny, 0.5, 0.52, 0.18, 0.38);
   }
 
-  return pointInEllipse(nx, ny, 0.4, 0.3, 0.24, 0.22) ||
+  return (nx >= 0.15 && nx <= 0.85 && ny >= 0.08 && ny <= 0.92) ||
+    pointInEllipse(nx, ny, 0.4, 0.3, 0.24, 0.22) ||
     pointInEllipse(nx, ny, 0.55, 0.62, 0.3, 0.3) ||
     (nx >= 0.28 && nx <= 0.72 && ny >= 0.3 && ny <= 0.78);
 }
@@ -3331,7 +3365,10 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
   document.body.classList.add("dragging");
   window.electronAPI.setStretchMode(true);
-  startChain();
+  // Catjang uses the dynamic 16-segment spine. The other mascots keep their
+  // dedicated drag sprite visible until mouseup; starting chainTick for them
+  // removes `.dragging` on the first animation frame.
+  if (currentMascot === "cat") startChain();
 }
 
 function finishDragStretch(notifyMain = true) {
@@ -3343,7 +3380,7 @@ function finishDragStretch(notifyMain = true) {
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
 
   // Only the original cat mascot uses the 16-segment dynamic SVG spine chain.
-  // All other mascots (schnauzer, chisi, milo, musubi) use dedicated drag sprites
+  // All other mascots (schnauzer, chisi, milo, musubi, peruperro) use dedicated drag sprites
   // and must restore immediately to idle upon mouse release.
   if (currentMascot === "cat" && endData && stretchT > 0.01) {
     releasing = true;
@@ -3506,6 +3543,10 @@ window.addEventListener("mousemove", (e) => {
   updatePurringAtPoint(e.clientX, e.clientY);
   updateWaylandEyeTracking(e);
   if (!dragging) return;
+  if (!(e.buttons & 1)) {
+    finishDragStretch(true);
+    return;
+  }
   const dx = e.screenX - lastX;
   const dy = e.screenY - lastY;
   if (dx !== 0 || dy !== 0) {
@@ -3535,10 +3576,10 @@ window.addEventListener("mouseup", (e) => {
   updateMouseEventPassthrough(e);
 });
 
-window.addEventListener("mouseleave", () => {
+window.addEventListener("mouseleave", (e) => {
   if (!dragging) setPetMouseEventsEnabled(false);
   clearPendingDrag();
-  if (dragging || releasing) finishDragStretch(true);
+  if ((dragging || releasing) && !(e.buttons & 1)) finishDragStretch(true);
   stopPurring();
   if (windowBackend === "wayland") updateCursorTracking({ dx: 0, dy: 0 });
 });
@@ -3778,6 +3819,7 @@ function registerSvgObjectWhenReady(id) {
   if (!el) return;
   const register = () => {
     if (!el.contentDocument) return;
+    if (el.dataset.mascot && el.dataset.mascot !== currentMascot) return;
     registerSvgDoc(el.contentDocument, id);
     if (document.body.dataset.reminderJump && (id === "jump-start" || id === "jump-ing")) {
       ensureReminderJumpEyes(el.contentDocument, id === "jump-start" ? "start" : "ing");
@@ -3799,6 +3841,14 @@ if (typeof MASCOTS === "object") {
   }
 }
 registerSvgObjectWhenReady("stretch-pose-ing");
+
+function registerMascotSvgDocs(mascotId) {
+  const mascot = typeof MASCOTS === "object" ? MASCOTS[mascotId] : null;
+  if (!mascot || !mascot.elements) return;
+  for (const elementId of Object.values(mascot.elements)) {
+    ensureSvgObjectReady(elementId);
+  }
+}
 
 // ── 타이핑 강도(KPS)에 따라 --cat-color를 base→빨강으로 lerp ──
 // BASE_RGB는 사용자가 패턴에서 정한 baseColor에서 동적으로 갱신.
@@ -3858,12 +3908,15 @@ function heatTick() {
   if (dragging && currentHeat > 0.005) {
     overlayColor = rgbToCss(HOT_RGB);
     fullOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
+    legacyOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
   } else if (stretchingHeat > 0.005 || stretchingHeatTarget > 0) {
     overlayColor = rgbToCss(COOL_RGB);
     legacyOverlayOpacity = Math.min(COOL_OVERLAY_MAX, stretchingHeat * COOL_OVERLAY_MAX);
+    fullOverlayOpacity = 0;
   } else {
     overlayColor = rgbToCss(HOT_RGB);
     legacyOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
+    fullOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
   }
   setCatColorAllSvgs(rgbToCss(BASE_RGB));
   setHeatOverlayAllSvgs(overlayColor, legacyOverlayOpacity.toFixed(3), fullOverlayOpacity.toFixed(3));
@@ -3872,6 +3925,7 @@ function heatTick() {
   // stretching 중에는 CSS에서 display:none으로 가려짐
   const steamOpacity = Math.max(0, Math.min(1, (currentHeat - 0.5) * 2));
   document.body.style.setProperty("--steam-opacity", steamOpacity.toFixed(2));
+  document.body.style.setProperty("--typing-heat", currentHeat.toFixed(3));
 
   if (currentHeat > 0 || kps > 0 || stretchingHeat > 0 || stretchingHeatTarget > 0) {
     heatRafId = requestAnimationFrame(heatTick);
@@ -4088,27 +4142,22 @@ function registerUserActivity() {
 function wakePet() {
   isPetSleeping = false;
   delete document.body.dataset.sleeping;
-  const roots = [
-    obj && obj.contentDocument && obj.contentDocument.documentElement,
-    dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
-  ];
-  for (const root of roots) {
+  for (const idle of document.querySelectorAll(".mascot-idle")) {
+    const root = idle.contentDocument && idle.contentDocument.documentElement;
     if (root) root.classList.remove("sleeping");
   }
+  scheduleTrackingTick();
 }
 
 function putPetToSleep() {
   if (isPetSleeping) return;
-  if (document.body.dataset.press || document.body.dataset.jump || document.body.dataset.stretching) return;
+  if (dragging || document.body.dataset.purring || document.body.hasAttribute("data-thinking") ||
+      document.body.dataset.press || document.body.dataset.jump || document.body.dataset.stretching) return;
   isPetSleeping = true;
   document.body.dataset.sleeping = "1";
-  const roots = [
-    obj && obj.contentDocument && obj.contentDocument.documentElement,
-    dogObj && dogObj.contentDocument && dogObj.contentDocument.documentElement,
-  ];
-  for (const root of roots) {
-    if (root) root.classList.add("sleeping");
-  }
+  const idle = currentIdleElement();
+  const root = idle && idle.contentDocument && idle.contentDocument.documentElement;
+  if (root) root.classList.add("sleeping");
 }
 
 setInterval(() => {
@@ -4123,10 +4172,13 @@ window.addEventListener("keydown", registerUserActivity, { passive: true });
 
 // ── MASCOT SWITCHING ──
 function applyMascot(mascot) {
+  registerUserActivity();
   currentMascot = (mascot === "schnauzer" || mascot === "chisi" || mascot === "milo" || mascot === "musubi" || mascot === "peruperro") ? mascot : "cat";
+  registerMascotSvgDocs(currentMascot);
   document.body.dataset.mascot = currentMascot;
   const currentEl = currentIdleElement();
-  if (currentEl && currentEl.contentDocument) initDogTracking(currentEl.contentDocument);
+  if (currentEl && currentEl.contentDocument) initDogTracking(currentEl.contentDocument, currentMascot);
+  scheduleTrackingTick();
 }
 
 if (window.electronAPI && window.electronAPI.mascotGet) {
@@ -4134,47 +4186,10 @@ if (window.electronAPI && window.electronAPI.mascotGet) {
   window.electronAPI.onMascotChanged((mascot) => applyMascot(mascot));
 }
 
-if (dogObj) {
-  dogObj.addEventListener("load", () => {
-    initDogTracking(dogObj.contentDocument);
-  });
-  requestAnimationFrame(() => {
-    if (dogObj && dogObj.contentDocument) initDogTracking(dogObj.contentDocument);
-  });
-}
-const chisiObj = document.getElementById("chisi");
-if (chisiObj) {
-  chisiObj.addEventListener("load", () => {
-    initDogTracking(chisiObj.contentDocument);
-  });
-  requestAnimationFrame(() => {
-    if (chisiObj && chisiObj.contentDocument) initDogTracking(chisiObj.contentDocument);
-  });
-}
-const miloObj = document.getElementById("milo");
-if (miloObj) {
-  miloObj.addEventListener("load", () => {
-    initDogTracking(miloObj.contentDocument);
-  });
-  requestAnimationFrame(() => {
-    if (miloObj && miloObj.contentDocument) initDogTracking(miloObj.contentDocument);
-  });
-}
-const musubiObj = document.getElementById("musubi");
-if (musubiObj) {
-  musubiObj.addEventListener("load", () => {
-    initDogTracking(musubiObj.contentDocument);
-  });
-  requestAnimationFrame(() => {
-    if (musubiObj && musubiObj.contentDocument) initDogTracking(musubiObj.contentDocument);
-  });
-}
-const peruperroObj = document.getElementById("peruperro");
-if (peruperroObj) {
-  peruperroObj.addEventListener("load", () => {
-    initDogTracking(peruperroObj.contentDocument);
-  });
-  requestAnimationFrame(() => {
-    if (peruperroObj && peruperroObj.contentDocument) initDogTracking(peruperroObj.contentDocument);
+for (const mascotId of ["schnauzer", "chisi", "milo", "musubi", "peruperro"]) {
+  const idleElement = document.getElementById(mascotId);
+  if (!idleElement) continue;
+  idleElement.addEventListener("load", () => {
+    if (currentMascot === mascotId) initDogTracking(idleElement.contentDocument, mascotId);
   });
 }

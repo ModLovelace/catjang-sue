@@ -20,7 +20,6 @@ const os = require("os");
 const http = require("http");
 const vm = require("vm");
 const { spawn } = require("child_process");
-const bundledFfmpegPath = require("ffmpeg-static");
 
 const IS_MAC = process.platform === "darwin";
 const IS_WINDOWS = process.platform === "win32";
@@ -30,12 +29,13 @@ const IS_LINUX_WAYLAND_SESSION = IS_LINUX && process.env.XDG_SESSION_TYPE === "w
 const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().toLowerCase();
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
 const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
-// Agent integrations (hooks & local agent server).
-// On Linux, default to opt-in for sandboxing/safety tests.
-// On Windows and macOS, enable by default unless explicitly disabled with CATJANG_ENABLE_AGENT_INTEGRATIONS=0.
-const ENABLE_AGENT_INTEGRATIONS = IS_LINUX
-  ? process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS === "1"
-  : process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS !== "0";
+// Agent integrations are opt-in. An explicit environment override remains
+// available for automated setups, but normal installations use settings.json.
+const AGENT_INTEGRATIONS_ENV = process.env.CATJANG_ENABLE_AGENT_INTEGRATIONS;
+const AGENT_INTEGRATIONS_OVERRIDE = AGENT_INTEGRATIONS_ENV === "0" || AGENT_INTEGRATIONS_ENV === "1"
+  ? AGENT_INTEGRATIONS_ENV === "1"
+  : null;
+let agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === true;
 // Typing and wheel gestures are core pet interactions. Keep them enabled when
 // uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
 // for installations that do not want a global input hook.
@@ -138,9 +138,15 @@ let currentLanguage = "es";
 let currentMascot = "cat";
 
 function resolveFfmpegPath() {
-  if (!bundledFfmpegPath) return null;
-  const unpackedPath = bundledFfmpegPath.replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`);
-  return unpackedPath;
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "ffmpeg", IS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
+  }
+  try {
+    const developmentPath = require("ffmpeg-static");
+    return developmentPath || null;
+  } catch {
+    return null;
+  }
 }
 
 const ffmpegPath = resolveFfmpegPath();
@@ -234,7 +240,7 @@ const I18N = {
     mascotChisi: "Poodle Toy (Chisi) 🐩",
     mascotMilo: "Milo (Milongas) 🐕",
     mascotMusubi: "Tabby Cat (Musubi) 🐱",
-    mascotPeruperro: "Peruvian Hairless (Inca) 🐕",
+    mascotPeruperro: "Peruvian Hairless (Chuño) 🐕",
   },
   es: {
     licenseMissingKey: "Introduce tu clave de licencia.",
@@ -324,7 +330,7 @@ const I18N = {
     mascotChisi: "Caniche Toy (Chisi) 🐩",
     mascotMilo: "Milo (Milongas) 🐕",
     mascotMusubi: "Gato Atigrado (Musubi) 🐱",
-    mascotPeruperro: "Perro Peruano Calado (Inca) 🐕",
+    mascotPeruperro: "Perro Peruano Calado (Chuño) 🐕",
   },
   ko: {
     licenseMissingKey: "라이선스 키를 입력해 주세요.",
@@ -414,7 +420,7 @@ const I18N = {
     mascotChisi: "토이푸들 (치시) 🐩",
     mascotMilo: "밀로 (밀롱가스) 🐕",
     mascotMusubi: "줄무늬 고양이 (무스비) 🐱",
-    mascotPeruperro: "페루 무모견 (잉카) 🐕",
+    mascotPeruperro: "페루 무모견 (추뇨) 🐕",
   },
   ja: {
     licenseMissingKey: "ライセンスキーを入力してください。",
@@ -504,7 +510,7 @@ const I18N = {
     mascotChisi: "トイプードル (Chisi) 🐩",
     mascotMilo: "ミロ (Milongas) 🐕",
     mascotMusubi: "トラ猫 (Musubi) 🐱",
-    mascotPeruperro: "ペルーヘアレス (Inca) 🐕",
+    mascotPeruperro: "ペルーヘアレス (Chuño) 🐕",
   },
 };
 
@@ -740,7 +746,7 @@ let mascotNames = {
   chisi: "Chisi",
   milo: "Milo",
   musubi: "Musubi",
-  peruperro: "Inca",
+  peruperro: "Chuño",
 };
 let catName = "Catjang";
 let userName = "";
@@ -819,7 +825,8 @@ function loadSettings() {
           mascotNames.musubi = data.mascotNames.musubi.trim().slice(0, 24);
         }
         if (typeof data.mascotNames.peruperro === "string" && data.mascotNames.peruperro.trim()) {
-          mascotNames.peruperro = data.mascotNames.peruperro.trim().slice(0, 24);
+          const pName = data.mascotNames.peruperro.trim().slice(0, 24);
+          mascotNames.peruperro = (pName === "Inca") ? "Chuño" : pName;
         }
       } else if (typeof data.catName === "string" && data.catName.trim()) {
         mascotNames.cat = data.catName.trim().slice(0, 24);
@@ -831,6 +838,10 @@ function loadSettings() {
       if (catName === "Otto" && currentMascot === "schnauzer") {
         catName = "Toto";
         mascotNames.schnauzer = "Toto";
+      }
+      if (catName === "Inca" && currentMascot === "peruperro") {
+        catName = "Chuño";
+        mascotNames.peruperro = "Chuño";
       }
       if (typeof data.userName === "string") {
         userName = data.userName.trim().slice(0, 24);
@@ -849,6 +860,9 @@ function loadSettings() {
       }
       if (typeof data.agentOnboardingShown === "boolean") {
         agentOnboardingShown = data.agentOnboardingShown;
+      }
+      if (AGENT_INTEGRATIONS_OVERRIDE === null && typeof data.agentIntegrationsEnabled === "boolean") {
+        agentIntegrationsEnabled = data.agentIntegrationsEnabled;
       }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
@@ -885,6 +899,7 @@ function saveSettings() {
       showReminderButtonOutside,
       catNamePromptShown,
       agentOnboardingShown,
+      agentIntegrationsEnabled,
       taskCompleteSoundVolume,
       petSize: currentPetSize,
       petPosition: currentPetPosition,
@@ -898,7 +913,7 @@ function setMascot(mascot) {
   if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi" && mascot !== "peruperro") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
-  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Inca" : "Catjang"))));
+  const defaultName = currentMascot === "schnauzer" ? "Toto" : (currentMascot === "chisi" ? "Chisi" : (currentMascot === "milo" ? "Milo" : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Chuño" : "Catjang"))));
   catName = mascotNames[currentMascot] || defaultName;
   saveSettings();
   if (petWin && !petWin.isDestroyed()) {
@@ -1164,7 +1179,7 @@ function setCatName(value) {
       ? "Chisi"
       : (currentMascot === "milo"
         ? "Milo"
-        : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Inca" : "Catjang"))));
+        : (currentMascot === "musubi" ? "Musubi" : (currentMascot === "peruperro" ? "Chuño" : "Catjang"))));
   const next = String(value || "").trim().slice(0, 24) || fallback;
   catName = next;
   mascotNames[currentMascot] = catName;
@@ -1423,6 +1438,7 @@ function createPetWindow() {
     height: H,
     x: initialPosition.x,
     y: initialPosition.y,
+    show: false,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -1444,6 +1460,15 @@ function createPetWindow() {
 
   attachWindowDiagnostics(petWin, "pet");
   keepWindowOnTop(petWin);
+  petWin.once("ready-to-show", () => {
+    if (!petWin || petWin.isDestroyed()) return;
+    keepWindowOnTop(petWin);
+    petWin.showInactive();
+    logInfo("[Catjang] pet window shown", {
+      bounds: petWin.getBounds(),
+      visible: petWin.isVisible(),
+    });
+  });
   petWin.on("system-context-menu", (event) => {
     event.preventDefault();
     showPetContextMenu();
@@ -1490,17 +1515,24 @@ function createPetWindow() {
   // X11/XWayland exposes global coordinates. The renderer uses this poll for
   // eye tracking and petting even before the window receives a DOM mousemove.
   if (!IS_NATIVE_WAYLAND) {
+    let lastCursorDx = null;
+    let lastCursorDy = null;
     cursorPollTimer = setInterval(() => {
       if (!petWin || petWin.isDestroyed()) return;
       const cursor = screen.getCursorScreenPoint();
       const b = petWin.getBounds();
       const cx = b.x + b.width / 2;
       const cy = b.y + b.height / 2;
+      const dx = cursor.x - cx;
+      const dy = cursor.y - cy;
+      if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;
+      lastCursorDx = dx;
+      lastCursorDy = dy;
       petWin.webContents.send("cursor-pos", {
-        dx: cursor.x - cx,
-        dy: cursor.y - cy,
+        dx,
+        dy,
       });
-    }, 16);
+    }, 32);
   }
 
   petWin.on("closed", () => {
@@ -1583,10 +1615,10 @@ function startLicensedApp(options = {}) {
   } else {
     logInfo("[Catjang] global input hook disabled by CATJANG_ENABLE_GLOBAL_INPUT=0");
   }
-  if (ENABLE_AGENT_INTEGRATIONS) {
+  if (agentIntegrationsEnabled) {
     startAgentIntegrations();
   } else {
-    logInfo("[Catjang] agent integrations disabled; set CATJANG_ENABLE_AGENT_INTEGRATIONS=1 to enable them");
+    logInfo("[Catjang] agent integrations disabled until the user opts in");
   }
   startStretchTimer();
   startReminderTimer();
@@ -1679,7 +1711,7 @@ function confirmAndPerformFullReset() {
     chisi: "Chisi",
     milo: "Milo",
     musubi: "Musubi",
-    peruperro: "Inca",
+    peruperro: "Chuño",
   };
   catName = "Catjang";
   currentMascot = "cat";
@@ -2448,6 +2480,9 @@ ipcMain.handle("license-start", async (_evt, options = {}) => {
   }
 
   if (options && typeof options.connectAgents === "boolean") {
+    agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === null
+      ? options.connectAgents
+      : AGENT_INTEGRATIONS_OVERRIDE;
     if (options.connectAgents === false) {
       agentOnboardingShown = true;
       saveSettings();
@@ -2534,6 +2569,7 @@ ipcMain.handle("agent-status-get", () => {
   const codexDir = path.join(os.homedir(), ".codex", "sessions");
 
   return {
+    enabled: agentIntegrationsEnabled,
     serverActive: !!agentStateServer,
     port: AGENT_STATE_PORT,
     antigravityInstalled: fs.existsSync(geminiHookPath),
@@ -2544,9 +2580,14 @@ ipcMain.handle("agent-status-get", () => {
 });
 ipcMain.handle("agent-hooks-install", () => {
   try {
-    installAntigravityHooks();
-    installClaudeCodeHooks();
-    installCursorHooks();
+    agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === null
+      ? true
+      : AGENT_INTEGRATIONS_OVERRIDE;
+    saveSettings();
+    if (!agentIntegrationsEnabled) {
+      return { ok: false, error: "Agent integrations are disabled by environment policy." };
+    }
+    startAgentIntegrations();
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err && err.message };
@@ -2805,6 +2846,7 @@ function showPetContextMenu() {
     { type: "separator" },
     {
       label: t("patternEditor"),
+      visible: false,
       click: () => openPatternEditor(),
     },
     ...(fs.existsSync(path.join(__dirname, "mapping-editor", "index.html")) && !releaseBuildExcludesDevOptions() ? [{
@@ -3207,13 +3249,18 @@ function startCursorAgentMonitor() {
 }
 
 function startAgentIntegrations() {
+  if (!agentIntegrationsEnabled) return;
   startAgentStateServer();
   installClaudeCodeHooks();
   installAntigravityHooks();
   installCursorHooks();
   startCodexMonitor();
-  startKiroMonitor();
-  startCursorAgentMonitor();
+  // Cursor is covered by its hook on Windows. The current log paths for
+  // Cursor and Kiro are macOS-specific, so do not poll nonexistent trees.
+  if (IS_MAC) {
+    startKiroMonitor();
+    startCursorAgentMonitor();
+  }
 }
 
 function stopAgentIntegrations() {

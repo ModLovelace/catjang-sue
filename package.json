@@ -32,15 +32,14 @@
     "dist:mac": "electron-builder --mac",
     "dist:linux": "electron-builder --linux"
   },
-  "dependencies": {
-    "ffmpeg-static": "^5.3.0"
-  },
+  "dependencies": {},
   "optionalDependencies": {
     "uiohook-napi": "^1.5.5"
   },
   "devDependencies": {
     "electron": "^43.1.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "ffmpeg-static": "^5.3.0"
   },
   "build": {
     "appId": "dev.catjang.app",
@@ -48,6 +47,13 @@
     "copyright": "Copyright © 2026",
     "publish": null,
     "npmRebuild": false,
+    "electronLanguages": [
+      "en-US",
+      "es",
+      "es-419",
+      "ja",
+      "ko"
+    ],
     "files": [
       "main.js",
       "preload.js",
@@ -57,20 +63,42 @@
       "hooks/**",
       "agents/**",
       "agents-setup/**",
-      "scripts/**",
-      "workspace/**",
+      "scripts/notify-catjang.js",
+      "workspace/assets/sound/**",
+      "workspace/assets/img/presets/**",
+      "workspace/assets/svg/catjang-logo.svg",
+      "workspace/assets/svg/heart.svg",
       "presets/**",
-      "svg/**",
-      "assets/**",
+      "svg/cat/**",
+      "svg/schnauzer/**",
+      "svg/chisi/**",
+      "svg/milo/**",
+      "svg/musubi/**",
+      "svg/peruperro/**",
+      "svg/stretch-start.svg",
+      "assets/catjang-logo.ico",
+      "assets/catjang-logo.png",
       "prototype-license/**",
-      "package.json"
-    ],
-    "extraResources": [
-      "node_modules/ffmpeg-static/**"
+      "package.json",
+      "!node_modules/uiohook-napi/src/**",
+      "!node_modules/uiohook-napi/libuiohook/**",
+      "!node_modules/uiohook-napi/**/*.map"
     ],
     "win": {
       "icon": "assets/catjang-logo.ico",
       "requestedExecutionLevel": "asInvoker",
+      "extraResources": [
+        {
+          "from": "node_modules/ffmpeg-static",
+          "to": "ffmpeg",
+          "filter": [
+            "ffmpeg.exe",
+            "ffmpeg.exe.LICENSE",
+            "ffmpeg.exe.README",
+            "LICENSE"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "nsis",
@@ -83,6 +111,18 @@
     "mac": {
       "icon": "assets/catjang-logo.png",
       "category": "public.app-category.productivity",
+      "extraResources": [
+        {
+          "from": "node_modules/ffmpeg-static",
+          "to": "ffmpeg",
+          "filter": [
+            "ffmpeg",
+            "ffmpeg.LICENSE",
+            "ffmpeg.README",
+            "LICENSE"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "dmg",
@@ -104,6 +144,18 @@
       "target": "AppImage",
       "category": "Utility",
       "icon": "assets/catjang-logo.png",
+      "extraResources": [
+        {
+          "from": "node_modules/ffmpeg-static",
+          "to": "ffmpeg",
+          "filter": [
+            "ffmpeg",
+            "ffmpeg.LICENSE",
+            "ffmpeg.README",
+            "LICENSE"
+          ]
+        }
+      ],
       "syncDesktopName": true
     }
   }

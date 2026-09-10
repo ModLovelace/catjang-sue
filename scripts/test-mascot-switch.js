@@ -28,11 +28,13 @@ app.whenReady().then(async () => {
   }));
   ipcMain.handle("cat-name-get", () => "Catjang");
   ipcMain.handle("cat-name-prompt-shown", () => true);
+  ipcMain.handle("user-name-get", () => "");
   ipcMain.handle("fixed-message-get", () => "");
   ipcMain.handle("reminders-get", () => []);
   ipcMain.handle("pomodoro-get", () => ({ active: false }));
   ipcMain.handle("pattern-get", () => null);
   ipcMain.handle("language-get", () => "es");
+  ipcMain.handle("task-complete-sound-volume-get", () => 0.1);
 
   await win.loadFile(path.join(__dirname, "..", "renderer", "index.html"));
 
@@ -631,6 +633,61 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(`delete document.body.dataset.stretching`);
   console.log("PASS 6: All Musubi animations and state transitions passed cleanly!");
 
-  console.log("=== ALL LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
+  // 7. Switch to Chuño and verify the core live states
+  const stateChuno = await win.webContents.executeJavaScript(`
+    (() => {
+      document.body.dataset.mascot = "peruperro";
+      const ids = ["cat", "schnauzer", "chisi", "milo", "musubi"];
+      const peruperro = document.getElementById("peruperro");
+      const foreignVisible = ids.filter((id) => window.getComputedStyle(document.getElementById(id)).display !== "none");
+      const idleDisplay = window.getComputedStyle(peruperro).display;
+
+      document.body.dataset.press = "left";
+      const pressDisplay = window.getComputedStyle(document.getElementById("peruperro-press-left")).display;
+      const pressIdleDisplay = window.getComputedStyle(peruperro).display;
+      delete document.body.dataset.press;
+
+      document.body.dataset.scroll = "unroll";
+      const scrollDisplay = window.getComputedStyle(document.getElementById("peruperro-scroll-unroll")).display;
+      delete document.body.dataset.scroll;
+
+      document.body.classList.add("dragging");
+      const dragDisplay = window.getComputedStyle(document.getElementById("peruperro-drag")).display;
+      document.body.classList.remove("dragging");
+
+      document.body.dataset.stretching = "ing";
+      const stretchDisplay = window.getComputedStyle(document.getElementById("peruperro-stretch")).display;
+      delete document.body.dataset.stretching;
+
+      return {
+        mascot: document.body.dataset.mascot,
+        idleDisplay,
+        foreignVisible,
+        pressDisplay,
+        pressIdleDisplay,
+        scrollDisplay,
+        dragDisplay,
+        stretchDisplay,
+      };
+    })()
+  `);
+  console.log("STATE 7 (Chuño core live states):", stateChuno);
+  if (
+    stateChuno.mascot !== "peruperro" ||
+    stateChuno.idleDisplay !== "block" ||
+    stateChuno.foreignVisible.length !== 0 ||
+    stateChuno.pressDisplay !== "block" ||
+    stateChuno.pressIdleDisplay !== "none" ||
+    stateChuno.scrollDisplay !== "block" ||
+    stateChuno.dragDisplay !== "block" ||
+    stateChuno.stretchDisplay !== "block"
+  ) {
+    console.error("FAIL: Chuño live state transition or sprite isolation is incorrect!", stateChuno);
+    app.exit(1);
+    return;
+  }
+  console.log("PASS 7: Chuño idle, typing, scroll, drag and stretch transitions passed cleanly!");
+
+  console.log("=== ALL 6 LIVE ELECTRON MASCOT ANIMATIONS & ISOLATION TESTS PASSED! ===");
   app.exit(0);
 });

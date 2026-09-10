@@ -148,8 +148,8 @@ const MASCOTS = {
   },
   peruperro: {
     id: "peruperro",
-    defaultName: "Inca",
-    label: "Perro Peruano Calado (Inca) 🐕",
+    defaultName: "Chuño",
+    label: "Perro Peruano Calado (Chuño) 🐕",
     soundType: "bark",
     folder: "svg/peruperro",
     petting: { cx: 0.50, cy: 0.33, rx: 0.26, ry: 0.24 },

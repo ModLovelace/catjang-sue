@@ -4,13 +4,29 @@
  * 2. Hover estático sin movimiento (1.8s) -> NO debe acariciar.
  * 3. Movimiento intencional simulado (~1.5s de vaivén) -> SÍ debe acariciar.
  */
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 
 app.commandLine.appendSwitch("disable-gpu");
 app.commandLine.appendSwitch("disable-software-rasterizer");
 
 app.whenReady().then(async () => {
+  ipcMain.handle("mascot-get", () => "cat");
+  ipcMain.handle("window-capabilities", () => ({
+    backend: "x11",
+    nativeWayland: false,
+    supportsProgrammaticMove: true,
+  }));
+  ipcMain.handle("cat-name-get", () => "Catjang");
+  ipcMain.handle("cat-name-prompt-shown", () => true);
+  ipcMain.handle("user-name-get", () => "");
+  ipcMain.handle("fixed-message-get", () => "");
+  ipcMain.handle("reminders-get", () => []);
+  ipcMain.handle("pomodoro-get", () => ({ active: false }));
+  ipcMain.handle("pattern-get", () => null);
+  ipcMain.handle("language-get", () => "es");
+  ipcMain.handle("task-complete-sound-volume-get", () => 0.1);
+
   const win = new BrowserWindow({
     width: 320,
     height: 320,

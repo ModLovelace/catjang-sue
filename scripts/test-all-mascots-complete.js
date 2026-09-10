@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
   await new Promise((r) => setTimeout(r, 800));
 
   console.log("==================================================================");
-  console.log("=== COMPREHENSIVE MASCOT-BY-MASCOT SUITE (5/5 MASCOTS AUDIT) ===");
+  console.log("=== COMPREHENSIVE MASCOT-BY-MASCOT SUITE (6/6 MASCOTS AUDIT) ===");
   console.log("==================================================================");
 
   const mascotList = Object.keys(MASCOTS);
@@ -306,7 +306,7 @@ app.whenReady().then(async () => {
   }
 
   console.log("\n==================================================================");
-  console.log(`=== ALL 5 MASCOTS PASSED 100% OF TESTS (${totalTestsPassed}/${mascotList.length * 9} CHECKS) ===`);
+  console.log(`=== ALL 6 MASCOTS PASSED 100% OF TESTS (${totalTestsPassed}/${mascotList.length * 9} CHECKS) ===`);
   console.log("==================================================================");
   app.exit(0);
 });
