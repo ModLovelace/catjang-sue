@@ -77,3 +77,19 @@
 - **Único cierre visual pendiente:** observación del escritorio real. Computer Use falló por pipe nativo no disponible; `desktopCapturer` no expuso pantalla y Windows reportó error 170. No presentar las capturas del renderer como prueba del compositor de Windows.
 - Resultados y alcance: `docs/QA_2026-09-10.md`. Artefactos locales: `.tmp/qa-desktop/`.
 - Regresión completa aprobada (54/54 más arrastre, onboarding, Chuño, cambio de mascota, caricias, demora e integración de conversaciones). Paquete actualizado y verificado con `scripts/test-package.js`: fuentes actuales, 48 SVG, FFmpeg externo y arranque smoke desde fuentes/ejecutable, todo con código 0. `app.asar`: 2,199,581 bytes.
+
+## 5. Publicación experimental multiplataforma (2026-09-10)
+- Pre-release público: `v0.1.40-experimental.1` en
+  `https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.40-experimental.1`.
+- Tag de fuentes: `32667c577bcafc570e200dff576bb0ac1c6fa76a`.
+- Artefactos verificados en GitHub: DMG/ZIP para macOS Apple Silicon arm64 e
+  Intel x64, instalador NSIS para Windows x64 y archivos `SHA256SUMS` para
+  ambas plataformas.
+- Los paquetes son experimentales, sin firma ni notarización. Las instrucciones
+  de apertura con Gatekeeper y SmartScreen están en
+  `docs/EXPERIMENTAL_INSTALLATION.md` y en las notas del pre-release.
+- Los workflows de etiqueta construyen, validan y adjuntan los paquetes. El
+  error histórico del run `34497573208` pertenecía a `99ef3eb` y quedó
+  corregido en `ba37cac`; los builds de publicación del tag finalizaron con
+  éxito.
+- PR de integración hacia `community/windows`: `#7`.

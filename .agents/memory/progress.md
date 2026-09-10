@@ -24,7 +24,11 @@
 - [x] **Siesta y Agentes (2026-09-10):** Cierre de ojos y despertar de las seis mascotas, avisos de agentes durante la siesta y regresión IPC aprobados. CPU total medida entre 0.500% y 0.953% en el equipo de prueba (monitores de logs desactivados); detalles y limitación visual en `docs/QA_2026-09-10.md`.
 - [x] **Sonidos Específicos:** Jadeo y ladridos para perros, ronroneo y maullido para gatos.
 - [x] **Soporte macOS Apple Silicon:** Compilación arm64 para M1/M2/M3/M4 e Intel en GitHub Actions.
-- [x] **Versión Actual:** v0.1.39 lanzada públicamente.
+- [x] **Versión Estable Actual:** v0.1.39 lanzada públicamente.
+- [x] **Preview Multiplataforma (2026-09-10):** `v0.1.40-experimental.1`
+  publicada como pre-release con DMG/ZIP para macOS arm64 y x64, instalador
+  Windows x64, instrucciones para Gatekeeper/SmartScreen y archivos SHA-256.
+  Los binarios son experimentales y no están firmados ni notarizados.
 
 ---
 
