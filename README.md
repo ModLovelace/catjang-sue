@@ -40,6 +40,13 @@ The latest public release is
 featuring full multi-mascot support (Catjang, Toto, Chisi, Milo, Musubi), deliberate petting gestures,
 and stable AI agent integration (Antigravity/Gemini, Claude, Cursor) for both Windows (x64) and macOS (Apple Silicon M1/M2/M3/M4 & Intel).
 
+The current preview is
+[v0.1.40-experimental.1](https://github.com/ModLovelace/catjang-sue/releases/tag/v0.1.40-experimental.1).
+It adds Chuño, nap handling, updated agent reactions, and the latest desktop
+performance fixes. Its macOS and Windows packages are unsigned; follow the
+[experimental installation guide](docs/EXPERIMENTAL_INSTALLATION.md) to open
+them and verify their SHA-256 checksums.
+
 For development, install NVM for Windows, select Node `24.18.0` with
 `nvm use 24.18.0`, then run `npm ci` and `npm start`. End users do not need
 Node.js or a repository clone: they install the `.exe` from a release.
