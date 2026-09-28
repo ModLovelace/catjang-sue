@@ -2543,6 +2543,12 @@ ipcMain.on("set-window-shape", (_evt, requestedRects) => {
     } catch (error) {
       logWarn("[Catjang] Linux window shaping is unavailable:", error && error.message);
     }
+  } else {
+    try {
+      petWin.setShape([]);
+    } catch (error) {
+      logWarn("[Catjang] Linux window shape reset failed:", error && error.message);
+    }
   }
 });
 
@@ -2917,7 +2923,7 @@ ipcMain.on("show-context-menu", showPetContextMenu);
 
 // ── 스트레칭 시퀀스: 윈도우 확대 + 중앙으로 → SVG 애니메이션 → 복원 ──
 const STRETCH_DURATION_MS = 3000;
-const STRETCH_GROW_MS = 400;       // 확대 transition 시간
+const STRETCH_GROW_MS = 250;       // 확대 transition 시간
 const STRETCH_SHRINK_DELAY_MS = 200; // 종료 후 복원까지 여유
 const STRETCH_FILL_RATIO = 0.90;    // 화면 높이의 90%를 채우도록 (정사각 윈도우)
 let stretchInProgress = false;
@@ -2940,17 +2946,20 @@ function triggerStretchSequence() {
   const display = screen.getDisplayMatching(savedStretchBounds);
   const { x: dispX, y: dispY, width: dispW, height: dispH } = display.workArea;
 
-  // 정사각 큰 윈도우 — 화면 높이 기준 STRETCH_FILL_RATIO
-  const targetSize = Math.round(dispH * STRETCH_FILL_RATIO);
-  const newX = dispX + Math.round((dispW - targetSize) / 2);
-  const newY = dispY + Math.round((dispH - targetSize) / 2);
+  petWin.setResizable(true);
+  if (IS_LINUX && typeof petWin.setShape === "function") {
+    try {
+      petWin.setShape([]);
+    } catch {}
+  }
 
+  // 화면 작업영역 전체로 확대하여 와이드스크린/울트라와이드에서도 완벽히 적응
   petWin.setBounds(
-    { x: newX, y: newY, width: targetSize, height: targetSize },
-    true
+    { x: dispX, y: dispY, width: dispW, height: dispH },
+    false
   );
 
-  // 윈도우 확대 transition 후 SVG 애니메이션 시작
+  // 윈도우 확대 후 SVG 애니메이션 시작
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("do-stretch");
@@ -2959,8 +2968,17 @@ function triggerStretchSequence() {
 
   // 시퀀스 종료 후 원래 bounds 복원
   setTimeout(() => {
-    if (petWin && !petWin.isDestroyed() && savedStretchBounds) {
-      petWin.setBounds(savedStretchBounds, true);
+    if (petWin && !petWin.isDestroyed()) {
+      petWin.webContents.send("stretch-ended");
+      if (savedStretchBounds) {
+        if (IS_LINUX && typeof petWin.setShape === "function") {
+          try {
+            petWin.setShape([]);
+          } catch {}
+        }
+        petWin.setBounds(savedStretchBounds, false);
+        petWin.setResizable(false);
+      }
     }
     stretchInProgress = false;
   }, STRETCH_GROW_MS + STRETCH_DURATION_MS + STRETCH_SHRINK_DELAY_MS);
@@ -2981,7 +2999,8 @@ function triggerPomodoroFocusStartSequence() {
   const newX = dispX + Math.round((dispW - targetSize) / 2);
   const newY = dispY + Math.round((dispH - targetSize) / 2);
 
-  petWin.setBounds({ x: newX, y: newY, width: targetSize, height: targetSize }, true);
+  petWin.setResizable(true);
+  petWin.setBounds({ x: newX, y: newY, width: targetSize, height: targetSize }, false);
 
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed()) {
@@ -2991,7 +3010,8 @@ function triggerPomodoroFocusStartSequence() {
 
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed() && savedFocusStartBounds) {
-      petWin.setBounds(savedFocusStartBounds, true);
+      petWin.setBounds(savedFocusStartBounds, false);
+      petWin.setResizable(false);
     }
     focusStartInProgress = false;
     savedFocusStartBounds = null;

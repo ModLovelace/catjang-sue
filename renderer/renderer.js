@@ -2482,23 +2482,26 @@ function scheduleNativeWindowShapeUpdate() {
   if (!windowShapeSupported || nativeShapeRaf !== null) return;
   nativeShapeRaf = requestAnimationFrame(() => {
     nativeShapeRaf = null;
-    const selectors = [
-      "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
-      "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
-      "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
-      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-scroll-unroll", "#schnauzer-jump-start", "#schnauzer-jump-ing", "#schnauzer-drag", "#schnauzer-stretch",
-      "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
-      "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
-    ];
+    const staticElements = document.querySelectorAll(
+      "#drag-handle, #share-name-badge, #cat-speech-bubble, #cat-thinking-dots, " +
+      "#reminder-clock-button, #reminder-panel, #cat-name-editor, #user-name-editor, " +
+      "#fixed-message-editor, #pomodoro-focus-editor, #share-duration-editor, " +
+      "#purr-hearts, #heat-steam, #sleep-bubble, #alert-exclamation, #completion-confetti"
+    );
+    const mascotElements = document.querySelectorAll(".mascot-sprite");
+    const candidateElements = [...staticElements, ...mascotElements];
     const rects = [];
-    for (const selector of selectors) {
-      const element = document.querySelector(selector);
+    for (const element of candidateElements) {
       if (!element) continue;
       const style = getComputedStyle(element);
-      if (style.display === "none" || style.visibility === "hidden") continue;
+      if (
+        style.display === "none" ||
+        style.visibility === "hidden" ||
+        parseFloat(style.opacity || "1") <= 0.01
+      ) continue;
       const rect = element.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
-      const padding = selector === "#purr-hearts" || selector === "#heat-steam" ? 40 : 8;
+      const padding = element.id === "purr-hearts" || element.id === "heat-steam" ? 40 : 12;
       rects.push({
         x: Math.floor(rect.left - padding),
         y: Math.floor(rect.top - padding),
@@ -4006,6 +4009,22 @@ function setStretchPoseAnimating(active) {
   return true;
 }
 
+function endStretchAnimation() {
+  clearStretchingTimers();
+  pendingStretchAnimation += 1;
+  clearPendingStretchLoadListener();
+  setStretchPoseAnimating(false);
+  delete document.body.dataset.stretching;
+  stretchingHeatTarget = 0;
+  scheduleNativeWindowShapeUpdate();
+}
+
+if (window.electronAPI && typeof window.electronAPI.onStretchEnded === "function") {
+  window.electronAPI.onStretchEnded(() => {
+    endStretchAnimation();
+  });
+}
+
 window.electronAPI.onDoStretch(() => {
   if (dragging || releasing || document.body.classList.contains("dragging")) {
     cancelDragStretchState();
@@ -4026,6 +4045,7 @@ window.electronAPI.onDoStretch(() => {
     : (currentMascot === "schnauzer" ? "schnauzer-stretch" : "stretch-pose-default");
   if (stretchId) ensureSvgObjectReady(stretchId);
   document.body.dataset.stretching = "ing";
+  scheduleNativeWindowShapeUpdate();
   requestStretchPoseAnimation();
   // 색상: 검정 → 초록 → 검정 (전체 3초 안에 자연스럽게)
   stretchingHeatTarget = 1;
@@ -4034,13 +4054,10 @@ window.electronAPI.onDoStretch(() => {
   stretchingTimers.push(setTimeout(() => {
     stretchingHeatTarget = 0;
   }, STRETCH_DURATION_MS * 0.7));
-  // 종료: idle 복귀
+  // 종료: fallback idle 복귀
   stretchingTimers.push(setTimeout(() => {
-    pendingStretchAnimation += 1;
-    clearPendingStretchLoadListener();
-    setStretchPoseAnimating(false);
-    delete document.body.dataset.stretching;
-  }, STRETCH_DURATION_MS));
+    endStretchAnimation();
+  }, STRETCH_DURATION_MS + 250));
 });
 
 const TYPING_TRIGGER_COUNT = 5;

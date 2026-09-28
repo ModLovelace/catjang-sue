@@ -1189,6 +1189,22 @@ body[data-mascot="chisi"][data-stretching] #chisi-stretch { display: block !impo
 body[data-mascot="milo"][data-stretching] #milo-stretch { display: block !important; }
 body[data-mascot="musubi"][data-stretching] #musubi-stretch { display: block !important; }
 body[data-mascot="peruperro"][data-stretching] #peruperro-stretch { display: block !important; }
+
+/* Adaptación universal de pantalla completa / ultrawide para el estiramiento */
+body[data-stretching] .mascot-sprite.mascot-stretch,
+body[data-stretching] #stretch-pose-default {
+  position: absolute;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(85vw, calc(80vh * (72 / 56))) !important;
+  max-width: 90vw !important;
+  max-height: 82vh !important;
+  aspect-ratio: 72 / 56 !important;
+  height: auto !important;
+  z-index: 10 !important;
+}
+
 body[data-stretching] #cat,
 body[data-stretching] #schnauzer,
 body[data-stretching] #chisi,
@@ -1202,6 +1218,19 @@ body[data-stretching] .mascot-scroll,
 body[data-stretching] .mascot-jump-start,
 body[data-stretching] .mascot-jump-ing,
 body[data-stretching] .mascot-drag { display: none !important; }
+
+body[data-stretching] #drag-handle,
+body[data-stretching] #petting-handle,
+body[data-stretching] #reminder-clock-button,
+body[data-stretching] #reminder-panel,
+body[data-stretching] #cat-speech-bubble,
+body[data-stretching] #cat-thinking-dots,
+body[data-stretching] #share-name-badge,
+body[data-stretching] #sleep-bubble,
+body[data-stretching] #alert-exclamation,
+body[data-stretching] #completion-confetti {
+  display: none !important;
+}
 
 /* ── SLEEP / NAP ANIMATION ── */
 body[data-sleeping="1"] #cat,

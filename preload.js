@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("mouse-wheel", (_evt, event) => callback(event)),
   onDoStretch: (callback) =>
     ipcRenderer.on("do-stretch", () => callback()),
+  onStretchEnded: (callback) =>
+    ipcRenderer.on("stretch-ended", () => callback()),
   onDoJump: (callback) =>
     ipcRenderer.on("do-jump", () => callback()),
   onShareRecord: (callback) =>
