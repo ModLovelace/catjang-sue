@@ -143,7 +143,11 @@
       ]
     },
     "linux": {
-      "target": "AppImage",
+      "maintainer": "Catjang Developers <dev@catjang.app>",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Utility",
       "icon": "assets/catjang-logo.png",
       "extraResources": [
