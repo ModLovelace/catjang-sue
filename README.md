@@ -41,6 +41,21 @@ Elige el instalador correspondiente a tu sistema operativo (Versión más recien
 
 ---
 
+## 🔑 Claves de Activación (Prototipo Gratuito) / Prototype License Keys
+
+Catjang utiliza un validador local y fuera de línea sin intermediarios (`prototype-license/endpoint.js`). Al iniciar por primera vez, copia y pega cualquiera de las siguientes claves gratuitas para activar y acceder al catálogo de mascotas:
+
+```text
+CATJANG-PROTO-ALPH-0001-AAAA-BBBB-CCCC
+CATJANG-PROTO-BETA-0002-DDDD-EEEE-FFFF
+CATJANG-PROTO-GAMM-0003-GGGG-HHHH-IIII
+CATJANG-PROTO-DEMO-1234-5678-9ABC-DEF0
+```
+
+> 💡 *Nota:* También es válida cualquier clave personalizada con el formato `CATJANG-PROTO-XXXX-XXXX-XXXX-XXXX`.
+
+---
+
 ## 🌟 ¿Qué es Catjang-Sue?
 
 **Catjang-Sue** es un fork comunitario de escritorio evolucionado a partir del prototipo original de **jan (nerfspeed)** bajo licencia `CC BY-NC 4.0`. 
