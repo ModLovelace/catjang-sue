@@ -1,0 +1,46 @@
+<svg width="40" height="145" viewBox="0 0 40 145" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- start.svg: 별도 object로 표시하지 않고 stretch chain의 시작 좌표로 사용. rect 순서는 end.svg와 동일하게 유지. -->
+<!-- 앞다리 좌측 (compressed) -->
+<path id="leg-fl-start" d="M11 26H13V31H12V34H11V37H9V32H10V28H11V26Z" fill="var(--cat-color)"/>
+<!-- 머리 -->
+<path d="M13 8H11V10H10V12H9V17H10V21H12V22H13V23H15V24H25V23H27V22H28V21H29V20H30V17H31V13H30V10H29V9H28V8H26V7H24V6H16V7H13V8Z" fill="var(--cat-color)"/>
+<!-- 꼬리 -->
+<path id="tail-path" d="M27 51V50H33V49H35V48H36V47H35V44H36V43H38V44H39V45H40V50H39V51H38V52H36V53H31V52H28V51H27Z" fill="var(--cat-color)"/>
+<g id="whiskers" data-heat-overlay="true">
+  <rect width="5" height="1" transform="translate(6 14)" fill="var(--cat-color)"/>
+  <rect width="5" height="1" transform="translate(29 14)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(5 17)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(29 17)" fill="var(--cat-color)"/>
+</g>
+<path d="M11 9V6H12V4H13V3H14V2H15V4H16V5H17V9H16V10H12V9H11Z" fill="var(--cat-color)"/>
+<path d="M24 5H23V9H24V10H27V9H28V4H27V3H26V2H25V3H24V5Z" fill="var(--cat-color)"/>
+<rect x="13" y="22" width="14" height="3" fill="var(--cat-color)"/>
+<rect x="12" y="24" width="16" height="3" fill="var(--cat-color)"/>
+<rect x="12" y="26" width="16" height="3" fill="var(--cat-color)"/>
+<rect x="12" y="28" width="16" height="3" fill="var(--cat-color)"/>
+<rect x="12" y="30" width="16" height="3" fill="var(--cat-color)"/>
+<rect x="12" y="32" width="16" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="34" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="36" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="38" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="40" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="42" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="44" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="11" y="46" width="18" height="3" fill="var(--cat-color)"/>
+<rect x="10" y="48" width="20" height="3" fill="var(--cat-color)"/>
+<rect x="10" y="50" width="20" height="3" fill="var(--cat-color)"/>
+<rect width="1" height="3" transform="translate(22 13)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="1" height="3" transform="translate(26 13)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="5" transform="translate(23 12)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="3" transform="translate(23 13)" fill="var(--cat-color)"/>
+<rect width="1" height="3" transform="translate(13 13)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="1" height="3" transform="translate(17 13)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="5" transform="translate(14 12)" fill="var(--eye-bg-color, #FFFFFF)"/>
+<rect width="3" height="3" transform="translate(14 13)" fill="var(--cat-color)"/>
+<!-- 앞다리 우측 (compressed) -->
+<path id="leg-fr-start" d="M29 26H27V31H28V34H29V37H31V32H30V28H29V26Z" fill="var(--cat-color)"/>
+<!-- 뒷다리 좌측 (compressed) -->
+<path id="leg-rl-start" d="M10 55V51H18V55H17V57H16V59H12V57H11V55H10Z" fill="var(--cat-color)"/>
+<!-- 뒷다리 우측 (compressed) -->
+<path id="leg-rr-start" d="M22 55V51H30V55H29V57H28V59H24V57H23V55H22Z" fill="var(--cat-color)"/>
+</svg>

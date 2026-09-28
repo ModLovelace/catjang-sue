@@ -1,0 +1,109 @@
+<svg width="50" height="50" viewBox="-2 -2 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <style>
+    :root {
+      --cat-color: #1A1A1A;
+      --cat-outline: #FFFFFF;
+    }
+  </style>
+  <filter id="cat-outline" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="var(--cat-outline)" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  <filter id="eye-outline" x="-50%" y="-50%" width="200%" height="200%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="#F5F5F5" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <clipPath id="head-clip">
+    <path d="M13 9H11V11H10V13H9V18H10V22H12V23H13V24H15V25H25V24H27V23H28V22H29V21H30V18H31V14H30V11H29V10H28V9H26V8H24V7H16V8H13V9Z"/>
+  </clipPath>
+  <clipPath id="leg-fl-clip">
+    <path d="M12 30V21H13V20H14V19H17V20H18V21H19V32.5H18V36H17V37H16V38H10V34H11V30H12Z"/>
+  </clipPath>
+  <clipPath id="leg-fr-clip">
+    <path d="M24 30H25V21.5H26V17H27V16H31V17H32V18H33V25H32V27H31V29.5V32.5H30V34H25V33H24V30Z"/>
+  </clipPath>
+  <!-- body-clip: M33 15 path (cat silhouette) — patches가 cat 외곽 안에서만 보이도록 -->
+  <clipPath id="body-clip">
+    <path d="M33 15V14H31V13H24.5H18V16H15V17H14V20.5H15V23.5H16V24.5H17V25.5H18V26.5H20.5V27.5H21.5V36.5H39V23H38V20H37V18H36V17H35V16H34V15H33Z"/>
+  </clipPath>
+</defs>
+<g id="cat-content" filter="url(#cat-outline)">
+<!-- 꼬리 (이전 M32 20 자리) — installTailComponent가 동적 주입 -->
+<g id="tail" data-patch-frame="32 12 1 1"></g>
+<!-- 몸통 실루엣 (M33 15) — 맨 뒤. body 패턴 매핑 (22 cell × 15 row, 가시 body 영역에 비례). -->
+<g id="body" data-patch-frame="14 13 1.136 1.6">
+  <path d="M33 15V14H31V13H24.5H18V16H15V17H14V20.5H15V23.5H16V24.5H17V25.5H18V26.5H20.5V27.5H21.5V36.5H39V23H38V20H37V18H36V17H35V16H34V15H33Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#body-clip)"></g>
+</g>
+<!-- 좌측 키보드 -->
+<path d="M4 33V32H5V31H18V32H19V35H18V38H17V40H16V42H1V41H0V39H1V37H2V35H3V33H4Z" fill="#999797"/>
+<path d="M0 41H1V42H16V44H15H2V43H1V42H0V41Z" fill="#605E5E"/>
+<path d="M16 44H15V42H16V40H17V38H18V35H19V33H20V35.5H19V38.5H18V41H17V43H16V44Z" fill="#222222"/>
+<rect x="2" y="41" width="13" height="1" fill="#D7D6D6"/>
+<rect y="39" width="1" height="1" fill="#D9D9D9"/>
+<rect x="1" y="40" width="1" height="1" fill="#D9D9D9"/>
+<rect x="15" y="40" width="1" height="1" fill="#D9D9D9"/>
+<rect x="16" y="39" width="1" height="1" fill="#D9D9D9"/>
+<!-- 우측 키보드 — 꼬리/몸통 뒤로 다음에 그려져 우측 발(M24 26) 아래로 깔림 -->
+<path d="M24 29V28H25V27H38V28H39V31H38V34H37V36H36V38H21V37H20V35H21V33H22V31H23V29H24Z" fill="#999797"/>
+<path d="M20 37H21V38H36V44H35H22V43H21V42H20V37Z" fill="#605E5E"/>
+<path d="M36 44H35V42H36V36H37V34H38V31H39V29H40V35.5H39V38.5H38V41H37V43H36V44Z" fill="#222222"/>
+<rect x="22" y="37" width="13" height="1" fill="#D7D6D6"/>
+<rect x="20" y="35" width="1" height="1" fill="#D9D9D9"/>
+<rect x="21" y="36" width="1" height="1" fill="#D9D9D9"/>
+<rect x="35" y="36" width="1" height="1" fill="#D9D9D9"/>
+<rect x="36" y="35" width="1" height="1" fill="#D9D9D9"/>
+<!-- 좌측 팔 (pressing) — 좌측 키보드 위. legFl 패턴 매핑 (8×11 셀 → bbox 9×19). -->
+<g id="leg-fl" data-patch-frame="10 19 1.125 1.727">
+  <path d="M12 30V21H13V20H14V19H17V20H18V21H19V32.5H18V36H17V37H16V38H10V34H11V30H12Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fl-clip)"></g>
+</g>
+<!-- 우측 발 (resting) — 우측 키보드 위에 올라탐. legFr 패턴 매핑 (8×11 셀 → bbox 9×18). -->
+<g id="leg-fr" data-patch-frame="24 16 1.125 1.636">
+  <path d="M24 30H25V21.5H26V17H27V16H31V17H32V18H33V25H32V27H31V29.5V32.5H30V34H25V33H24V30Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fr-clip)"></g>
+</g>
+
+<!-- 머리 -->
+<g id="head" data-patch-frame="9 7 1 1">
+  <path d="M13 9H11V11H10V13H9V18H10V22H12V23H13V24H15V25H25V24H27V23H28V22H29V21H30V18H31V14H30V11H29V10H28V9H26V8H24V7H16V8H13V9Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#head-clip)"></g>
+</g>
+<!-- 수염 -->
+<g id="whiskers" data-heat-overlay="true">
+  <rect width="6" height="1" transform="translate(5 17)" fill="var(--cat-color)"/>
+  <rect width="6" height="1" transform="translate(6 20)" fill="var(--cat-color)"/>
+</g>
+
+
+<!-- 귀 — installEarComponents가 표준 ear path 동적 주입 -->
+<g id="ear-left" data-ear-position="11 3"></g>
+<g id="ear-right" data-ear-position="23 3"></g>
+
+<!-- 눈 -->
+<g>
+  <rect width="1" height="3" transform="translate(20 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+  <rect width="1" height="3" transform="translate(24 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+  <rect width="3" height="5" transform="translate(21 14)" fill="var(--eye-bg-color, #FFFFFF)"/>
+</g>
+<rect class="pupil-right" width="3" height="3" transform="translate(21 15)" fill="var(--eye-color-right, var(--eye-color, var(--cat-color)))"/>
+<g>
+  <rect width="1" height="3" transform="translate(11 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+  <rect width="1" height="3" transform="translate(15 15)" fill="var(--eye-bg-color, #FFFFFF)"/>
+  <rect width="3" height="5" transform="translate(12 14)" fill="var(--eye-bg-color, #FFFFFF)"/>
+</g>
+<rect class="pupil-left" width="3" height="3" transform="translate(12 15)" fill="var(--eye-color-left, var(--eye-color, var(--cat-color)))"/>
+</g>
+</svg>

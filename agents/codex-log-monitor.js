@@ -6,6 +6,7 @@ const os = require("os");
 
 const MAX_TRACKED_FILES = 50;
 const MAX_PARTIAL_BYTES = 65536;
+const MAX_READ_BYTES = 256 * 1024;
 
 class CodexLogMonitor {
   constructor(onStateChange) {
@@ -85,7 +86,9 @@ class CodexLogMonitor {
       if (!sessionId) return;
       if (this._tracked.size >= MAX_TRACKED_FILES) this._cleanStaleFiles(true);
       tracked = {
-        offset: 0,
+        // A recently touched session can already be very large when Catjang
+        // starts. Tail it instead of allocating and parsing the whole file.
+        offset: Math.max(0, stat.size - MAX_READ_BYTES),
         partial: "",
         sessionId: `codex:${sessionId}`,
         cwd: "",
@@ -100,13 +103,18 @@ class CodexLogMonitor {
     if (stat.size <= tracked.offset) return;
 
     let buf;
+    let fd = null;
     try {
-      const fd = fs.openSync(filePath, "r");
-      buf = Buffer.alloc(stat.size - tracked.offset);
-      fs.readSync(fd, buf, 0, buf.length, tracked.offset);
-      fs.closeSync(fd);
+      const readOffset = Math.max(tracked.offset, stat.size - MAX_READ_BYTES);
+      fd = fs.openSync(filePath, "r");
+      buf = Buffer.alloc(stat.size - readOffset);
+      fs.readSync(fd, buf, 0, buf.length, readOffset);
     } catch {
       return;
+    } finally {
+      if (fd !== null) {
+        try { fs.closeSync(fd); } catch {}
+      }
     }
     tracked.offset = stat.size;
 
@@ -139,6 +147,12 @@ class CodexLogMonitor {
     if (key === "event_msg:task_started" || key === "event_msg:user_message") {
       tracked.activeTurn = true;
       tracked.hadToolUse = false;
+      const msg = (payload && (payload.message || payload.content || payload.text || payload.prompt)) || "";
+      if (typeof msg === "string" && msg.trim()) {
+        let clean = msg.trim().replace(/\s+/g, " ");
+        if (clean.length > 55) clean = clean.slice(0, 52) + "...";
+        tracked.currentTask = clean;
+      }
       this._emit(tracked, "thinking", key);
       return;
     }
@@ -165,7 +179,7 @@ class CodexLogMonitor {
     }
     if (key === "event_msg:task_complete") {
       if (!tracked.activeTurn) return;
-      this._emit(tracked, "complete", key);
+      this._emit(tracked, "complete", key, { task: tracked.currentTask || "" });
       tracked.activeTurn = false;
       tracked.hadToolUse = false;
       return;
@@ -195,15 +209,17 @@ class CodexLogMonitor {
     this._emit(tracked, "notification", event);
   }
 
-  _emit(tracked, state, event) {
+  _emit(tracked, state, event, extra = {}) {
     if (state === tracked.lastState && state === "working") return;
     tracked.lastState = state;
     tracked.lastEventTime = Date.now();
     this._onStateChange({
       agentId: "codex",
+      agentName: "Codex",
       sessionId: tracked.sessionId,
       state,
       event,
+      task: extra.task || tracked.currentTask || "",
       cwd: tracked.cwd,
     });
   }

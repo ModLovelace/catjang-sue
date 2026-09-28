@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 50 50" width="50" height="50" shape-rendering="crispEdges">
+  <defs>
+    <filter id="musubi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="cat-content" filter="url(#musubi-outline)">
+    <!-- Bushy Tail held high -->
+    <rect x="29" y="14" width="4" height="4" fill="#261910" rx="1"/>
+    <rect x="31" y="13" width="3" height="3" fill="#8B6846"/>
+    <rect x="28" y="18" width="4" height="5" fill="#261910"/>
+    <rect x="29" y="23" width="3" height="4" fill="#8B6846"/>
+
+    <!-- Fluffy Tabby Body with Stripes -->
+    <rect x="13" y="18" width="18" height="15" fill="#8B6846"/>
+    <rect x="18" y="19" width="3" height="8" fill="#261910"/>
+    <rect x="23" y="18" width="3" height="9" fill="#261910"/>
+    <rect x="28" y="20" width="3" height="7" fill="#261910"/>
+
+    <!-- Mane / Ruff Fluff -->
+    <rect x="11" y="16" width="14" height="5" fill="#B8956E"/>
+    <rect x="13" y="18" width="11" height="4" fill="#D4BA99"/>
+
+    <!-- Keyboards (Retro dual setup) -->
+    <!-- Left keyboard -->
+    <path d="M4 33V32H5V31H18V32H19V35H18V38H17V40H16V42H1V41H0V39H1V37H2V35H3V33H4Z" fill="#999797"/>
+    <path d="M0 41H1V42H16V44H15H2V43H1V42H0V41Z" fill="#605E5E"/>
+    <rect x="2" y="41" width="13" height="1" fill="#D7D6D6"/>
+    <!-- Right keyboard -->
+    <path d="M24 29V28H25V27H38V28H39V31H38V34H37V36H36V38H21V37H20V35H21V33H22V31H23V29H24Z" fill="#999797"/>
+    <path d="M20 37H21V38H36V40H35H22V39H21V38H20V37Z" fill="#605E5E"/>
+
+    <!-- Left Paw DOWN on keyboard (fluffy tabby) -->
+    <rect x="8" y="27" width="5" height="8" fill="#8B6846"/>
+    <rect x="7" y="34" width="6" height="4" fill="#B8956E"/>
+    <rect x="7" y="37" width="6" height="2" fill="#705234"/>
+    <rect x="9" y="35" width="2" height="3" fill="#261910"/>
+
+    <!-- Right Paw UP in air -->
+    <rect x="20" y="20" width="5" height="7" fill="#8B6846"/>
+    <rect x="20" y="17" width="6" height="4" fill="#B8956E"/>
+    <rect x="21" y="16" width="5" height="2" fill="#705234"/>
+
+    <!-- Head & Face (Focused on typing) -->
+    <rect x="9" y="5" width="16" height="13" fill="#8B6846"/>
+    <rect x="8" y="7" width="18" height="10" fill="#8B6846"/>
+
+    <!-- Pointed Tabby Ears with Lynx Tufts -->
+    <rect x="6" y="5" width="4" height="4" fill="#6B4E33"/>
+    <rect x="7" y="3" width="3" height="3" fill="#6B4E33"/>
+    <rect x="8" y="1" width="1" height="2" fill="#1A1009"/>
+
+    <rect x="21" y="5" width="4" height="4" fill="#6B4E33"/>
+    <rect x="21" y="3" width="3" height="3" fill="#6B4E33"/>
+    <rect x="22" y="1" width="1" height="2" fill="#1A1009"/>
+
+    <!-- Forehead "M" Marking -->
+    <rect x="12" y="5" width="2" height="3" fill="#1A1009"/>
+    <rect x="18" y="5" width="2" height="3" fill="#1A1009"/>
+    <rect x="15" y="6" width="2" height="2" fill="#1A1009"/>
+    <rect x="13" y="7" width="6" height="1" fill="#1A1009"/>
+
+    <!-- Emerald Green Eyes (Focused on screen/keys) -->
+    <rect x="10" y="9" width="4" height="3" fill="#1A1009" rx="0.5"/>
+    <rect x="10" y="9" width="3" height="3" fill="#43A047"/>
+    <rect x="11" y="9" width="2" height="3" fill="#111811"/>
+    <rect x="10" y="9" width="1" height="1" fill="#A5D6A7"/>
+
+    <rect x="18" y="9" width="4" height="3" fill="#1A1009" rx="0.5"/>
+    <rect x="18" y="9" width="3" height="3" fill="#43A047"/>
+    <rect x="19" y="9" width="2" height="3" fill="#111811"/>
+    <rect x="18" y="9" width="1" height="1" fill="#A5D6A7"/>
+
+    <!-- Snout & Terracotta Nose -->
+    <rect x="12" y="11" width="7" height="6" fill="#B8956E"/>
+    <rect x="14" y="12" width="4" height="2" fill="#B85D52" rx="0.5"/>
+    <rect x="14" y="15" width="3" height="1" fill="#261910"/>
+
+    <!-- Whiskers -->
+    <line x1="5" y1="12" x2="11" y2="13" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+    <line x1="20" y1="13" x2="26" y2="12" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+  </g>
+</svg>

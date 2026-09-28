@@ -1,0 +1,126 @@
+<svg width="50" height="64" viewBox="-2 -2 50 64" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <filter id="chisi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <style>
+      @keyframes dog-dangle-legs {
+        0%, 100% { transform: rotate(-3deg); }
+        50% { transform: rotate(4deg); }
+      }
+      @keyframes dog-dangle-tail {
+        0%, 100% { transform: rotate(-10deg); }
+        50% { transform: rotate(14deg); }
+      }
+      .dangle-fl {
+        transform-origin: 17px 29px;
+        animation: dog-dangle-legs 0.45s ease-in-out infinite alternate;
+      }
+      .dangle-fr {
+        transform-origin: 29px 29px;
+        animation: dog-dangle-legs 0.45s ease-in-out infinite alternate-reverse;
+      }
+      .dangle-bl {
+        transform-origin: 18px 46px;
+        animation: dog-dangle-legs 0.5s ease-in-out infinite alternate;
+      }
+      .dangle-br {
+        transform-origin: 28px 46px;
+        animation: dog-dangle-legs 0.5s ease-in-out infinite alternate-reverse;
+      }
+      .dangle-tail {
+        transform-origin: 34px 44px;
+        animation: dog-dangle-tail 0.3s ease-in-out infinite alternate;
+      }
+    </style>
+  </defs>
+
+  <g id="dog-content" filter="url(#chisi-outline)">
+    <!-- Scruff Fold (where cursor holds the puppy) -->
+    <rect x="21" y="20" width="5" height="4" fill="#FAF6ED" rx="1"/>
+    <rect x="22" y="19" width="3" height="3" fill="#FFFFFF"/>
+    <rect x="21" y="22" width="5" height="1" fill="#E6D8BF"/>
+
+    <!-- Pompom Tail dangling -->
+    <g class="dangle-tail">
+      <rect x="33" y="44" width="3" height="3" fill="#E6D8BF"/>
+      <rect x="34" y="46" width="4" height="4" fill="#FAF6ED" rx="1"/>
+      <rect x="35" y="47" width="2" height="2" fill="#FFFFFF"/>
+      <rect x="36" y="45" width="2" height="2" fill="#DAB984"/>
+    </g>
+
+    <!-- Suspended Elongated Fluffy Body -->
+    <rect x="17" y="24" width="14" height="23" fill="#FAF6ED"/>
+    <rect x="18" y="23" width="11" height="24" fill="#FAF6ED"/>
+    <rect x="19" y="25" width="8" height="20" fill="#FFFFFF"/>
+    <rect x="17" y="32" width="2" height="12" fill="#E6D8BF"/>
+    <rect x="29" y="32" width="2" height="12" fill="#E6D8BF"/>
+
+    <!-- Dangling Front Legs -->
+    <!-- Front Left -->
+    <g class="dangle-fl">
+      <rect x="14" y="29" width="4" height="10" fill="#FAF6ED"/>
+      <rect x="13" y="38" width="5" height="4" fill="#FFFFFF"/>
+      <rect x="13" y="41" width="5" height="1" fill="#E6D8BF"/>
+    </g>
+    <!-- Front Right -->
+    <g class="dangle-fr">
+      <rect x="29" y="29" width="4" height="10" fill="#FAF6ED"/>
+      <rect x="29" y="38" width="5" height="4" fill="#FFFFFF"/>
+      <rect x="29" y="41" width="5" height="1" fill="#E6D8BF"/>
+    </g>
+
+    <!-- Dangling Back Legs -->
+    <!-- Back Left -->
+    <g class="dangle-bl">
+      <rect x="15" y="46" width="4" height="10" fill="#FAF6ED"/>
+      <rect x="14" y="55" width="5" height="4" fill="#FFFFFF"/>
+      <rect x="14" y="58" width="5" height="1" fill="#E6D8BF"/>
+    </g>
+    <!-- Back Right -->
+    <g class="dangle-br">
+      <rect x="27" y="46" width="4" height="10" fill="#FAF6ED"/>
+      <rect x="27" y="55" width="5" height="4" fill="#FFFFFF"/>
+      <rect x="27" y="58" width="5" height="1" fill="#E6D8BF"/>
+    </g>
+
+    <!-- Head & Face (Looking cute and slightly wondering) -->
+    <rect x="15" y="5" width="16" height="15" fill="#FAF6ED"/>
+    <rect x="13" y="7" width="20" height="12" fill="#FAF6ED"/>
+    
+    <!-- Topknot Curls -->
+    <rect x="15" y="2" width="16" height="4" fill="#FFFFFF"/>
+    <rect x="17" y="1" width="12" height="3" fill="#FAF6ED"/>
+    <rect x="19" y="0" width="8" height="2" fill="#FFFFFF"/>
+
+    <!-- Floppy Curly Ears Hanging Down with Champagne Tips -->
+    <!-- Left Ear -->
+    <rect x="10" y="6" width="4" height="4" fill="#FAF6ED"/>
+    <rect x="9" y="9" width="4" height="6" fill="#F0E5D0"/>
+    <rect x="8" y="13" width="5" height="6" fill="#E2CCA1"/>
+    <rect x="9" y="17" width="4" height="3" fill="#D4BE96"/>
+    <!-- Right Ear -->
+    <rect x="32" y="6" width="4" height="4" fill="#FAF6ED"/>
+    <rect x="33" y="9" width="4" height="6" fill="#F0E5D0"/>
+    <rect x="33" y="13" width="5" height="6" fill="#E2CCA1"/>
+    <rect x="33" y="17" width="4" height="3" fill="#D4BE96"/>
+
+    <!-- Big Wide Innocent Eyes -->
+    <rect x="15" y="9" width="3" height="4" fill="#20150F" rx="1"/>
+    <rect x="15" y="9" width="1" height="1" fill="#FFFFFF"/>
+    <rect x="28" y="9" width="3" height="4" fill="#20150F" rx="1"/>
+    <rect x="28" y="9" width="1" height="1" fill="#FFFFFF"/>
+
+    <!-- Muzzle & Button Nose -->
+    <rect x="19" y="12" width="8" height="6" fill="#FFFFFF"/>
+    <rect x="21" y="13" width="4" height="2" fill="#2B1D16" rx="0.5"/>
+    <rect x="22" y="16" width="2" height="1" fill="#887060"/>
+  </g>
+</svg>

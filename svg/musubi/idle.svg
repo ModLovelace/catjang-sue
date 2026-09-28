@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -10 50 50" width="500" height="500" shape-rendering="crispEdges">
+  <defs>
+    <style>
+      :root {
+        --tabby-base: #8B6846;
+        --tabby-dark: #6B4E33;
+        --tabby-stripe: #261910;
+        --tabby-mane: #B8956E;
+        --tabby-mane-light: #D4BA99;
+        --eye-green: #43A047;
+        --eye-green-light: #81C784;
+        --cat-nose: #B85D52;
+      }
+
+      .breathe-anim { transform-origin: 16px 22px; animation: musubi-breathe 3.0s infinite ease-in-out; }
+      .tail-wag { transform-origin: 24px 28px; animation: musubi-tail-swish 2.2s infinite ease-in-out; }
+      .ear-twitch-l { transform-origin: 7px 8px; animation: musubi-ear-l 7.5s infinite; }
+      .ear-twitch-r { transform-origin: 23px 8px; animation: musubi-ear-r 8.5s infinite; }
+
+      @keyframes musubi-breathe {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.96) translateY(0.4px); }
+      }
+      @keyframes musubi-tail-swish {
+        0%, 100% { transform: rotate(0deg); }
+        30% { transform: rotate(14deg); }
+        70% { transform: rotate(-10deg); }
+      }
+      @keyframes musubi-ear-l {
+        0%, 92%, 100% { transform: rotate(0deg); }
+        94% { transform: rotate(-6deg); }
+        97% { transform: rotate(3deg); }
+      }
+      @keyframes musubi-ear-r {
+        0%, 90%, 100% { transform: rotate(0deg); }
+        93% { transform: rotate(6deg); }
+        96% { transform: rotate(-3deg); }
+      }
+      @keyframes cat-blink {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.1); }
+      }
+
+      .eye-l-blink, .eye-r-blink {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      :root.blinking .eye-l-blink,
+      :root.blinking .eye-r-blink {
+        animation: cat-blink 0.18s ease-in-out forwards;
+      }
+      :root.sleeping .eye-l-blink,
+      :root.sleeping .eye-r-blink {
+        transform: scaleY(0.1);
+      }
+      @keyframes cat-purr-face {
+        0%, 100% { transform: translate(var(--purr-face-x, 0px), var(--purr-face-y, 0px)); }
+        50% { transform: translate(var(--purr-face-x, 0px), calc(var(--purr-face-y, 0px) + 0.4px)); }
+      }
+      :root.purring #face-js {
+        animation: cat-purr-face 1.1s steps(2, end) infinite;
+      }
+      :root.purring .eye-l-blink,
+      :root.purring .eye-r-blink {
+        transform: scaleY(0.18);
+        transition: transform 0.15s ease-out;
+      }
+      :root.purring .ear-twitch-l {
+        transform: rotate(-12deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .ear-twitch-r {
+        transform: rotate(12deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .tail-wag {
+        animation: musubi-tail-swish 0.22s infinite ease-in-out;
+      }
+      .pupil-left, .pupil-right {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.22s ease-out;
+      }
+    </style>
+
+    <filter id="musubi-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="cat-content" filter="url(#musubi-outline)">
+    <!-- Bushy Tabby Tail with Fluffy Rings -->
+    <g class="tail-wag">
+      <rect x="23" y="26" width="3" height="4" fill="#261910"/>
+      <rect x="24" y="23" width="4" height="4" fill="#8B6846"/>
+      <rect x="25" y="20" width="4" height="4" fill="#261910"/>
+      <rect x="26" y="17" width="4" height="4" fill="#8B6846"/>
+      <rect x="26" y="15" width="3" height="3" fill="#261910"/>
+    </g>
+
+    <!-- Body with Fluffy Tabby Fur and Stripes -->
+    <g class="breathe-anim">
+      <!-- Body Base Silhouette -->
+      <rect x="7" y="19" width="18" height="12" fill="#8B6846"/>
+      <rect x="6" y="21" width="20" height="9" fill="#8B6846"/>
+
+      <!-- Dark Tabby Side Stripes -->
+      <rect x="7" y="22" width="2" height="6" fill="#261910"/>
+      <rect x="11" y="21" width="2" height="7" fill="#261910"/>
+      <rect x="15" y="20" width="2" height="8" fill="#261910"/>
+      <rect x="19" y="21" width="2" height="8" fill="#261910"/>
+      <rect x="23" y="23" width="2" height="6" fill="#261910"/>
+
+      <!-- Magnificent Fluffy Lion-Like Neck Ruff / Mane -->
+      <rect x="8" y="17" width="16" height="5" fill="#B8956E"/>
+      <rect x="9" y="18" width="14" height="5" fill="#D4BA99"/>
+      <rect x="11" y="20" width="10" height="4" fill="#E6D3BC"/>
+      <!-- Mane Fluff Spikes -->
+      <rect x="6" y="18" width="2" height="3" fill="#B8956E"/>
+      <rect x="24" y="18" width="2" height="3" fill="#B8956E"/>
+      <rect x="7" y="20" width="2" height="2" fill="#A07D57"/>
+      <rect x="23" y="20" width="2" height="2" fill="#A07D57"/>
+
+      <!-- Front Paws (Soft agouti with dark toe markings) -->
+      <rect x="9" y="30" width="4" height="3" fill="#B8956E"/>
+      <rect x="9" y="32" width="4" height="1" fill="#705234"/>
+      <rect x="10" y="32" width="1" height="1" fill="#261910"/>
+
+      <rect x="17" y="30" width="4" height="3" fill="#B8956E"/>
+      <rect x="17" y="32" width="4" height="1" fill="#705234"/>
+      <rect x="19" y="32" width="1" height="1" fill="#261910"/>
+    </g>
+
+    <!-- Face & Head Group -->
+    <g id="face-js">
+      <!-- Head Base -->
+      <rect x="7" y="6" width="16" height="12" fill="#8B6846"/>
+      <rect x="6" y="8" width="18" height="9" fill="#8B6846"/>
+      <rect x="5" y="10" width="20" height="6" fill="#8B6846"/>
+
+      <!-- Fluffy Cheek Tufts (Maine Coon/Longhair silhouette) -->
+      <rect x="4" y="11" width="2" height="4" fill="#B8956E"/>
+      <rect x="24" y="11" width="2" height="4" fill="#B8956E"/>
+      <rect x="3" y="13" width="2" height="2" fill="#A07D57"/>
+      <rect x="25" y="13" width="2" height="2" fill="#A07D57"/>
+
+      <!-- Pointed Ears with Lynx Ear Tufts -->
+      <!-- Left Ear -->
+      <g class="ear-twitch-l">
+        <rect x="5" y="6" width="4" height="4" fill="#6B4E33"/>
+        <rect x="6" y="4" width="3" height="3" fill="#6B4E33"/>
+        <rect x="7" y="2" width="2" height="3" fill="#6B4E33"/>
+        <!-- Lynx Ear Tuft / Tip -->
+        <rect x="7" y="1" width="1" height="2" fill="#1A1009"/>
+        <!-- Inner Ear Fluff -->
+        <rect x="7" y="5" width="2" height="3" fill="#D4BA99"/>
+      </g>
+      <!-- Right Ear -->
+      <g class="ear-twitch-r">
+        <rect x="21" y="6" width="4" height="4" fill="#6B4E33"/>
+        <rect x="21" y="4" width="3" height="3" fill="#6B4E33"/>
+        <rect x="21" y="2" width="2" height="3" fill="#6B4E33"/>
+        <!-- Lynx Ear Tuft / Tip -->
+        <rect x="22" y="1" width="1" height="2" fill="#1A1009"/>
+        <!-- Inner Ear Fluff -->
+        <rect x="21" y="5" width="2" height="3" fill="#D4BA99"/>
+      </g>
+
+      <!-- Characteristic Tabby Forehead "M" Marking -->
+      <rect x="11" y="6" width="2" height="3" fill="#1A1009"/>
+      <rect x="17" y="6" width="2" height="3" fill="#1A1009"/>
+      <rect x="14" y="7" width="2" height="2" fill="#1A1009"/>
+      <rect x="12" y="8" width="6" height="1" fill="#1A1009"/>
+      <!-- Cheek Tabby Stripes -->
+      <rect x="6" y="9" width="3" height="1" fill="#1A1009"/>
+      <rect x="5" y="12" width="3" height="1" fill="#1A1009"/>
+      <rect x="21" y="9" width="3" height="1" fill="#1A1009"/>
+      <rect x="22" y="12" width="3" height="1" fill="#1A1009"/>
+
+      <!-- Striking Emerald Green Eyes -->
+      <!-- Left Eye -->
+      <g id="eye-left" class="eye-l-blink">
+        <rect x="9" y="10" width="4" height="3" fill="#1A1009" rx="0.5"/>
+        <rect x="9" y="10" width="3" height="3" fill="#43A047"/>
+        <rect id="pupil-left" class="pupil-left" x="10" y="10" width="2" height="3" fill="#111811"/>
+        <rect x="9" y="10" width="1" height="1" fill="#A5D6A7"/>
+      </g>
+      <!-- Right Eye -->
+      <g id="eye-right" class="eye-r-blink">
+        <rect x="17" y="10" width="4" height="3" fill="#1A1009" rx="0.5"/>
+        <rect x="18" y="10" width="3" height="3" fill="#43A047"/>
+        <rect id="pupil-right" class="pupil-right" x="18" y="10" width="2" height="3" fill="#111811"/>
+        <rect x="18" y="10" width="1" height="1" fill="#A5D6A7"/>
+      </g>
+
+      <!-- Muzzle / Snout (Cream/Golden highlights) -->
+      <rect x="11" y="12" width="8" height="5" fill="#B8956E"/>
+      <rect x="12" y="13" width="6" height="4" fill="#D4BA99"/>
+
+      <!-- Terracotta / Dusty Rose Nose with Dark Outline -->
+      <rect x="13" y="13" width="4" height="2" fill="#1A1009" rx="0.5"/>
+      <rect id="cat-nose" x="14" y="13" width="2" height="1" fill="#B85D52"/>
+      <rect x="14" y="14" width="2" height="1" fill="#913D34"/>
+
+      <!-- Serious Regal Mouth -->
+      <rect x="13" y="16" width="4" height="1" fill="#261910"/>
+
+      <!-- Long White Whiskers -->
+      <line x1="3" y1="13" x2="10" y2="14" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+      <line x1="2" y1="15" x2="10" y2="15" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+      <line x1="20" y1="14" x2="27" y2="13" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+      <line x1="20" y1="15" x2="28" y2="15" stroke="#FFFFFF" stroke-width="0.8" opacity="0.85"/>
+    </g>
+  </g>
+</svg>

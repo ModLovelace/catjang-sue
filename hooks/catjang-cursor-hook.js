@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
+const path = require("path");
 const { postAgentState } = require("./server-config");
 
 function readStdinJson() {
@@ -46,12 +47,18 @@ async function main() {
   const payload = await readStdinJson();
   const event = process.argv[2] || payload.hook_event_name || "";
   if (event === "beforeShellExecution" || event === "beforeMCPExecution") {
+    const task = (payload.command || payload.tool_name || payload.prompt || "").slice(0, 55);
+    const cwd = cwdFromPayload(payload);
+    const conversationName = payload.conversation_title || payload.chat_title || payload.title || payload.topic || (cwd ? path.basename(cwd) : "");
     postAgentState({
       agentId: "cursor",
+      agentName: "Cursor",
       event,
       state: "notification",
+      task,
+      conversationName,
       sessionId: payload.conversation_id || payload.session_id || "cursor",
-      cwd: cwdFromPayload(payload),
+      cwd: cwd,
     }, () => {
       process.stdout.write(`${JSON.stringify(hookResponse(event))}\n`);
       process.exit(0);

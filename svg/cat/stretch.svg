@@ -1,0 +1,270 @@
+<svg width="72" height="56" viewBox="-10 -2 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <style>
+    :root {
+      --cat-color: #1A1A1A;
+      --cat-outline: #FFFFFF;
+      --hunting-look-x: 0px;
+      --hunting-look-y: 0px;
+      --hunting-pupil-x: 0px;
+      --hunting-pupil-y: 0px;
+    }
+    svg {
+      overflow: visible;
+    }
+
+    /* 부위별 회전축 — 패턴 patches가 들어와도 bbox가 변해 축이 밀리지 않도록
+       viewBox 좌표계의 고정 px origin을 사용한다. */
+    #leg-fl, #leg-fr, #leg-rl, #leg-rr,
+    #body, #head-group, #tail {
+      transform-box: view-box;
+    }
+    #leg-fl     { transform-origin: 11.5px 22px; }  /* 어깨 (위쪽 중앙) */
+    #leg-fr     { transform-origin: 20.5px 22px; }
+    #leg-rl     { transform-origin: 30px 33.5px; }
+    #leg-rr     { transform-origin: 38px 33.5px; }
+    #body       { transform-origin: 29px 24.5px; }
+    #head-group { transform-origin: 15px 24px; }
+    #tail       { transform-origin: 39px 21px; }    /* 시작점 (몸통 연결부) */
+
+    /* stretching 클래스 시 부위별 keyframe 재생 (3s) */
+    .stretching #leg-fl,
+    .stretching #leg-fr,
+    .stretching #leg-rl,
+    .stretching #leg-rr,
+    .stretching #body,
+    .stretching #head-group,
+    .stretching #tail {
+      animation-duration: 3s;
+      animation-timing-function: ease-in-out;
+      animation-fill-mode: both;
+      animation-iteration-count: 1;
+    }
+    .stretching #leg-fl     { animation-name: stretch-fl; }
+    .stretching #leg-fr     { animation-name: stretch-fr; }
+    .stretching #leg-rl     { animation-name: stretch-rl; }
+    .stretching #leg-rr     { animation-name: stretch-rr; }
+    .stretching #body       { animation-name: stretch-body; }
+    .stretching #head-group { animation-name: stretch-head; }
+    .stretching #tail       { animation-name: stretch-tail; }
+
+    :root.hunting #leg-fl { transform: translate(4px, 8.7px) rotate(51deg) scaleY(0.69); }
+    :root.hunting #leg-fr { transform: translate(2px, 9.7px) rotate(51deg) scaleY(0.69); }
+    :root.hunting #leg-rl { transform-origin: 30px 41px; animation: hunting-leg-rl 0.82s steps(2, end) infinite; }
+    :root.hunting #leg-rr { transform-origin: 38px 41px; animation: hunting-leg-rr 0.82s steps(2, end) infinite; }
+    :root.hunting #head-group {
+      transform: translate(calc(5px + var(--hunting-look-x)), calc(4px + var(--hunting-look-y)));
+    }
+    :root.hunting #body { animation: hunting-stretch-body 0.82s steps(2, end) infinite; }
+    :root.hunting #tail { animation: hunting-stretch-tail 0.48s steps(2, end) infinite; }
+    :root.hunting #cat-content { animation: hunting-shiver 0.82s steps(2, end) infinite; }
+    :root.hunting #eyes-open { opacity: 1; }
+    :root.hunting #eyes-closed { opacity: 0; }
+    :root.hunting .hunting-pupil-track {
+      transform: translate(var(--hunting-pupil-x), var(--hunting-pupil-y));
+    }
+
+    /* 앞다리 좌측: 발 위치 좌측+살짝 아래 */
+    @keyframes stretch-fl {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) scaleY(1); }
+      30%, 70% { transform: translate(4px, 8.7px) rotate(51deg) scaleY(0.69); }
+    }
+    /* 앞다리 우측: 동일 패턴 */
+    @keyframes stretch-fr {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) scaleY(1); }
+      30%, 70% { transform: translate(2px, 9.7px) rotate(51deg) scaleY(0.69); }
+    }
+    /* 뒷다리: 우상으로 이동 (delta +7, -2) */
+    @keyframes stretch-rl {
+      0%, 100% { transform: translate(0, 0); }
+      30%, 70% { transform: translate(7px, -2px); }
+    }
+    @keyframes stretch-rr {
+      0%, 100% { transform: translate(0, 0); }
+      30%, 70% { transform: translate(7px, -2px); }
+    }
+    /* 몸통: bbox 크기 같음, 단순 translate(5, 1) — 우하로 살짝 */
+    @keyframes stretch-body {
+      0%, 100% { transform: translate(0, 0); }
+      30%, 70% { transform: translate(5px, 1px); }
+    }
+    /* 머리: center delta (+5, +4) */
+    @keyframes stretch-head {
+      0%, 100% { transform: translate(0, 0); }
+      30%, 70% { transform: translate(5px, 4px); }
+    }
+    /* 꼬리: 시작점(몸통 연결부)에서 살짝 들리듯 — 작게 회전 + 미세 이동 */
+    @keyframes stretch-tail {
+      0%, 100% { transform: rotate(0deg) translate(0, 0); }
+      30%, 70% { transform: rotate(-10deg) translate(1px, -2px); }
+    }
+    @keyframes hunting-stretch-body {
+      0%, 100% { transform: translate(5px, 1px); }
+      25% { transform: translate(4px, 1px); }
+      50% { transform: translate(6.2px, 0.7px); }
+      75% { transform: translate(4.3px, 1.2px); }
+    }
+    @keyframes hunting-leg-rl {
+      0%, 100% { transform: translate(7px, -2px) rotate(0deg); }
+      25% { transform: translate(7px, -2px) rotate(3deg); }
+      50% { transform: translate(7px, -2px) rotate(-4deg); }
+      75% { transform: translate(7px, -2px) rotate(2deg); }
+    }
+    @keyframes hunting-leg-rr {
+      0%, 100% { transform: translate(7px, -2px) rotate(0deg); }
+      25% { transform: translate(7px, -2px) rotate(-3deg); }
+      50% { transform: translate(7px, -2px) rotate(4deg); }
+      75% { transform: translate(7px, -2px) rotate(-2deg); }
+    }
+    @keyframes hunting-stretch-tail {
+      0%, 100% { transform: rotate(-14deg) translate(1px, -2px); }
+      50% { transform: rotate(8deg) translate(1px, -2px); }
+    }
+    @keyframes hunting-shiver {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(0.3px, 0.1px); }
+    }
+
+    /* 눈 — 평상시 open, 정점(30~70%) 동안 closed (squint 모양) */
+    #eyes-closed { opacity: 0; }
+    .stretching #eyes-open  { animation: eyes-toggle-open  3s linear both; }
+    .stretching #eyes-closed { animation: eyes-toggle-close 3s linear both; }
+    @keyframes eyes-toggle-open {
+      0%, 25%, 75%, 100% { opacity: 1; }
+      30%, 70% { opacity: 0; }
+    }
+    @keyframes eyes-toggle-close {
+      0%, 25%, 75%, 100% { opacity: 0; }
+      30%, 70% { opacity: 1; }
+    }
+
+    /* 몸 떨림 (shiver) — 정점 구간(30~70%)에 작은 진동
+       cat-content 전체에 transform 적용해 모든 부위가 같이 떨림 */
+    .stretching #cat-content { animation: shiver 3s linear both; }
+    @keyframes shiver {
+      0%, 30%, 70%, 100% { transform: translate(0, 0); }
+      33%  { transform: translate(-0.4px, 0.2px); }
+      36%  { transform: translate(0.3px, -0.3px); }
+      39%  { transform: translate(-0.3px, 0.3px); }
+      42%  { transform: translate(0.4px, -0.2px); }
+      45%  { transform: translate(-0.2px, 0.4px); }
+      48%  { transform: translate(0.3px, 0.2px); }
+      51%  { transform: translate(-0.4px, -0.1px); }
+      54%  { transform: translate(0.2px, 0.3px); }
+      57%  { transform: translate(-0.3px, -0.3px); }
+      60%  { transform: translate(0.4px, 0.1px); }
+      63%  { transform: translate(-0.2px, -0.4px); }
+      66%  { transform: translate(0.3px, 0.3px); }
+    }
+  </style>
+  <filter id="cat-outline" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="var(--cat-outline)" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  <filter id="eye-outline" x="-50%" y="-50%" width="200%" height="200%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="#F5F5F5" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge>
+      <feMergeNode in="outline"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <clipPath id="head-clip">
+    <path d="M8 17H6V19H5V21H4V26H5V30H7V31H8V32H10V33H20V32H22V31H23V30H24V29H25V26H26V22H25V19H24V18H23V17H21V16H19V15H11V16H8V17Z"/>
+  </clipPath>
+  <clipPath id="body-clip">
+    <path d="M14 30V25.5H15V23.5H16H17V22H20V21H22V20H24V19H26V18H27H28V17H29V16H30H31V15H33V14H38V15H40V16H41H42V18H43V20H44V26H43V28H42V29H41V31H40V32H38V33H36H35H34H33V34H32V35H30V34H26H23H22H18H17H15V30H14Z"/>
+  </clipPath>
+  <clipPath id="leg-rl-clip">
+    <path d="M34 37V27V26H33V25H28V26H27V27H26V31H27V33H28V37H27V39H26V41H27V42H31V41H32V40H33V37H34Z"/>
+  </clipPath>
+  <clipPath id="leg-rr-clip">
+    <path d="M42 37V27V26H41V25H36V26H35V27H34V31H35V33H36V37H35V39H34V41H35V42H39V41H40V40H41V37H42Z"/>
+  </clipPath>
+  <clipPath id="leg-fl-clip">
+    <path d="M9 37.1724L9 22H16L16 37.1724H9Z"/>
+    <path d="M9 36V34H16V38.5H15V42H14V43H13V44H7L7 40H8V36H9Z"/>
+  </clipPath>
+  <clipPath id="leg-fr-clip">
+    <path d="M18 37.1724V22H25L25 37.1724H18Z"/>
+    <path d="M18 36V34H25V38.5H24V42H23V43H22V44H16V40H17V36H18Z"/>
+  </clipPath>
+  <!-- tail-clip은 renderer.js의 installTailComponent가 동적 생성 -->
+</defs>
+<g id="cat-content" filter="url(#cat-outline)">
+  <!-- 꼬리 — 맨 뒤 레이어. installTailComponent가 동적 주입. -->
+  <g id="tail" data-patch-frame="39 13 1 1"></g>
+  <!-- 뒷다리 좌측 — 몸통 뒤 레이어 -->
+  <g id="leg-rl" data-patch-frame="26 25 1 2.125">
+    <path d="M34 37V27V26H33V25H28V26H27V27H26V31H27V33H28V37H27V39H26V41H27V42H31V41H32V40H33V37H34Z" fill="var(--cat-color)"/>
+    <g class="patches" clip-path="url(#leg-rl-clip)"></g>
+  </g>
+  <!-- 몸통 — 꼬리 다음 -->
+  <g id="body" data-patch-frame="14 14 1.364 1.615">
+    <path d="M14 30V25.5H15V23.5H16H17V22H20V21H22V20H24V19H26V18H27H28V17H29V16H30H31V15H33V14H38V15H40V16H41H42V18H43V20H44V26H43V28H42V29H41V31H40V32H38V33H36H35H34H33V34H32V35H30V34H26H23H22H18H17H15V30H14Z" fill="var(--cat-color)"/>
+    <g class="patches" clip-path="url(#body-clip)"></g>
+  </g>
+  <!-- 뒷다리 우측 -->
+  <g id="leg-rr" data-patch-frame="34 25 1 2.125">
+    <path d="M42 37V27V26H41V25H36V26H35V27H34V31H35V33H36V37H35V39H34V41H35V42H39V41H40V40H41V37H42Z" fill="var(--cat-color)"/>
+    <g class="patches" clip-path="url(#leg-rr-clip)"></g>
+  </g>
+  <!-- 앞다리 좌측 (윗부분 + 발 g 묶음) -->
+  <g id="leg-fl" data-patch-frame="7 22 1.125 2">
+    <path d="M9 37.1724L9 22H16L16 37.1724H9Z" fill="var(--cat-color)"/>
+    <path d="M9 36V34H16V38.5H15V42H14V43H13V44H7L7 40H8V36H9Z" fill="var(--cat-color)"/>
+    <g class="patches" clip-path="url(#leg-fl-clip)"></g>
+  </g>
+  <!-- 앞다리 우측 -->
+  <g id="leg-fr" data-patch-frame="16 22 1.125 2">
+    <path d="M18 37.1724V22H25L25 37.1724H18Z" fill="var(--cat-color)"/>
+    <path d="M18 36V34H25V38.5H24V42H23V43H22V44H16V40H17V36H18Z" fill="var(--cat-color)"/>
+    <g class="patches" clip-path="url(#leg-fr-clip)"></g>
+  </g>
+  <!-- 머리 + 귀 + 수염 + 눈 -->
+  <g id="head-group">
+    <g id="head" data-patch-frame="4 15 1 1">
+      <path d="M8 17H6V19H5V21H4V26H5V30H7V31H8V32H10V33H20V32H22V31H23V30H24V29H25V26H26V22H25V19H24V18H23V17H21V16H19V15H11V16H8V17Z" fill="var(--cat-color)"/>
+      <g class="patches" clip-path="url(#head-clip)"></g>
+    </g>
+    <g id="whiskers" data-heat-overlay="true">
+      <rect width="6" height="1" transform="translate(0 25)" fill="var(--cat-color)"/>
+      <rect width="6" height="1" transform="translate(1 28)" fill="var(--cat-color)"/>
+    </g>
+    <!-- 귀 — installEarComponents가 표준 ear path 동적 주입 -->
+    <g id="ear-left" data-ear-position="6 11"></g>
+    <g id="ear-right" data-ear-position="18 11"></g>
+    <!-- 평상시 뜬 눈 (open) -->
+    <g id="eyes-open">
+      <g>
+        <rect width="1" height="3" transform="translate(15 23)" fill="var(--eye-bg-color, #FFFFFF)"/>
+        <rect width="1" height="3" transform="translate(19 23)" fill="var(--eye-bg-color, #FFFFFF)"/>
+        <rect width="3" height="5" transform="translate(16 22)" fill="var(--eye-bg-color, #FFFFFF)"/>
+      </g>
+      <g class="hunting-pupil-track">
+        <rect class="pupil-right" width="3" height="3" transform="translate(16 23)" fill="var(--eye-color-right, var(--eye-color, var(--cat-color)))"/>
+      </g>
+      <g>
+        <rect width="1" height="3" transform="translate(6 23)" fill="var(--eye-bg-color, #FFFFFF)"/>
+        <rect width="1" height="3" transform="translate(10 23)" fill="var(--eye-bg-color, #FFFFFF)"/>
+        <rect width="3" height="5" transform="translate(7 22)" fill="var(--eye-bg-color, #FFFFFF)"/>
+      </g>
+      <g class="hunting-pupil-track">
+        <rect class="pupil-left" width="3" height="3" transform="translate(7 23)" fill="var(--eye-color-left, var(--eye-color, var(--cat-color)))"/>
+      </g>
+    </g>
+    <!-- 스트레칭 정점 시 닫힌 눈 (squint 모양) — 평상시 hidden -->
+    <g id="eyes-closed">
+      <path d="M6 22 L10 24 L6 26" stroke="var(--cat-outline, #FFFFFF)" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19 22 L15 24 L19 26" stroke="var(--cat-outline, #FFFFFF)" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</g>
+</svg>

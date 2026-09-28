@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -10 50 50" width="500" height="500" shape-rendering="crispEdges">
+  <defs>
+    <style>
+      :root {
+        --dog-color: #FAF8F5;
+        --dog-dark: #E2DDD0;
+        --dog-brown: #A86F3E;
+        --dog-brown-dark: #8F5A2C;
+        --dog-speckle: #C29B77;
+        --dog-nose: #855444;
+        --dog-chain: #C8CBD0;
+        --dog-chain-dark: #8E939C;
+        --dog-outline: #FFFFFF;
+      }
+
+      .breathe-anim { transform-origin: 16px 22px; animation: dog-breathe 2.8s infinite ease-in-out; }
+      .tail-wag { transform-origin: 24px 28px; animation: dog-tail-wag 1.6s infinite ease-in-out; }
+      .ear-twitch-l { transform-origin: 7px 8px; animation: milo-ear-l 7s infinite; }
+      .ear-twitch-r { transform-origin: 23px 8px; animation: milo-ear-r 8s infinite; }
+
+      @keyframes dog-breathe {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.96) translateY(0.4px); }
+      }
+      @keyframes dog-tail-wag {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(18deg); }
+        75% { transform: rotate(-14deg); }
+      }
+      @keyframes milo-ear-l {
+        0%, 92%, 100% { transform: rotate(0deg); }
+        94% { transform: rotate(-7deg); }
+        97% { transform: rotate(4deg); }
+      }
+      @keyframes milo-ear-r {
+        0%, 90%, 100% { transform: rotate(0deg); }
+        93% { transform: rotate(7deg); }
+        96% { transform: rotate(-3deg); }
+      }
+      @keyframes dog-blink {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.1); }
+      }
+
+      .eye-l-blink, .eye-r-blink {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      :root.blinking .eye-l-blink,
+      :root.blinking .eye-r-blink {
+        animation: dog-blink 0.18s ease-in-out forwards;
+      }
+      :root.sleeping .eye-l-blink,
+      :root.sleeping .eye-r-blink {
+        transform: scaleY(0.1);
+      }
+      @keyframes dog-purr-face {
+        0%, 100% { transform: translate(var(--purr-face-x, 0px), var(--purr-face-y, 0px)); }
+        50% { transform: translate(var(--purr-face-x, 0px), calc(var(--purr-face-y, 0px) + 0.4px)); }
+      }
+      :root.purring #face-js {
+        animation: dog-purr-face 1.1s steps(2, end) infinite;
+      }
+      :root.purring .eye-l-blink,
+      :root.purring .eye-r-blink {
+        transform: scaleY(0.18);
+        transition: transform 0.15s ease-out;
+      }
+      :root.purring .ear-twitch-l {
+        transform: rotate(-10deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .ear-twitch-r {
+        transform: rotate(10deg);
+        transition: transform 0.2s ease-out;
+      }
+      :root.purring .tail-wag {
+        animation: dog-tail-wag 0.16s infinite ease-in-out;
+      }
+      #dog-tongue {
+        display: none;
+      }
+      :root.purring #dog-tongue {
+        display: block !important;
+      }
+      .pupil-left, .pupil-right {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.22s ease-out;
+      }
+    </style>
+
+    <filter id="milo-outline" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+      <feFlood flood-color="#FFFFFF" result="flood"/>
+      <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="dog-content" filter="url(#milo-outline)">
+    <!-- Wagging Tail with Caramel Tip -->
+    <g class="tail-wag">
+      <rect x="23" y="27" width="2" height="3" fill="#8F5A2C"/>
+      <rect x="24" y="24" width="3" height="4" fill="#A86F3E"/>
+      <rect x="25" y="22" width="3" height="3" fill="#FAF8F5"/>
+      <rect x="26" y="21" width="2" height="2" fill="#FAF8F5"/>
+    </g>
+
+    <!-- Chunky Body with Caramel Patches & Speckles -->
+    <g class="breathe-anim">
+      <!-- Body Base -->
+      <rect x="8" y="19" width="16" height="12" fill="#FAF8F5"/>
+      <rect x="7" y="21" width="18" height="9" fill="#FAF8F5"/>
+
+      <!-- Caramel Saddle Patch on Back/Flank -->
+      <rect x="18" y="19" width="6" height="10" fill="#A86F3E"/>
+      <rect x="16" y="21" width="3" height="6" fill="#A86F3E"/>
+      <rect x="21" y="20" width="3" height="3" fill="#8F5A2C"/>
+
+      <!-- Body Ticking / Freckles -->
+      <rect x="9" y="23" width="1" height="1" fill="#C29B77"/>
+      <rect x="12" y="25" width="1" height="1" fill="#C29B77"/>
+      <rect x="11" y="27" width="1" height="1" fill="#C29B77"/>
+      <rect x="14" y="24" width="1" height="1" fill="#C29B77"/>
+      <rect x="10" y="29" width="1" height="1" fill="#C29B77"/>
+      <rect x="15" y="28" width="1" height="1" fill="#C29B77"/>
+
+      <!-- Silver Metal Chain Link Collar around Neck -->
+      <rect x="7" y="18" width="17" height="2" fill="#C8CBD0"/>
+      <rect x="8" y="18" width="2" height="2" fill="#8E939C"/>
+      <rect x="12" y="18" width="2" height="2" fill="#8E939C"/>
+      <rect x="16" y="18" width="2" height="2" fill="#8E939C"/>
+      <rect x="20" y="18" width="2" height="2" fill="#8E939C"/>
+      <!-- Small chain ring tag hanging in front -->
+      <rect x="14" y="20" width="3" height="2" fill="#C8CBD0" rx="0.5"/>
+      <rect x="15" y="20" width="1" height="1" fill="#717680"/>
+
+      <!-- Front Paws with Speckles -->
+      <rect x="9" y="30" width="4" height="3" fill="#FAF8F5"/>
+      <rect x="9" y="32" width="4" height="1" fill="#E2DDD0"/>
+      <rect x="10" y="30" width="1" height="1" fill="#C29B77"/>
+
+      <rect x="16" y="30" width="4" height="3" fill="#FAF8F5"/>
+      <rect x="16" y="32" width="4" height="1" fill="#E2DDD0"/>
+      <rect x="18" y="31" width="1" height="1" fill="#C29B77"/>
+    </g>
+
+    <!-- Face & Head Group -->
+    <g id="face-js">
+      <!-- Head Base (White on left, Caramel patch on right) -->
+      <rect x="7" y="6" width="16" height="13" fill="#FAF8F5"/>
+      <rect x="6" y="8" width="18" height="10" fill="#FAF8F5"/>
+
+      <!-- Asymmetrical Caramel Patch over Right Eye & Forehead -->
+      <rect x="15" y="6" width="8" height="11" fill="#A86F3E"/>
+      <rect x="14" y="8" width="2" height="7" fill="#A86F3E"/>
+      <rect x="18" y="5" width="4" height="3" fill="#8F5A2C"/>
+
+      <!-- Floppy Folded Caramel Ears -->
+      <!-- Left Ear -->
+      <g class="ear-twitch-l">
+        <rect x="4" y="7" width="4" height="4" fill="#A86F3E"/>
+        <rect x="3" y="10" width="4" height="6" fill="#A86F3E"/>
+        <rect x="4" y="14" width="3" height="3" fill="#8F5A2C"/>
+      </g>
+      <!-- Right Ear -->
+      <g class="ear-twitch-r">
+        <rect x="22" y="7" width="4" height="4" fill="#A86F3E"/>
+        <rect x="23" y="10" width="4" height="6" fill="#A86F3E"/>
+        <rect x="23" y="14" width="3" height="3" fill="#8F5A2C"/>
+      </g>
+
+      <!-- Ticking / Freckles on White Cheek / Snout Bridge -->
+      <rect x="8" y="9" width="1" height="1" fill="#C29B77"/>
+      <rect x="10" y="8" width="1" height="1" fill="#C29B77"/>
+      <rect x="7" y="12" width="1" height="1" fill="#C29B77"/>
+      <rect x="9" y="13" width="1" height="1" fill="#C29B77"/>
+      <rect x="11" y="14" width="1" height="1" fill="#C29B77"/>
+
+      <!-- Warm Amber / Hazel Eyes -->
+      <!-- Left Eye (on white face side) -->
+      <g id="eye-left" class="eye-l-blink">
+        <rect x="9" y="10" width="3" height="3" fill="#3D2314" rx="0.5"/>
+        <rect id="pupil-left" class="pupil-left" x="9" y="10" width="2" height="2" fill="#5A3B22"/>
+        <rect x="9" y="10" width="1" height="1" fill="#FFFFFF"/>
+      </g>
+      <!-- Right Eye (inside caramel patch) -->
+      <g id="eye-right" class="eye-r-blink">
+        <rect x="17" y="10" width="3" height="3" fill="#2E180A" rx="0.5"/>
+        <rect id="pupil-right" class="pupil-right" x="18" y="10" width="2" height="2" fill="#5A3B22"/>
+        <rect x="17" y="10" width="1" height="1" fill="#FFFFFF"/>
+      </g>
+
+      <!-- Snout / Muzzle Area -->
+      <rect x="11" y="12" width="7" height="6" fill="#FAF8F5"/>
+      <rect x="12" y="13" width="1" height="1" fill="#C29B77"/>
+      <rect x="16" y="14" width="1" height="1" fill="#C29B77"/>
+
+      <!-- Distinctive Chocolate / Liver Nose Truffle -->
+      <rect id="dog-nose" x="12" y="13" width="5" height="3" fill="#855444" rx="1"/>
+      <rect x="13" y="13" width="2" height="1" fill="#A46E5E"/>
+      <rect x="13" y="15" width="3" height="1" fill="#6E4133"/>
+
+      <!-- Mouth & Tongue (Appears on Petting) -->
+      <rect x="13" y="16" width="3" height="1" fill="#664433"/>
+      <rect id="dog-tongue" x="13" y="16" width="4" height="4" fill="#FF6B8B" rx="1"/>
+      <rect x="14" y="18" width="2" height="2" fill="#FF4770"/>
+    </g>
+  </g>
+</svg>

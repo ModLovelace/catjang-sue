@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectar con Agentes de IA - Catjang</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <img class="logo" src="../assets/catjang-logo.png" alt="Catjang">
+      <div class="header-text">
+        <h1>Conecta tus Agentes de IA</h1>
+        <p class="subtitle">Haz que Catjang sea la mascota compañera de tus agentes. Reaccionará mientras piensan o trabajan y te avisará cuando completen una tarea.</p>
+      </div>
+    </header>
+
+    <div class="agent-grid">
+      <!-- Gemini / Antigravity -->
+      <div class="agent-card" id="card-gemini">
+        <div class="agent-card-header">
+          <div class="agent-title-row">
+            <span class="agent-icon">✦</span>
+            <h3>Gemini / Antigravity</h3>
+          </div>
+          <span class="status-badge" id="badge-gemini">Detectando...</span>
+        </div>
+        <p class="agent-desc">Detecta cuando el agente está pensando (<code>PreInvocation</code>), ejecutando herramientas y avisa con un salto y maullido al completar (<code>PostInvocation</code>).</p>
+        <div class="agent-action-row">
+          <span class="hook-path">Configuración en <code>~/.gemini/config/hooks.json</code></span>
+        </div>
+      </div>
+
+      <!-- OpenAI Codex -->
+      <div class="agent-card" id="card-codex">
+        <div class="agent-card-header">
+          <div class="agent-title-row">
+            <span class="agent-icon">⚙</span>
+            <h3>OpenAI Codex</h3>
+          </div>
+          <span class="status-badge is-active" id="badge-codex">Activo</span>
+        </div>
+        <p class="agent-desc">Monitoreo automático en vivo de sesiones locales en <code>~/.codex/sessions</code>. Avisa al terminar turnos y cuando se requiere tu permiso o intervención.</p>
+        <div class="agent-action-row">
+          <span class="hook-path">Monitoreo automático de logs activado</span>
+        </div>
+      </div>
+
+      <!-- Claude Code -->
+      <div class="agent-card" id="card-claude">
+        <div class="agent-card-header">
+          <div class="agent-title-row">
+            <span class="agent-icon">🟣</span>
+            <h3>Claude Code</h3>
+          </div>
+          <span class="status-badge" id="badge-claude">Detectando...</span>
+        </div>
+        <p class="agent-desc">Registra hooks para inicio/fin de sesión, llamadas a herramientas y avisos de aprobación en <code>~/.claude/settings.json</code>.</p>
+        <div class="agent-action-row">
+          <span class="hook-path">Configuración en <code>~/.claude/settings.json</code></span>
+        </div>
+      </div>
+
+      <!-- Cursor -->
+      <div class="agent-card" id="card-cursor">
+        <div class="agent-card-header">
+          <div class="agent-title-row">
+            <span class="agent-icon">⚡</span>
+            <h3>Cursor</h3>
+          </div>
+          <span class="status-badge" id="badge-cursor">Detectando...</span>
+        </div>
+        <p class="agent-desc">Monitoreo de hooks (<code>beforeShellExecution</code>, MCP) y lectura de logs de sesión para sincronizar el estado del editor.</p>
+        <div class="agent-action-row">
+          <span class="hook-path">Configuración en <code>~/.cursor/hooks.json</code></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="server-info-box">
+      <div class="server-info-header">
+        <span class="status-dot"></span>
+        <strong>Servidor local para cualquier Agente o Script</strong>
+        <span class="server-port">http://127.0.0.1:23456</span>
+      </div>
+      <p class="server-desc">Cualquier script en Python, PowerShell o cURL puede enviar avisos a <code>/agent-state</code> o recordatorios a <code>/agent-reminder</code>.</p>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="btn-test" class="btn btn-secondary">🐾 Probar aviso con la mascota</button>
+      <div class="actions-right">
+        <button type="button" id="btn-sync" class="btn btn-outline">Sincronizar Hooks</button>
+        <button type="button" id="btn-done" class="btn btn-primary">¡Empezar!</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="agents-setup.js"></script>
+</body>
+</html>

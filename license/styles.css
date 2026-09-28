@@ -139,3 +139,210 @@ button:disabled {
 .status-message.is-ok {
   color: #28633c;
 }
+body.is-launching .license-panel {
+  animation: license-launch 420ms ease-in-out both;
+}
+
+body.is-launching .brand-mark {
+  animation: brand-hop 420ms ease-in-out both;
+}
+
+@keyframes license-launch {
+  50% { transform: translateY(-5px); }
+  100% { opacity: 0.72; transform: translateY(-2px); }
+}
+
+@keyframes brand-hop {
+  50% { transform: translateY(-8px) rotate(-5deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+
+/* ── STEP 2: SETUP PANEL ── */
+.setup-panel {
+  width: 100%;
+  max-width: 440px;
+  animation: setup-fade 250ms ease-out both;
+}
+
+@keyframes setup-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.setup-header h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #211f1b;
+}
+
+.setup-subtitle {
+  margin: 0 0 16px;
+  color: #5c564d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.setup-section {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #332f29;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.section-description {
+  margin: 0 0 10px;
+  color: #6e675c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mascot-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.mascot-card {
+  background: #fffdf9;
+  border: 1.5px solid #dcd4c7;
+  border-radius: 9px;
+  padding: 8px 3px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  height: auto;
+}
+
+.mascot-card:hover {
+  border-color: #9c9386;
+  background: #faf7f2;
+  transform: translateY(-1px);
+}
+
+.mascot-card.is-selected {
+  border-color: #211f1b;
+  background: #f0eae0;
+  box-shadow: 0 0 0 2px rgba(33, 31, 27, 0.14);
+  transform: translateY(-1px);
+}
+
+.mascot-avatar {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.mascot-avatar img {
+  max-width: 40px;
+  max-height: 40px;
+  object-fit: contain;
+}
+
+.mascot-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #211f1b;
+  margin-bottom: 1px;
+  text-align: center;
+}
+
+.mascot-tag {
+  font-size: 9px;
+  font-weight: 600;
+  color: #787063;
+  white-space: nowrap;
+}
+
+.agent-choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.choice-button {
+  background: #fffdf9;
+  border: 1.5px solid #dcd4c7;
+  border-radius: 9px;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  height: auto;
+}
+
+.choice-button:hover {
+  border-color: #9c9386;
+  background: #faf7f2;
+}
+
+.choice-button.is-active {
+  border-color: #211f1b;
+  background: #f0eae0;
+  box-shadow: 0 0 0 2px rgba(33, 31, 27, 0.14);
+}
+
+.choice-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.choice-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice-text strong {
+  font-size: 12px;
+  font-weight: 800;
+  color: #211f1b;
+}
+
+.choice-text small {
+  font-size: 10px;
+  color: #6e675c;
+  line-height: 1.25;
+}
+
+.primary-button {
+  width: 100%;
+  height: 44px;
+  background: #211f1b;
+  color: #fffaf2;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: opacity 0.15s ease;
+}
+
+.primary-button:hover {
+  opacity: 0.92;
+}
+
+.primary-button:active {
+  transform: scale(0.99);
+}
+

@@ -17,6 +17,8 @@ const TRACKING_LAYERS = {
 const MAX_RAW_DIST_PX = 400;
 
 const obj = document.getElementById("cat");
+const dogObj = document.getElementById("schnauzer");
+let currentMascot = "cat";
 const shareNameBadge = document.getElementById("share-name-badge");
 const catSpeechBubble = document.getElementById("cat-speech-bubble");
 const catThinkingDots = document.getElementById("cat-thinking-dots");
@@ -55,6 +57,7 @@ const trackingInitializedDocs = new WeakSet();
 let layers = null;
 let targetDx = 0;
 let targetDy = 0;
+let trackingRafId = null;
 let currentCatName = "Catjang";
 let currentUserName = "";
 let isCatNameVisible = false;
@@ -67,21 +70,40 @@ let editingReminderId = null;
 let currentFixedMessage = "";
 let aiTaskStaleTimer = null;
 let mouseEventsEnabled = true;
-let currentLanguage = "en";
+let currentLanguage = "es";
+let windowBackend = "x11";
+let windowShapeSupported = false;
 let currentPomodoroState = null;
 let updateCtaState = null;
-const completionMeow = new Audio("../workspace/assets/sound/meow.m4a");
-const reminderMeow = new Audio("../workspace/assets/sound/meow-alert.m4a");
-const purringSound = new Audio("../workspace/assets/sound/purring.m4a");
 let completionMeowVolume = 0.1;
 const reminderMeowVolumeBoost = 2.4;
-completionMeow.volume = completionMeowVolume;
-completionMeow.preload = "auto";
-reminderMeow.volume = getReminderMeowVolume();
-reminderMeow.preload = "auto";
-purringSound.loop = true;
-purringSound.preload = "auto";
-purringSound.volume = 0.28;
+const audioCache = new Map();
+const AUDIO_CONFIG = {
+  completion: { src: "../workspace/assets/sound/meow.m4a" },
+  reminder: { src: "../workspace/assets/sound/meow-alert.m4a" },
+  purring: { src: "../workspace/assets/sound/purring.m4a", loop: true, volume: 0.28 },
+  dogBark: { src: "../workspace/assets/sound/dog-bark.m4a", volume: 0.45 },
+  dogPetting: { src: "../workspace/assets/sound/dog-panting.m4a", loop: true, volume: 0.40 },
+};
+
+function getAudio(name) {
+  if (audioCache.has(name)) return audioCache.get(name);
+  const config = AUDIO_CONFIG[name];
+  if (!config) return null;
+  const audio = new Audio(config.src);
+  audio.preload = "none";
+  audio.loop = !!config.loop;
+  if (typeof config.volume === "number") audio.volume = config.volume;
+  audioCache.set(name, audio);
+  return audio;
+}
+
+function resetAudio(name) {
+  const audio = audioCache.get(name);
+  if (!audio) return;
+  audio.pause();
+  audio.currentTime = 0;
+}
 
 const I18N = {
   en: {
@@ -126,6 +148,49 @@ const I18N = {
     sharePermissionFailedWindows: "Could not record the screen. Please check Windows privacy or security settings for screen capture.",
     shareConversionFailed: "Could not convert the share video to MP4.",
     shareRecordingFailed: "Could not make the share video.",
+  },
+  es: {
+    agentComplete: "¡Tarea completada!",
+    needsAttention: (name) => `${name || "Humano"}, ¡necesito tu atención!`,
+    focusLabel: "Concentración",
+    restLabel: "Descanso",
+    startBreak: (name) => `${name || "Humano"}, ¡tómate un descanso!`,
+    startFocus: (name) => `${name || "Humano"}, ¡volvamos a concentrarnos!`,
+    updateChecking: "Buscando...",
+    updateAvailable: "Actualizar",
+    updateNone: "No hay actualizaciones",
+    updateDownloading: (percent) => percent === null ? "Actualizando..." : `Actualizando ${percent}%`,
+    updateRestarting: "Reiniciando...",
+    userNameGuide: "Dile tu nombre a Catjang para que pueda llamarte en los recordatorios y otros momentos.",
+    userNamePlaceholder: "Introduce tu nombre",
+    userGreeting: (name) => `¡Hola, ${name}!`,
+    pomodoroPause: "Pausar",
+    pomodoroResume: "Reanudar",
+    pomodoroReset: "Restablecer",
+    reminderOnce: "Una vez",
+    reminderCustomDays: "Elegir días",
+    reminderDaily: "Todos los días",
+    reminderWeekdays: "Días laborables",
+    reminderWeekends: "Fines de semana",
+    reminderDaysShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    reminderOpen: "Abrir recordatorios",
+    reminderTitle: "Recordatorios",
+    reminderPanelLabel: "Recordatorios",
+    reminderRepeatGroupLabel: "Repetición",
+    reminderDayPickerLabel: "Elegir días",
+    reminderMessagePlaceholder: "¿Qué debe recordarte Catjang?",
+    reminderAdd: "Añadir",
+    reminderCancel: "Cancelar",
+    reminderSave: "Guardar",
+    reminderUpdate: "Actualizar",
+    reminderClose: "Cerrar",
+    reminderEmpty: "Añade un recordatorio y Catjang te avisará a tiempo.",
+    reminderEdit: "Editar",
+    reminderDelete: "Eliminar",
+    sharePermissionFailed: "No se pudo grabar la pantalla. Comprueba el permiso de grabación de pantalla de macOS.",
+    sharePermissionFailedWindows: "No se pudo grabar la pantalla. Comprueba los permisos de captura en la configuración de privacidad o seguridad de Windows.",
+    shareConversionFailed: "No se pudo convertir el vídeo a MP4.",
+    shareRecordingFailed: "No se pudo crear el vídeo.",
   },
   ko: {
     agentComplete: "작업 완료냥!",
@@ -217,7 +282,7 @@ const I18N = {
 
 function normalizeLanguage(language) {
   const lang = String(language || "").toLowerCase().split("-")[0];
-  return I18N[lang] ? lang : "en";
+  return I18N[lang] ? lang : "es";
 }
 
 function tr(key, ...args) {
@@ -626,8 +691,8 @@ function installHeatOverlays(doc) {
   const bounds = getSvgViewBoxRect(doc);
   if (!bounds) return;
 
-  const catContent = doc.getElementById("cat-content") || doc.documentElement;
-  const maskId = "cat-heat-mask";
+  const catContent = doc.getElementById("cat-content") || doc.getElementById("dog-content") || doc.documentElement;
+  const maskId = doc.getElementById("dog-content") ? "dog-heat-mask" : "cat-heat-mask";
   let defs = doc.querySelector("defs");
   if (!defs) {
     defs = doc.createElementNS(SVG_NS, "defs");
@@ -730,17 +795,19 @@ function installHeatOverlays(doc) {
 
   for (const source of Array.from(doc.querySelectorAll("[data-heat-overlay]"))) {
     const parent = source.parentNode;
-    if (!parent) continue;
+    if (!parent || source.classList.contains("heat-overlay")) continue;
 
-    const legacyOverlay = doc.createElementNS(SVG_NS, "g");
-    legacyOverlay.setAttribute("class", "heat-overlay legacy-heat-overlay");
+    const legacyOverlay = source.cloneNode(true);
+    legacyOverlay.removeAttribute("id");
+    legacyOverlay.removeAttribute("data-heat-overlay");
+    legacyOverlay.classList.add("heat-overlay", "legacy-heat-overlay");
     legacyOverlay.setAttribute("pointer-events", "none");
-    for (const child of Array.from(source.children)) {
-      const clone = child.cloneNode(true);
-      for (const painted of [clone, ...Array.from(clone.querySelectorAll("[fill]"))]) {
-        if (painted.hasAttribute("fill")) painted.setAttribute("fill", "var(--heat-overlay-color, #dc2828)");
-      }
-      legacyOverlay.appendChild(clone);
+    for (const el of Array.from(legacyOverlay.querySelectorAll("[id]"))) {
+      el.removeAttribute("id");
+    }
+    for (const painted of [legacyOverlay, ...Array.from(legacyOverlay.querySelectorAll("[fill],[stroke]"))]) {
+      if (painted.hasAttribute("fill")) painted.setAttribute("fill", "var(--heat-overlay-color, #dc2828)");
+      if (painted.hasAttribute("stroke")) painted.setAttribute("stroke", "var(--heat-overlay-color, #dc2828)");
     }
     legacyOverlay.style.setProperty("opacity", "var(--legacy-heat-overlay-opacity, 0)");
     parent.insertBefore(legacyOverlay, source.nextSibling);
@@ -904,7 +971,7 @@ function initTracking() {
     for (const id of cfg.ids) {
       const el = svgDoc.getElementById(id);
       if (!el) continue;
-      wrappers.push(wrapElement(el));
+      wrappers.push(wrapElement(el, "cat"));
     }
     layers[name] = {
       wrappers,
@@ -916,7 +983,7 @@ function initTracking() {
     };
   }
 
-  requestAnimationFrame(tick);
+  scheduleTrackingTick();
   startBlinkLoop();
 }
 
@@ -925,10 +992,13 @@ function startBlinkLoop() {
   if (blinkTimer) clearTimeout(blinkTimer);
   function schedule() {
     blinkTimer = setTimeout(() => {
-      const root = svgDoc && svgDoc.documentElement;
-      if (root && !root.classList.contains("purring")) {
-        root.classList.add("blinking");
-        setTimeout(() => root && root.classList.remove("blinking"), 220);
+      const idle = currentIdleElement();
+      const roots = [idle && idle.contentDocument && idle.contentDocument.documentElement];
+      for (const root of roots) {
+        if (root && !root.classList.contains("purring") && !root.classList.contains("sleeping")) {
+          root.classList.add("blinking");
+          setTimeout(() => root && root.classList.remove("blinking"), 220);
+        }
       }
       schedule();
     }, 2200 + Math.random() * 3800);
@@ -936,13 +1006,41 @@ function startBlinkLoop() {
   schedule();
 }
 
-function wrapElement(el) {
+function wrapElement(el, mascotId = "cat") {
   const ns = "http://www.w3.org/2000/svg";
-  const wrapper = svgDoc.createElementNS(ns, "g");
+  const doc = el.ownerDocument || svgDoc;
+  const wrapper = doc.createElementNS(ns, "g");
   wrapper.setAttribute("data-tracking-wrapper", "1");
+  wrapper.setAttribute("data-tracking-mascot", mascotId);
   el.parentNode.insertBefore(wrapper, el);
   wrapper.appendChild(el);
   return wrapper;
+}
+
+function initDogTracking(specificDoc, mascotId = currentMascot) {
+  const currentEl = typeof currentIdleElement === "function" ? currentIdleElement() : null;
+  const dogDoc = specificDoc || (currentEl && currentEl.contentDocument) || (dogObj && dogObj.contentDocument);
+  if (!dogDoc || trackingInitializedDocs.has(dogDoc)) return;
+  trackingInitializedDocs.add(dogDoc);
+
+  if (!layers) layers = {};
+  for (const [name, cfg] of Object.entries(TRACKING_LAYERS)) {
+    if (!layers[name]) {
+      layers[name] = {
+        wrappers: [],
+        maxOffset: cfg.maxOffset,
+        ease: cfg.ease,
+        stretchAxis: cfg.stretchAxis,
+        x: 0,
+        y: 0,
+      };
+    }
+    for (const id of cfg.ids) {
+      const el = dogDoc.getElementById(id);
+      if (!el) continue;
+      layers[name].wrappers.push(wrapElement(el, mascotId));
+    }
+  }
 }
 
 function isStretching() {
@@ -985,13 +1083,15 @@ function updateShakeDetection(dx, dy) {
   lastCursorSample = { dx, dy, vx, vy, t: now };
 }
 
-window.electronAPI.onCursorPos(({ dx, dy }) => {
+function updateCursorTracking({ dx, dy }) {
+  updatePolledMouseEventPassthrough(dx, dy);
   // 스트레칭 중에는 마우스 추적 정지 — layers가 자연스럽게 0으로 수렴
   if (isStretching()) {
     targetDx = 0;
     targetDy = 0;
     lastCursorSample = null;
     shakeEnergy = 0;
+    scheduleTrackingTick();
     return;
   }
   updateShakeDetection(dx, dy);
@@ -999,18 +1099,32 @@ window.electronAPI.onCursorPos(({ dx, dy }) => {
   if (dist === 0) {
     targetDx = 0;
     targetDy = 0;
+    scheduleTrackingTick();
     return;
   }
   const clamped = Math.min(dist, MAX_RAW_DIST_PX) / MAX_RAW_DIST_PX;
   targetDx = (dx / dist) * clamped;
   targetDy = (dy / dist) * clamped;
-});
+  if (!document.body.dataset.sleeping) scheduleTrackingTick();
+}
+window.electronAPI.onCursorPos(updateCursorTracking);
+
+function scheduleTrackingTick() {
+  if (trackingRafId !== null || !layers) return;
+  trackingRafId = requestAnimationFrame(tick);
+}
 
 function tick() {
-  if (!layers) return;
+  trackingRafId = null;
+  if (!layers || document.body.dataset.sleeping) return;
+  let needsAnotherFrame = false;
   for (const layer of Object.values(layers)) {
     const tx = targetDx * layer.maxOffset;
     const ty = targetDy * layer.maxOffset;
+
+    if (Math.abs(tx - layer.x) > 0.005 || Math.abs(ty - layer.y) > 0.005) {
+      needsAnotherFrame = true;
+    }
 
     layer.x += (tx - layer.x) * layer.ease;
     layer.y += (ty - layer.y) * layer.ease;
@@ -1024,6 +1138,7 @@ function tick() {
     const qy = Math.round(layer.y * 8) / 8;
 
     for (const w of layer.wrappers) {
+      if (w.getAttribute("data-tracking-mascot") !== currentMascot) continue;
       if (layer.stretchAxis === "x") {
         const stretch = 1 + Math.abs(targetDx) * 0.08;
         w.setAttribute("transform", `translate(${qx} 0) scale(${stretch.toFixed(3)} 1)`);
@@ -1032,7 +1147,7 @@ function tick() {
       }
     }
   }
-  requestAnimationFrame(tick);
+  if (needsAnotherFrame) scheduleTrackingTick();
 }
 
 function applyCatNameSettings(settings) {
@@ -1685,7 +1800,7 @@ function renderSpeech(speech) {
     return;
   }
   if (!renderPomodoroTimerSpeech(speech)) {
-    catSpeechBubble.textContent = speech.kind === "thinking" ? "" : speech.text;
+    catSpeechBubble.textContent = speech.text;
     catSpeechBubble.setAttribute("aria-label", speech.text);
     document.body.dataset.speech = speech.kind || "notice";
   }
@@ -1716,7 +1831,7 @@ function clearSpeech() {
 }
 
 function showSpeech(text, { duration = 1800, kind = "notice" } = {}) {
-  if (activeSpeechKind === "reminder" && kind !== "reminder") return;
+  if (activeSpeechKind === "reminder" && kind !== "reminder" && kind !== "complete") return;
   if (speechTimer) clearTimeout(speechTimer);
   activeSpeechKind = kind;
   delete document.body.dataset.speech;
@@ -1753,6 +1868,12 @@ function playCompletionMeow() {
   const now = Date.now();
   if (now - lastMeowAt < MEOW_COOLDOWN_MS) return;
   lastMeowAt = now;
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
+    playPuppyBark();
+    return;
+  }
+  const completionMeow = getAudio("completion");
   completionMeow.volume = completionMeowVolume;
   completionMeow.currentTime = 0;
   completionMeow.play().catch(() => {});
@@ -1764,8 +1885,14 @@ function getReminderMeowVolume() {
 
 function playReminderMeow(options = {}) {
   if (completionMeowVolume <= 0) return;
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
+    playPuppyBark();
+    return;
+  }
   const repeat = Math.max(1, Math.min(3, Math.round(Number(options.repeat) || 3)));
   const play = () => {
+    const reminderMeow = getAudio("reminder");
     reminderMeow.volume = getReminderMeowVolume();
     reminderMeow.currentTime = 0;
     reminderMeow.play().catch(() => {});
@@ -1775,17 +1902,277 @@ function playReminderMeow(options = {}) {
   if (repeat >= 3) setTimeout(play, 3000);
 }
 
-function playAiComplete() {
-  setThinkingDotsVisible(false);
-  playCompletionJump();
-  playCompletionMeow();
-  showSpeech(tr("agentComplete"), { kind: "complete" });
+let puppyAudioCtx = null;
+let dogPettingNodes = null;
+
+function startDogPettingAudio() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
+    if (puppyAudioCtx.state === "suspended") {
+      puppyAudioCtx.resume().catch(() => {});
+    }
+    if (dogPettingNodes) return; // already active
+
+    const ctx = puppyAudioCtx;
+
+    // Buffer for soft pinkish breath noise (panting)
+    const bufferSize = ctx.sampleRate * 2;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99 * b0 + white * 0.05;
+      b1 = 0.96 * b1 + white * 0.11;
+      b2 = 0.86 * b2 + white * 0.25;
+      output[i] = (b0 + b1 + b2) * 0.45;
+    }
+
+    const whiteNoise = ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const breathFilter = ctx.createBiquadFilter();
+    breathFilter.type = "bandpass";
+    breathFilter.frequency.value = 850;
+    breathFilter.Q.value = 1.4;
+
+    // LFO for rhythmic panting (3.3 Hz breath rate)
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 3.3;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.30;
+
+    const breathGain = ctx.createGain();
+    breathGain.gain.value = 0.40;
+
+    whiteNoise.connect(breathFilter);
+    breathFilter.connect(breathGain);
+    lfo.connect(lfoGain);
+    lfoGain.connect(breathGain.gain);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
+    masterGain.gain.exponentialRampToValueAtTime(0.38, ctx.currentTime + 0.15);
+
+    breathGain.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    whiteNoise.start();
+    lfo.start();
+
+    // Occasional gentle contented puppy sigh while continuously petted
+    const sighTimer = setInterval(() => {
+      if (!dogPettingNodes) return;
+      try {
+        const osc = ctx.createOscillator();
+        const sGain = ctx.createGain();
+        osc.type = "sine";
+        const t = ctx.currentTime;
+        osc.frequency.setValueAtTime(460, t);
+        osc.frequency.exponentialRampToValueAtTime(280, t + 0.45);
+
+        sGain.gain.setValueAtTime(0, t);
+        sGain.gain.linearRampToValueAtTime(0.22, t + 0.1);
+        sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+        osc.connect(sGain);
+        sGain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.55);
+      } catch {}
+    }, 2200);
+
+    dogPettingNodes = { whiteNoise, lfo, masterGain, sighTimer };
+  } catch {}
 }
 
-function playAiNotification() {
+function stopDogPettingAudio() {
+  if (!dogPettingNodes) return;
+  try {
+    const { whiteNoise, lfo, masterGain, sighTimer } = dogPettingNodes;
+    clearInterval(sighTimer);
+    if (puppyAudioCtx && masterGain) {
+      masterGain.gain.linearRampToValueAtTime(0.001, puppyAudioCtx.currentTime + 0.12);
+    }
+    setTimeout(() => {
+      try {
+        whiteNoise.stop();
+        lfo.stop();
+        whiteNoise.disconnect();
+        lfo.disconnect();
+      } catch {}
+    }, 150);
+  } catch {}
+  dogPettingNodes = null;
+}
+
+function playPuppyBark() {
+  try {
+    const dogBarkSound = getAudio("dogBark");
+    dogBarkSound.volume = Math.max(0.18, completionMeowVolume * 2.5);
+    dogBarkSound.currentTime = 0;
+    dogBarkSound.play().catch(() => {});
+  } catch {}
+
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
+    if (puppyAudioCtx.state === "suspended") {
+      puppyAudioCtx.resume().catch(() => {});
+    }
+    const ctx = puppyAudioCtx;
+    const now = ctx.currentTime;
+
+    function bark(t, pitch = 1.0) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(400 * pitch, t);
+      osc.frequency.exponentialRampToValueAtTime(160 * pitch, t + 0.13);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1400, t);
+
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.35, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.14);
+    }
+
+    bark(now, 1.0);
+    bark(now + 0.15, 1.18);
+  } catch {}
+}
+
+function triggerCompletionConfetti() {
+  const container = document.getElementById("completion-confetti");
+  if (!container) return;
+  container.innerHTML = "";
+  document.body.dataset.confetti = "1";
+
+  const colors = ["#ff3366", "#33ccff", "#ffcc00", "#33ff99", "#ff9933", "#cc66ff", "#ffffff"];
+  const count = 28;
+
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+    const dist = 28 + Math.random() * 40;
+    const x = Math.cos(angle) * dist;
+    const y = Math.sin(angle) * dist - 12;
+    const rot = (Math.random() * 720 - 360) + "deg";
+    const color = colors[i % colors.length];
+
+    piece.style.setProperty("--cf-x", `${x}px`);
+    piece.style.setProperty("--cf-y", `${y}px`);
+    piece.style.setProperty("--cf-rot", rot);
+    piece.style.backgroundColor = color;
+    piece.style.left = "calc(50% - 2px)";
+    piece.style.top = "calc(50% - 2px)";
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => {
+    delete document.body.dataset.confetti;
+    container.innerHTML = "";
+  }, 2000);
+}
+
+function triggerAlertAnimation() {
+  document.body.dataset.alert = "1";
+  setTimeout(() => {
+    delete document.body.dataset.alert;
+  }, 4000);
+}
+
+function formatAgentDisplayName(agentId, agentName) {
+  if (agentName && typeof agentName === "string" && agentName.trim()) {
+    return agentName.trim();
+  }
+  const id = (agentId || "").toLowerCase();
+  if (id.includes("gemini") || id.includes("antigravity")) return "Gemini";
+  if (id.includes("codex")) return "Codex";
+  if (id.includes("claude")) return "Claude Code";
+  if (id.includes("cursor")) return "Cursor";
+  if (id && id !== "agent" && id !== "cli" && id !== "test") {
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  }
+  return "Agente IA";
+}
+
+function formatAiCompleteText(event) {
+  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
+  let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+  let task = (event && typeof event.task === "string" && event.task.trim()) || "";
+  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
+
+  if (conversation.length > 30) {
+    conversation = conversation.slice(0, 27) + "...";
+  }
+  if (task.length > 38) {
+    task = task.slice(0, 35) + "...";
+  }
+
+  const prefix = conversation ? `${agent} [${conversation}]` : agent;
+
+  if (customText) {
+    if (customText.toLowerCase().includes(agent.toLowerCase()) || customText.includes(":")) {
+      return customText;
+    }
+    return `${prefix}: ${customText}`;
+  }
+
+  if (task) {
+    if (conversation && task.toLowerCase() === conversation.toLowerCase()) {
+      return `${prefix}: ${tr("agentComplete") || "¡Tarea completada!"}`;
+    }
+    return `${prefix}: Terminó "${task}"`;
+  }
+
+  return `${prefix}: ${tr("agentComplete") || "¡Tarea completada!"}`;
+}
+
+function playAiComplete(event) {
+  registerUserActivity();
+  setThinkingDotsVisible(false);
+  playCompletionJump();
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  if (m && m.soundType === "bark") {
+    playPuppyBark();
+  } else {
+    playCompletionMeow();
+  }
+  triggerCompletionConfetti();
+  const text = formatAiCompleteText(event);
+  showSpeech(text, { duration: 5000, kind: "complete" });
+}
+
+function playAiNotification(event) {
+  registerUserActivity();
   setThinkingDotsVisible(false);
   playReminderAlertOnce();
-  showSpeech(tr("needsAttention", currentUserName), { duration: 5200, kind: "reminder" });
+  triggerAlertAnimation();
+  const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName);
+  let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+  if (conversation.length > 30) conversation = conversation.slice(0, 27) + "...";
+  const prefix = conversation ? `${agent} [${conversation}]` : agent;
+  const customText = (event && typeof event.text === "string" && event.text.trim()) || "";
+  const text = customText
+    ? (customText.includes(":") ? customText : `${prefix}: ${customText}`)
+    : `${prefix}: ${tr("needsAttention", currentUserName)}`;
+  showSpeech(text, { duration: 5200, kind: "reminder" });
 }
 
 function formatPomodoroTime(totalSec) {
@@ -1823,11 +2210,22 @@ function applyAiTaskState(event) {
   const active = state === "thinking" || state === "working";
   setThinkingDotsVisible(active);
   clearAiTaskStaleTimer();
-  if (active && event && event.agentId === "antigravity") {
+
+  if (active) {
+    registerUserActivity();
+    const agent = formatAgentDisplayName(event && event.agentId, event && event.agentName) || "Gemini";
+    let conversation = (event && typeof event.conversationName === "string" && event.conversationName.trim()) || "";
+    if (conversation.length > 28) conversation = conversation.slice(0, 25) + "...";
+    const topicText = conversation ? ` [${conversation}]` : "";
+    const statusText = state === "thinking" ? "Pensando..." : "Trabajando...";
+    showSpeech(`${agent}${topicText}: ${statusText}`, { duration: 3500, kind: "thinking" });
+
     aiTaskStaleTimer = setTimeout(() => {
       aiTaskStaleTimer = null;
       setThinkingDotsVisible(false);
-    }, 3000);
+    }, 15000);
+  } else {
+    setThinkingDotsVisible(false);
   }
 }
 
@@ -1837,8 +2235,10 @@ window.electronAPI.onAiTaskState(applyAiTaskState);
 window.electronAPI.onAiTaskNotification(playAiNotification);
 function applyTaskCompleteSoundVolume(volume) {
   completionMeowVolume = Math.max(0, Math.min(1, Number(volume) || 0));
-  completionMeow.volume = completionMeowVolume;
-  reminderMeow.volume = getReminderMeowVolume();
+  const completionMeow = audioCache.get("completion");
+  const reminderMeow = audioCache.get("reminder");
+  if (completionMeow) completionMeow.volume = completionMeowVolume;
+  if (reminderMeow) reminderMeow.volume = getReminderMeowVolume();
 }
 window.electronAPI.taskCompleteSoundVolumeGet().then(applyTaskCompleteSoundVolume).catch(() => {});
 window.electronAPI.onTaskCompleteSoundVolume(applyTaskCompleteSoundVolume);
@@ -2016,6 +2416,7 @@ window.electronAPI.onShareCaptureCancel(() => {
 // ── Drag (좌클릭) + Context menu (우클릭) ──
 
 const dragHandle = document.getElementById("drag-handle");
+const pettingHandle = document.getElementById("petting-handle");
 const stretchEndObj = document.getElementById("stretch-svg-end");
 let dragging = false;
 let lastX = 0;
@@ -2032,6 +2433,7 @@ let lagY = 0, lagVelY = 0;
 let pendingDrag = null;
 let purrStopTimer = null;
 let purrPlayPromise = null;
+let dogPetPlayPromise = null;
 let purrWanted = false;
 let huntingTimer = null;
 let huntingReturnTimer = null;
@@ -2043,14 +2445,123 @@ const N_SEG = 16;
 const DRAG_START_THRESHOLD_PX = 4;
 const PURR_IDLE_TIMEOUT_MS = 420;
 const PURR_LEAVE_GRACE_MS = 260;
+const PETTING_REQUIRED_DURATION_MS = 1400; // ~1.4s of intentional stroking movement
+const PETTING_REQUIRED_DISTANCE_PX = 70;   // accumulated distance in px to simulate strokes
+const PETTING_STROKE_PAUSE_MS = 450;       // max pause between strokes before stroke progress resets
+const PETTING_STROKE_OUT_GRACE_MS = 250;   // grace period when cursor momentarily strays out of head area
+
+let pettingStrokeStartTime = 0;
+let pettingStrokeDistance = 0;
+let pettingStrokeLastX = null;
+let pettingStrokeLastY = null;
+let pettingStrokeLastMoveAt = 0;
+let pettingStrokeOutTimer = null;
+
+function resetPettingStroke() {
+  pettingStrokeStartTime = 0;
+  pettingStrokeDistance = 0;
+  pettingStrokeLastX = null;
+  pettingStrokeLastY = null;
+  pettingStrokeLastMoveAt = 0;
+  if (pettingStrokeOutTimer) {
+    clearTimeout(pettingStrokeOutTimer);
+    pettingStrokeOutTimer = null;
+  }
+}
 const SHAKE_SPEED_THRESHOLD = 11.2;
 const SHAKE_TRIGGER_ENERGY = 2.34;
 const SHAKE_ENERGY_DECAY = 0.82;
 const HUNTING_DURATION_MS = 1100;
 const HUNTING_RETURN_DURATION_MS = 420;
 
+let nativeShapeRaf = null;
+let nativeShapeObserversStarted = false;
+let nativeDragStateActive = false;
+
+function scheduleNativeWindowShapeUpdate() {
+  if (!windowShapeSupported || nativeShapeRaf !== null) return;
+  nativeShapeRaf = requestAnimationFrame(() => {
+    nativeShapeRaf = null;
+    const selectors = [
+      "#drag-handle", "#share-name-badge", "#cat-speech-bubble", "#cat-thinking-dots",
+      "#reminder-clock-button", "#reminder-panel", "#cat-name-editor", "#user-name-editor",
+      "#fixed-message-editor", "#pomodoro-focus-editor", "#share-duration-editor", "#cat",
+      "#schnauzer", "#schnauzer-press-left", "#schnauzer-press-right", "#schnauzer-scroll-unroll", "#schnauzer-jump-start", "#schnauzer-jump-ing", "#schnauzer-drag", "#schnauzer-stretch",
+      "#purr-hearts", "#heat-steam", "#press-left", "#press-right", "#scroll-unroll",
+      "#jump-start", "#jump-ing", "#stretch-svg-end", "#stretch-pose-default",
+    ];
+    const rects = [];
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (!element) continue;
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      const rect = element.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const padding = selector === "#purr-hearts" || selector === "#heat-steam" ? 40 : 8;
+      rects.push({
+        x: Math.floor(rect.left - padding),
+        y: Math.floor(rect.top - padding),
+        width: Math.ceil(rect.width + padding * 2),
+        height: Math.ceil(rect.height + padding * 2),
+      });
+    }
+    window.electronAPI.setWindowShape(rects);
+  });
+}
+
+function startNativeWindowShapeObservers() {
+  if (nativeShapeObserversStarted) return;
+  nativeShapeObserversStarted = true;
+  new MutationObserver(scheduleNativeWindowShapeUpdate).observe(document.body, {
+    attributes: true,
+    childList: true,
+    subtree: true,
+  });
+  const resizeObserver = new ResizeObserver(scheduleNativeWindowShapeUpdate);
+  resizeObserver.observe(document.documentElement);
+  for (const element of document.body.children) resizeObserver.observe(element);
+  scheduleNativeWindowShapeUpdate();
+}
+
+window.electronAPI.windowCapabilities().then((capabilities) => {
+  windowBackend = capabilities && capabilities.backend === "wayland" ? "wayland" : "x11";
+  windowShapeSupported = !!(capabilities && capabilities.supportsWindowShape);
+  document.body.dataset.windowBackend = windowBackend;
+  if (windowShapeSupported) {
+    setPetMouseEventsEnabled(true);
+    startNativeWindowShapeObservers();
+  } else if (windowBackend === "wayland") {
+    setPetMouseEventsEnabled(true);
+  } else {
+    requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+  }
+}).catch(() => {
+  windowBackend = "x11";
+  windowShapeSupported = false;
+  document.body.dataset.windowBackend = windowBackend;
+  requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+});
+
+window.electronAPI.onNativeWindowDragState((active) => {
+  if (windowBackend !== "wayland") return;
+  const next = !!active;
+  document.body.classList.toggle("native-dragging", next);
+  if (next === nativeDragStateActive) return;
+  nativeDragStateActive = next;
+  if (next) {
+    clearPendingDrag();
+    beginDragStretch(
+      { screenX: 0, screenY: 0 },
+      { screenX: 0, screenY: 0 },
+    );
+  } else {
+    if (!pendingDrag) finishDragStretch(false);
+  }
+});
+
 function setPetMouseEventsEnabled(enabled) {
-  const next = !!enabled;
+  const next = windowShapeSupported ? true : !!enabled;
   if (mouseEventsEnabled === next) return;
   mouseEventsEnabled = next;
   window.electronAPI.setMouseEventsEnabled(next);
@@ -2088,15 +2599,24 @@ function isIdlePoseInteractive() {
     !document.body.dataset.huntingReturn;
 }
 
+function currentIdleElement() {
+  const id = typeof getMascotPoseElementId === "function" ? getMascotPoseElementId(currentMascot, "idle") : null;
+  return (id && document.getElementById(id)) || (currentMascot === "schnauzer" ? dogObj : obj);
+}
+
 function isIdleHeadPoint(x, y) {
   if (!isIdlePoseInteractive()) return false;
-  const point = normalizedPointInElement(obj, x, y);
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const target = currentIdleElement();
+  const point = normalizedPointInElement(target, x, y);
   if (!point) return false;
-  return pointInEllipse(point.nx, point.ny, 0.40, 0.33, 0.25, 0.23);
+  const { cx, cy, rx, ry } = (m && m.petting) || { cx: 0.40, cy: 0.33, rx: 0.25, ry: 0.23 };
+  return pointInEllipse(point.nx, point.ny, cx, cy, rx, ry);
 }
 
 function idleSvgRoot() {
-  const doc = obj && obj.contentDocument;
+  const target = currentIdleElement();
+  const doc = target && target.contentDocument;
   return doc && doc.documentElement ? doc.documentElement : null;
 }
 
@@ -2157,10 +2677,13 @@ function setPurrFaceOffset(x, y) {
 }
 
 function purrFaceOffsetForPoint(x, y) {
-  const point = normalizedPointInElement(obj, x, y);
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const target = currentIdleElement();
+  const point = normalizedPointInElement(target, x, y);
   if (!point) return { x: 0, y: 0 };
-  const dx = Math.max(-1, Math.min(1, (point.nx - 0.40) / 0.25));
-  const dy = Math.max(-1, Math.min(1, (point.ny - 0.33) / 0.23));
+  const { cx, cy } = (m && m.petting) || { cx: 0.40, cy: 0.33 };
+  const dx = Math.max(-1, Math.min(1, (point.nx - cx) / 0.25));
+  const dy = Math.max(-1, Math.min(1, (point.ny - cy) / 0.23));
   return {
     x: dx * 1.15,
     y: dy * 0.75,
@@ -2174,16 +2697,40 @@ function startPurring(clientX, clientY) {
   setIdleSvgClass("purring", true);
   document.body.dataset.purring = "1";
   purrWanted = true;
-  if (purringSound.paused && !purrPlayPromise) {
-    purringSound.currentTime = 0;
-    purrPlayPromise = purringSound.play()
-      .then(() => {
-        purrPlayPromise = null;
-        if (!purrWanted) stopPurring();
-      })
-      .catch(() => {
-        purrPlayPromise = null;
-      });
+
+  const m = typeof getMascot === "function" ? getMascot(currentMascot) : null;
+  const isDogSound = m && m.soundType === "bark";
+
+  if (isDogSound) {
+    resetAudio("purring");
+    const dogPettingSound = getAudio("dogPetting");
+    if (dogPettingSound.paused && !dogPetPlayPromise) {
+      dogPettingSound.currentTime = 0;
+      dogPetPlayPromise = dogPettingSound.play()
+        .then(() => {
+          dogPetPlayPromise = null;
+          if (!purrWanted) stopPurring();
+        })
+        .catch(() => {
+          dogPetPlayPromise = null;
+        });
+    }
+    startDogPettingAudio();
+  } else {
+    resetAudio("dogPetting");
+    stopDogPettingAudio();
+    const purringSound = getAudio("purring");
+    if (purringSound.paused && !purrPlayPromise) {
+      purringSound.currentTime = 0;
+      purrPlayPromise = purringSound.play()
+        .then(() => {
+          purrPlayPromise = null;
+          if (!purrWanted) stopPurring();
+        })
+        .catch(() => {
+          purrPlayPromise = null;
+        });
+    }
   }
   scheduleStopPurring(PURR_IDLE_TIMEOUT_MS);
 }
@@ -2200,45 +2747,40 @@ function stopPurring() {
   setPurrFaceOffset(0, 0);
   clearTimeout(purrStopTimer);
   purrStopTimer = null;
-  purringSound.pause();
-  purringSound.currentTime = 0;
+  resetAudio("purring");
+  resetAudio("dogPetting");
+  stopDogPettingAudio();
+  resetPettingStroke();
 }
 
 function currentPoseElement() {
+  let poseKey = "idle";
   if (document.body.classList.contains("dragging")) {
-    ensureSvgObjectReady("stretch-svg-end");
-    return stretchEndObj;
+    poseKey = "drag";
+  } else if (document.body.dataset.stretching) {
+    poseKey = "stretch";
+  } else if (document.body.dataset.hunting) {
+    poseKey = "idle";
+  } else if (document.body.dataset.jump === "start") {
+    poseKey = "jumpStart";
+  } else if (document.body.dataset.jump === "ing") {
+    poseKey = "jumpIng";
+  } else if (document.body.dataset.scroll) {
+    poseKey = "scroll";
+  } else if (document.body.dataset.press === "left") {
+    poseKey = "pressLeft";
+  } else if (document.body.dataset.press === "right") {
+    poseKey = "pressRight";
   }
-  if (document.body.dataset.stretching) {
-    ensureSvgObjectReady("stretch-pose-default");
-    return document.getElementById("stretch-pose-default");
+  const id = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, poseKey)
+    : null;
+  if (id) {
+    ensureSvgObjectReady(id);
+    const el = document.getElementById(id);
+    if (el) return el;
   }
-  if (document.body.dataset.hunting) {
-    ensureSvgObjectReady("cat");
-    return document.getElementById("cat");
-  }
-  if (document.body.dataset.jump === "start") {
-    ensureSvgObjectReady("jump-start");
-    return document.getElementById("jump-start");
-  }
-  if (document.body.dataset.jump === "ing") {
-    ensureSvgObjectReady("jump-ing");
-    return document.getElementById("jump-ing");
-  }
-  if (document.body.dataset.scroll) {
-    ensureSvgObjectReady("scroll-unroll");
-    return document.getElementById("scroll-unroll");
-  }
-  if (document.body.dataset.press === "left") {
-    ensureSvgObjectReady("press-left");
-    return document.getElementById("press-left");
-  }
-  if (document.body.dataset.press === "right") {
-    ensureSvgObjectReady("press-right");
-    return document.getElementById("press-right");
-  }
-  ensureSvgObjectReady("cat");
-  return obj;
+  return currentIdleElement();
 }
 
 function isCatHitPoint(x, y) {
@@ -2255,7 +2797,8 @@ function isCatHitPoint(x, y) {
       pointInEllipse(nx, ny, 0.5, 0.52, 0.18, 0.38);
   }
 
-  return pointInEllipse(nx, ny, 0.4, 0.3, 0.24, 0.22) ||
+  return (nx >= 0.15 && nx <= 0.85 && ny >= 0.08 && ny <= 0.92) ||
+    pointInEllipse(nx, ny, 0.4, 0.3, 0.24, 0.22) ||
     pointInEllipse(nx, ny, 0.55, 0.62, 0.3, 0.3) ||
     (nx >= 0.28 && nx <= 0.72 && ny >= 0.3 && ny <= 0.78);
 }
@@ -2297,7 +2840,14 @@ function updateMouseEventPassthrough(event) {
   setPetMouseEventsEnabled(shouldReceiveMouseAt(event.clientX, event.clientY));
 }
 
-requestAnimationFrame(() => setPetMouseEventsEnabled(false));
+function updatePolledMouseEventPassthrough(dx, dy) {
+  if (windowBackend !== "x11" || dragging) return;
+  const clientX = Number(dx) + window.innerWidth / 2;
+  const clientY = Number(dy) + window.innerHeight / 2;
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+  setPetMouseEventsEnabled(shouldReceiveMouseAt(clientX, clientY));
+  updatePurringAtPoint(clientX, clientY, true);
+}
 
 // ── stretch-svg 자동 segment 분할 + 체인 wrapper 구축 ──
 const dxState = new Array(N_SEG).fill(0);
@@ -2377,6 +2927,7 @@ fetch("../svg/stretch-start.svg")
       endData = setupStretchChain(pendingEndDoc);
       pendingEndDoc = null;
       applyStretchChain();
+      if (dragging || releasing) startChain();
     }
   })
   .catch((err) => console.error("Failed to load stretch-start.svg:", err));
@@ -2391,6 +2942,7 @@ stretchEndObj.addEventListener("load", () => {
   }
   endData = setupStretchChain(doc);
   applyStretchChain();
+  if (dragging || releasing) startChain();
 });
 
 function setupStretchChain(svgDoc) {
@@ -2678,8 +3230,15 @@ const WIGGLE_IMPULSE = 0.008;  // lateral segment kick during drag only
 const WIGGLE_MIN_SPEED = 6;    // minimum dx (px/event) before wiggle fires at all
 const WIGGLE_MAX_DX = 2.5;     // hard clamp on per-segment lateral offset (svg units)
 
+let dragReleaseWatchdog = null;
+
 function chainTick() {
-  if (!endData) {
+  if (currentMascot !== "cat" || !endData) {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
     chainRafId = null;
     return;
   }
@@ -2697,6 +3256,16 @@ function chainTick() {
       ? 4 * holdT * holdT * holdT
       : 1 - Math.pow(-2 * holdT + 2, 3) / 2;
     stretchT = Math.min(0.32, stretchT);
+  }
+
+  // Native Wayland owns the pointer drag, so Chromium cannot provide its
+  // per-frame deltas. Keep the full hanging animation alive with a restrained
+  // lateral sway while the compositor reports that the window is moving.
+  if (nativeDragStateActive && dragging) {
+    const sway = Math.sin(performance.now() / 92) * 0.42;
+    pendulumVelAngle += sway;
+    lastWiggleDx = Math.sin(performance.now() / 58) * (WIGGLE_MIN_SPEED + 1.4);
+    lastDragMoveAt = Date.now();
   }
 
   // spring release: stretchT oscillates toward 0 with overshoot
@@ -2761,10 +3330,15 @@ function chainTick() {
   if (dragging || releasing || maxMotion > 0.01 || lagMotion > 0.01) {
     chainRafId = requestAnimationFrame(chainTick);
   } else {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
     for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
     pendulumAngle = 0; pendulumVelAngle = 0;
     if (stretchEndObj) stretchEndObj.style.transform = "translateX(-50%)";
     applyStretchChain();
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
     chainRafId = null;
   }
 }
@@ -2791,7 +3365,47 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
   document.body.classList.add("dragging");
   window.electronAPI.setStretchMode(true);
-  startChain();
+  // Catjang uses the dynamic 16-segment spine. The other mascots keep their
+  // dedicated drag sprite visible until mouseup; starting chainTick for them
+  // removes `.dragging` on the first animation frame.
+  if (currentMascot === "cat") startChain();
+}
+
+function finishDragStretch(notifyMain = true) {
+  if (!dragging && !releasing) return;
+  dragging = false;
+  if (notifyMain) window.electronAPI.dragWindowEnded();
+  // Kill wiggle instantly; the pendulum carries on during the release.
+  lastWiggleDx = 0;
+  for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
+
+  // Only the original cat mascot uses the 16-segment dynamic SVG spine chain.
+  // All other mascots (schnauzer, chisi, milo, musubi, peruperro) use dedicated drag sprites
+  // and must restore immediately to idle upon mouse release.
+  if (currentMascot === "cat" && endData && stretchT > 0.01) {
+    releasing = true;
+    stretchTVel = -stretchT * 0.55;
+    prevDragDx = 0;
+    startChain();
+    clearTimeout(dragReleaseWatchdog);
+    dragReleaseWatchdog = setTimeout(() => {
+      if (releasing) {
+        releasing = false;
+        stretchT = 0;
+        stretchTVel = 0;
+        document.body.classList.remove("dragging");
+        window.electronAPI.setStretchMode(false);
+        chainRafId = null;
+      }
+    }, 450);
+  } else {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
+    chainRafId = null;
+  }
 }
 
 function clearPendingDrag() {
@@ -2819,6 +3433,97 @@ dragHandle.addEventListener("mousedown", (e) => {
   }
 });
 
+if (pettingHandle) {
+  pettingHandle.addEventListener("mousedown", (event) => {
+    // Do not let the no-drag Wayland petting island create a renderer drag
+    // that the compositor cannot follow.
+    if (windowBackend === "wayland") event.stopPropagation();
+  });
+}
+
+function updatePurringAtPoint(clientX, clientY, continuous = false) {
+  const insideHead = isIdleHeadPoint(clientX, clientY);
+  const isCurrentlyPurring = document.body.dataset.purring === "1";
+
+  if (insideHead) {
+    if (pettingStrokeOutTimer) {
+      clearTimeout(pettingStrokeOutTimer);
+      pettingStrokeOutTimer = null;
+    }
+
+    const now = Date.now();
+
+    // If already in petting mode, smoothly follow mouse movement and keep alive
+    if (isCurrentlyPurring) {
+      const offset = purrFaceOffsetForPoint(clientX, clientY);
+      setPurrFaceOffset(offset.x, offset.y);
+      scheduleStopPurring(PURR_IDLE_TIMEOUT_MS);
+      return;
+    }
+
+    // Initialize stroking detection
+    if (pettingStrokeLastX === null || pettingStrokeLastY === null) {
+      pettingStrokeStartTime = now;
+      pettingStrokeDistance = 0;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+      return;
+    }
+
+    // If mouse was idle/paused for too long, reset stroke progress
+    if (now - pettingStrokeLastMoveAt > PETTING_STROKE_PAUSE_MS) {
+      pettingStrokeStartTime = now;
+      pettingStrokeDistance = 0;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+      return;
+    }
+
+    const dist = Math.hypot(clientX - pettingStrokeLastX, clientY - pettingStrokeLastY);
+    if (dist >= 1.5) {
+      pettingStrokeDistance += dist;
+      pettingStrokeLastX = clientX;
+      pettingStrokeLastY = clientY;
+      pettingStrokeLastMoveAt = now;
+    }
+
+    const strokeDuration = now - pettingStrokeStartTime;
+
+    // Trigger only when intentional petting has taken place:
+    // sustained stroking movement for at least PETTING_REQUIRED_DURATION_MS and accumulated distance
+    if (strokeDuration >= PETTING_REQUIRED_DURATION_MS && pettingStrokeDistance >= PETTING_REQUIRED_DISTANCE_PX) {
+      startPurring(clientX, clientY);
+      resetPettingStroke();
+    }
+  } else {
+    if (isCurrentlyPurring) {
+      if (!pendingDrag && (!continuous || !purrStopTimer)) {
+        scheduleStopPurring(PURR_LEAVE_GRACE_MS);
+      }
+    } else {
+      if (!pettingStrokeOutTimer && pettingStrokeStartTime > 0) {
+        pettingStrokeOutTimer = setTimeout(() => {
+          resetPettingStroke();
+        }, PETTING_STROKE_OUT_GRACE_MS);
+      }
+    }
+  }
+}
+
+function updateWaylandEyeTracking(event) {
+  if (windowBackend !== "wayland") return;
+  const pose = currentPoseElement();
+  if (!pose) return;
+  const rect = pose.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+  updateCursorTracking({
+    dx: event.clientX - (rect.left + rect.width / 2),
+    dy: event.clientY - (rect.top + rect.height / 2),
+  });
+}
+
 window.addEventListener("mousemove", updateMouseEventPassthrough, { passive: true });
 
 window.addEventListener("mousemove", (e) => {
@@ -2835,12 +3540,13 @@ window.addEventListener("mousemove", (e) => {
       clearPendingDrag();
     }
   }
-  if (isIdleHeadPoint(e.clientX, e.clientY)) {
-    startPurring(e.clientX, e.clientY);
-  } else if (!pendingDrag) {
-    scheduleStopPurring(PURR_LEAVE_GRACE_MS);
-  }
+  updatePurringAtPoint(e.clientX, e.clientY);
+  updateWaylandEyeTracking(e);
   if (!dragging) return;
+  if (!(e.buttons & 1)) {
+    finishDragStretch(true);
+    return;
+  }
   const dx = e.screenX - lastX;
   const dy = e.screenY - lastY;
   if (dx !== 0 || dy !== 0) {
@@ -2859,33 +3565,23 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", (e) => {
   clearPendingDrag();
-  if (dragging) {
-    dragging = false;
-    window.electronAPI.dragWindowEnded();
-    // kill wiggle instantly — pendulum carries on, segments snap to clean curve
-    lastWiggleDx = 0;
-    for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
-    if (stretchT > 0.01) {
-      releasing = true;
-      stretchTVel = -stretchT * 0.55;
-      prevDragDx = 0;
-      startChain();
-    } else {
-      stretchT = 0;
-      stretchTVel = 0;
-      document.body.classList.remove("dragging");
-      window.electronAPI.setStretchMode(false);
-    }
+  if (dragging || releasing) {
+    finishDragStretch(true);
   } else {
     dragging = false;
+    releasing = false;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
   }
   updateMouseEventPassthrough(e);
 });
 
-window.addEventListener("mouseleave", () => {
+window.addEventListener("mouseleave", (e) => {
   if (!dragging) setPetMouseEventsEnabled(false);
   clearPendingDrag();
+  if ((dragging || releasing) && !(e.buttons & 1)) finishDragStretch(true);
   stopPurring();
+  if (windowBackend === "wayland") updateCursorTracking({ dx: 0, dy: 0 });
 });
 
 function cancelDragStretchState() {
@@ -3062,7 +3758,10 @@ function playCompletionJump(options = {}) {
 }
 
 function scrollSvgObject() {
-  return document.getElementById("scroll-unroll");
+  const id = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "scroll")
+    : (currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : (currentMascot === "chisi" ? "chisi-scroll-unroll" : "scroll-unroll"));
+  return document.getElementById(id);
 }
 
 function scrollSvgDoc() {
@@ -3078,7 +3777,10 @@ function clearScrollPaperTimers() {
 }
 
 function setScrollPaperHeight(height) {
-  const doc = scrollSvgDoc();
+  const scrollId = typeof getMascotPoseElementId === "function" ? getMascotPoseElementId(currentMascot, "scroll") : "scroll-unroll";
+  const doc = (scrollId && document.getElementById(scrollId)?.contentDocument) ||
+              document.getElementById("scroll-unroll")?.contentDocument ||
+              document.getElementById("schnauzer-scroll-unroll")?.contentDocument;
   const mask = doc && doc.getElementById("paper-strip-mask");
   if (mask) mask.setAttribute("height", height.toFixed(2));
 }
@@ -3117,6 +3819,7 @@ function registerSvgObjectWhenReady(id) {
   if (!el) return;
   const register = () => {
     if (!el.contentDocument) return;
+    if (el.dataset.mascot && el.dataset.mascot !== currentMascot) return;
     registerSvgDoc(el.contentDocument, id);
     if (document.body.dataset.reminderJump && (id === "jump-start" || id === "jump-ing")) {
       ensureReminderJumpEyes(el.contentDocument, id === "jump-start" ? "start" : "ing");
@@ -3127,9 +3830,24 @@ function registerSvgObjectWhenReady(id) {
   requestAnimationFrame(register);
 }
 
-// press / wheel / stretch-pose SVG document 참조 — 이미 로드된 SVG도 놓치지 않고 등록한다.
-for (const id of ["press-left", "press-right", "scroll-unroll", "jump-start", "jump-ing", "stretch-pose-default", "stretch-pose-ing"]) {
-  registerSvgObjectWhenReady(id);
+// Automatically register all mascot SVG elements from MASCOTS
+if (typeof MASCOTS === "object") {
+  for (const mascot of Object.values(MASCOTS)) {
+    if (mascot.elements) {
+      for (const elId of Object.values(mascot.elements)) {
+        registerSvgObjectWhenReady(elId);
+      }
+    }
+  }
+}
+registerSvgObjectWhenReady("stretch-pose-ing");
+
+function registerMascotSvgDocs(mascotId) {
+  const mascot = typeof MASCOTS === "object" ? MASCOTS[mascotId] : null;
+  if (!mascot || !mascot.elements) return;
+  for (const elementId of Object.values(mascot.elements)) {
+    ensureSvgObjectReady(elementId);
+  }
 }
 
 // ── 타이핑 강도(KPS)에 따라 --cat-color를 base→빨강으로 lerp ──
@@ -3190,12 +3908,15 @@ function heatTick() {
   if (dragging && currentHeat > 0.005) {
     overlayColor = rgbToCss(HOT_RGB);
     fullOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
+    legacyOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
   } else if (stretchingHeat > 0.005 || stretchingHeatTarget > 0) {
     overlayColor = rgbToCss(COOL_RGB);
     legacyOverlayOpacity = Math.min(COOL_OVERLAY_MAX, stretchingHeat * COOL_OVERLAY_MAX);
+    fullOverlayOpacity = 0;
   } else {
     overlayColor = rgbToCss(HOT_RGB);
     legacyOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
+    fullOverlayOpacity = Math.min(HOT_OVERLAY_MAX, currentHeat * HOT_OVERLAY_MAX);
   }
   setCatColorAllSvgs(rgbToCss(BASE_RGB));
   setHeatOverlayAllSvgs(overlayColor, legacyOverlayOpacity.toFixed(3), fullOverlayOpacity.toFixed(3));
@@ -3204,6 +3925,7 @@ function heatTick() {
   // stretching 중에는 CSS에서 display:none으로 가려짐
   const steamOpacity = Math.max(0, Math.min(1, (currentHeat - 0.5) * 2));
   document.body.style.setProperty("--steam-opacity", steamOpacity.toFixed(2));
+  document.body.style.setProperty("--typing-heat", currentHeat.toFixed(3));
 
   if (currentHeat > 0 || kps > 0 || stretchingHeat > 0 || stretchingHeatTarget > 0) {
     heatRafId = requestAnimationFrame(heatTick);
@@ -3219,9 +3941,16 @@ const STRETCH_DURATION_MS = 3000;
 let stretchingTimers = [];
 let pendingStretchAnimation = 0;
 let pendingStretchLoadListener = null;
+function currentStretchElement() {
+  const stretchId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "stretch")
+    : (currentMascot === "schnauzer" ? "schnauzer-stretch" : "stretch-pose-default");
+  return (stretchId && document.getElementById(stretchId)) || document.getElementById("stretch-pose-default");
+}
+
 function clearPendingStretchLoadListener() {
   if (pendingStretchLoadListener) {
-    const obj = document.getElementById("stretch-pose-default");
+    const obj = currentStretchElement();
     if (obj) obj.removeEventListener("load", pendingStretchLoadListener);
     pendingStretchLoadListener = null;
   }
@@ -3236,7 +3965,7 @@ function clearStretchingTimers() {
 function requestStretchPoseAnimation() {
   const token = ++pendingStretchAnimation;
   if (pendingStretchLoadListener) {
-    const obj = document.getElementById("stretch-pose-default");
+    const obj = currentStretchElement();
     if (obj) obj.removeEventListener("load", pendingStretchLoadListener);
     pendingStretchLoadListener = null;
   }
@@ -3249,7 +3978,7 @@ function requestStretchPoseAnimation() {
     }
     if (performance.now() - startedAt < STRETCH_DURATION_MS) requestAnimationFrame(tryStart);
   };
-  const obj = document.getElementById("stretch-pose-default");
+  const obj = currentStretchElement();
   if (obj) {
     pendingStretchLoadListener = () => {
       if (token !== pendingStretchAnimation || !document.body.dataset.stretching) return;
@@ -3261,7 +3990,7 @@ function requestStretchPoseAnimation() {
 }
 
 function setStretchPoseAnimating(active) {
-  const obj = document.getElementById("stretch-pose-default");
+  const obj = currentStretchElement();
   if (!obj) return false;
   const doc = obj.contentDocument;
   if (!doc || !doc.documentElement) return false;
@@ -3292,7 +4021,10 @@ window.electronAPI.onDoStretch(() => {
   stopCompletionJump();
   stopScrollAnimation();
   stopHuntingPose();
-  ensureSvgObjectReady("stretch-pose-default");
+  const stretchId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "stretch")
+    : (currentMascot === "schnauzer" ? "schnauzer-stretch" : "stretch-pose-default");
+  if (stretchId) ensureSvgObjectReady(stretchId);
   document.body.dataset.stretching = "ing";
   requestStretchPoseAnimation();
   // 색상: 검정 → 초록 → 검정 (전체 3초 안에 자연스럽게)
@@ -3315,9 +4047,10 @@ const TYPING_TRIGGER_COUNT = 5;
 const TYPING_WINDOW_MS = 2000;
 let recentKeyTimestamps = [];
 
-window.electronAPI.onKeyPressed(() => {
+function handleKeyPress() {
   if (isStretching()) return;
   const now = Date.now();
+  registerUserActivity();
 
   // sliding window: only react visually once typing reaches 5 keys / 2 seconds
   recentKeyTimestamps.push(now);
@@ -3340,6 +4073,14 @@ window.electronAPI.onKeyPressed(() => {
   // heat colour tracking always runs regardless of threshold
   keyTimestamps.push(now);
   if (heatRafId === null) heatRafId = requestAnimationFrame(heatTick);
+}
+
+window.electronAPI.onKeyPressed(handleKeyPress);
+window.addEventListener("keydown", (event) => {
+  if (windowBackend !== "wayland" || event.defaultPrevented) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest("input, textarea, select, [contenteditable='true']")) return;
+  handleKeyPress();
 });
 
 window.electronAPI.onPomodoroFocusStart(() => {
@@ -3367,13 +4108,88 @@ window.electronAPI.onPomodoroFocusStart(() => {
   }, 110);
 });
 
-window.electronAPI.onMouseWheel(() => {
+function handleScrollGesture() {
   if (isStretching() || dragging || document.body.dataset.press || document.body.dataset.jump) return;
-  if (!document.body.dataset.scroll) restartScrollSvgAnimation();
-  ensureSvgObjectReady("scroll-unroll");
+  registerUserActivity();
+  const scrollId = typeof getMascotPoseElementId === "function"
+    ? getMascotPoseElementId(currentMascot, "scroll")
+    : (currentMascot === "schnauzer" ? "schnauzer-scroll-unroll" : (currentMascot === "chisi" ? "chisi-scroll-unroll" : "scroll-unroll"));
+  ensureSvgObjectReady(scrollId);
   document.body.dataset.scroll = "unroll";
   clearTimeout(scrollReleaseTimer);
   scrollReleaseTimer = setTimeout(() => {
     stopScrollAnimation();
   }, SCROLL_RELEASE_MS);
-});
+}
+
+window.electronAPI.onMouseWheel(handleScrollGesture);
+window.addEventListener("wheel", () => {
+  if (windowBackend === "wayland") handleScrollGesture();
+}, { passive: true });
+
+// ── SLEEP / NAP ANIMATION ──
+let lastUserActivity = Date.now();
+let isPetSleeping = false;
+const SLEEP_IDLE_TIMEOUT_MS = 60000; // 1 minute of inactivity triggers sleep
+
+function registerUserActivity() {
+  lastUserActivity = Date.now();
+  if (isPetSleeping) {
+    wakePet();
+  }
+}
+
+function wakePet() {
+  isPetSleeping = false;
+  delete document.body.dataset.sleeping;
+  for (const idle of document.querySelectorAll(".mascot-idle")) {
+    const root = idle.contentDocument && idle.contentDocument.documentElement;
+    if (root) root.classList.remove("sleeping");
+  }
+  scheduleTrackingTick();
+}
+
+function putPetToSleep() {
+  if (isPetSleeping) return;
+  if (dragging || document.body.dataset.purring || document.body.hasAttribute("data-thinking") ||
+      document.body.dataset.press || document.body.dataset.jump || document.body.dataset.stretching) return;
+  isPetSleeping = true;
+  document.body.dataset.sleeping = "1";
+  const idle = currentIdleElement();
+  const root = idle && idle.contentDocument && idle.contentDocument.documentElement;
+  if (root) root.classList.add("sleeping");
+}
+
+setInterval(() => {
+  if (!isPetSleeping && Date.now() - lastUserActivity > SLEEP_IDLE_TIMEOUT_MS) {
+    putPetToSleep();
+  }
+}, 5000);
+
+window.addEventListener("mousemove", registerUserActivity, { passive: true });
+window.addEventListener("mousedown", registerUserActivity, { passive: true });
+window.addEventListener("keydown", registerUserActivity, { passive: true });
+
+// ── MASCOT SWITCHING ──
+function applyMascot(mascot) {
+  registerUserActivity();
+  currentMascot = (mascot === "schnauzer" || mascot === "chisi" || mascot === "milo" || mascot === "musubi" || mascot === "peruperro") ? mascot : "cat";
+  registerMascotSvgDocs(currentMascot);
+  document.body.dataset.mascot = currentMascot;
+  const currentEl = currentIdleElement();
+  if (currentEl && currentEl.contentDocument) initDogTracking(currentEl.contentDocument, currentMascot);
+  scheduleTrackingTick();
+}
+
+if (window.electronAPI && window.electronAPI.mascotGet) {
+  window.electronAPI.mascotGet().then(applyMascot).catch(() => {});
+  window.electronAPI.onMascotChanged((mascot) => applyMascot(mascot));
+}
+
+for (const mascotId of ["schnauzer", "chisi", "milo", "musubi", "peruperro"]) {
+  const idleElement = document.getElementById(mascotId);
+  if (!idleElement) continue;
+  idleElement.addEventListener("load", () => {
+    if (currentMascot === mascotId) initDogTracking(idleElement.contentDocument, mascotId);
+  });
+}

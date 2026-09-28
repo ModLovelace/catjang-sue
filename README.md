@@ -84,7 +84,7 @@ Cada especie cuenta con assets vectoriales SVG optimizados y físicas dedicadas:
 ### 3. 🎮 Físicas Elásticas & Sensórica Interactiva
 * **Arrastre Pendular Físico:** Al levantar a tu mascota con el ratón, reacciona con un balanceo elástico realista ($\pm 16^\circ$ en patas, $\pm 22^\circ$ en cola).
 * **Caricias Deliberadas:** Algoritmo con retardo intencional (~1.4s) para diferenciar clics accidentales de caricias voluntarias.
-* **Audio Reactivo Sintetizado:** Cada especie emite sonidos característicos en eventos clave sin cargar archivos pesados.
+* **Audio Reactivo Sintetizado:** Cada especie emite sonidos característicos en eventos clave mediante Web Audio API sin sobrecargar recursos.
 * **Shaders SVG Especiales:** Uso de filtros `<feMorphology>` para eliminar bordes y artefactos negros en ventanas transparentes de Chromium sobre Windows y Linux.
 
 ---
@@ -93,33 +93,38 @@ Cada especie cuenta con assets vectoriales SVG optimizados y físicas dedicadas:
 Diseñado bajo el principio de ingeniería: **«Pausar, Diagnosticar y Corregir»**.
 
 * 🟢 **54 / 54 Pruebas de Regresión Automatizadas:** Validación rigurosa de ciclo de vida, transparencia de ventana y comunicación entre procesos.
-* ⚡ **Consumo de Recursos Ultraligero:** Mantiene un consumo de CPU de apenas **0.5% – 0.95%** en segundo plano, sin picos de GPU ni interferir con la compilación de tus proyectos.
+* ⚡ **Consumo de Recursos Ultraligero:** Mantiene un consumo de CPU de apenas **0.5% – 0.95%** en segundo plano, sin picos de GPU ni interferir con tus proyectos.
 * 📋 Documentación de testing: Consulta la [`TESTING_AND_QA_GUIDE.md`](docs/TESTING_AND_QA_GUIDE.md).
 
 ---
 
 ## 🐧 Instalación en Linux (Wayland / X11)
 
-Para distribuciones como Ubuntu, Debian, Fedora o Arch:
+Para distribuciones como Ubuntu, Debian, Fedora, Arch Linux o Pop!_OS:
 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/ModLovelace/catjang-sue.git
 cd catjang-sue
 
-# 2. Cambiar a la rama de Linux/Wayland optimizada
-git checkout community/linux-wayland
-
-# 3. Instalar dependencias
+# 2. Instalar dependencias
 npm install
 
-# 4. Iniciar en modo desarrollo
+# 3. Iniciar en modo desarrollo / XWayland recomendado
+./run-linux.sh
+# o directamente:
 npm start
 ```
 
+### Modos de ejecución en Linux:
+- **XWayland (recomendado por defecto):** Conserva arrastre elástico inercial completo, coordenadas globales del cursor, persistencia de posición y click-through mediante `setShape()`.
+- **Wayland nativo (opcional):** Arrancar con `CATJANG_NATIVE_WAYLAND=1 ./run-linux.sh`. Delega el arrastre al compositor mediante `-webkit-app-region: drag` y seguimiento de ojos relativo al centro del SVG.
+
+Más detalles en [LINUX-WAYLAND.md](LINUX-WAYLAND.md) y [PRUEBA-LINUX.md](PRUEBA-LINUX.md).
+
 ---
 
-## 🛠️ Desarrollo Local & Compilación
+## 🛠️ Desarrollo Local & Compilación Multiplataforma
 
 Si deseas contribuir o compilar los instaladores por tu cuenta:
 
@@ -130,11 +135,31 @@ npm install
 # Iniciar la aplicación
 npm start
 
-# Compilar instalador para Windows
+# Compilar instalador para Windows (.exe NSIS x64)
 npm run dist:win
 
 # Compilar instalador universal para macOS (.dmg)
 npm run dist:mac
+
+# Compilar paquete para Linux (.AppImage)
+npm run dist:linux
+```
+
+---
+
+## 🤖 Integración de Hooks para Agentes de IA
+
+Catjang escucha eventos en su servidor HTTP local `http://127.0.0.1:37281/agent-state`. Para conectar tus agentes de IA:
+
+| Agente | Archivo de Configuración | Eventos Escuchados |
+| :--- | :--- | :--- |
+| **Claude Code** | `~/.claude/settings.json` | `SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`, `Notification` |
+| **Antigravity (Gemini)** | `~/.gemini/config/hooks.json` | `PreInvocation`, `PostToolUse`, `PostInvocation`, `Stop` |
+| **Cursor** | `~/.cursor/hooks.json` | `beforeShellExecution`, `beforeMCPExecution` |
+
+Para instalar los hooks automáticamente:
+```bash
+npm run setup:hooks
 ```
 
 ---

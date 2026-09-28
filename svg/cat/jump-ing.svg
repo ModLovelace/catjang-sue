@@ -1,0 +1,57 @@
+<svg width="40" height="62" viewBox="0 0 40 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <clipPath id="head-clip"><path d="M13 7H11V9H10V11H9V16H10V20H12V21H13V22H15V23H25V22H27V21H28V20H29V19H30V16H31V12H30V9H29V8H28V7H26V6H24V5H16V6H13V7Z"/></clipPath>
+  <clipPath id="body-clip"><path d="M13 21H27V23H28V33H29V40.5H30V45.5H10V40.5H11V33H12V23H13V21Z"/></clipPath>
+  <clipPath id="leg-rl-clip"><path d="M10 46V42H18V46H17V48H16V50H12V48H11V46H10Z"/></clipPath>
+  <clipPath id="leg-rr-clip"><path d="M22 46V42H30V46H29V48H28V50H24V48H23V46H22Z"/></clipPath>
+  <clipPath id="leg-fl-clip"><path d="M11 37H10L10 27H11L11 26L12 26V25L15 25L15 37H14V38H11L11 37Z"/></clipPath>
+  <clipPath id="leg-fr-clip"><path d="M29 37H30L30 27H29V26L28 26V25L25 25L25 37H26V38H29V37Z"/></clipPath>
+  <filter id="cat-outline" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="dilated"/>
+    <feFlood flood-color="var(--cat-outline, #FFFFFF)" result="flood"/>
+    <feComposite in="flood" in2="dilated" operator="in" result="outline"/>
+    <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+<g id="cat-content" filter="url(#cat-outline)">
+<g id="leg-fl" data-patch-frame="10 25 0.625 1.182">
+  <animateTransform attributeName="transform" type="rotate" values="98 15 26; 112 15 26; 98 15 26; 88 15 26; 98 15 26" dur="0.32s" repeatCount="indefinite"/>
+  <path d="M11 37H10L10 27H11L11 26L12 26V25L15 25L15 37H14V38H11L11 37Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fl-clip)"></g>
+</g>
+<g id="leg-fr" data-patch-frame="25 25 0.625 1.182">
+  <animateTransform attributeName="transform" type="rotate" values="-98 25 26; -112 25 26; -98 25 26; -88 25 26; -98 25 26" dur="0.32s" repeatCount="indefinite"/>
+  <path d="M29 37H30L30 27H29V26L28 26V25L25 25L25 37H26V38H29V37Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-fr-clip)"></g>
+</g>
+<g id="head" data-patch-frame="9 5 1 1">
+  <path d="M13 7H11V9H10V11H9V16H10V20H12V21H13V22H15V23H25V22H27V21H28V20H29V19H30V16H31V12H30V9H29V8H28V7H26V6H24V5H16V6H13V7Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#head-clip)"></g>
+</g>
+<g id="tail" data-patch-frame="26 32 1 1"></g>
+<g id="whiskers" data-heat-overlay="true">
+  <rect width="5" height="1.02083" transform="translate(6 13)" fill="var(--cat-color)"/>
+  <rect width="5" height="1.02083" transform="translate(29 13)" fill="var(--cat-color)"/>
+  <rect width="6" height="1.02083" transform="translate(5 16)" fill="var(--cat-color)"/>
+  <rect width="6" height="1.02083" transform="translate(29 16)" fill="var(--cat-color)"/>
+</g>
+<g id="ear-left" data-ear-position="11 1"></g>
+<g id="ear-right" data-ear-position="24 1"></g>
+<g id="leg-rl" data-patch-frame="10 42 1 1">
+  <animateTransform attributeName="transform" type="rotate" values="0 14 43; -7 14 43; 0 14 43; 6 14 43; 0 14 43" dur="0.42s" repeatCount="indefinite"/>
+  <path d="M10 46V42H18V46H17V48H16V50H12V48H11V46H10Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-rl-clip)"></g>
+</g>
+<g id="leg-rr" data-patch-frame="22 42 1 1">
+  <animateTransform attributeName="transform" type="rotate" values="0 26 43; 7 26 43; 0 26 43; -6 26 43; 0 26 43" dur="0.42s" repeatCount="indefinite"/>
+  <path d="M22 46V42H30V46H29V48H28V50H24V48H23V46H22Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#leg-rr-clip)"></g>
+</g>
+<g id="body" data-patch-frame="10 25 0.909 1.367">
+  <path d="M13 21H27V23H28V33H29V40.5H30V45.5H10V40.5H11V33H12V23H13V21Z" fill="var(--cat-color)"/>
+  <g class="patches" clip-path="url(#body-clip)"></g>
+</g>
+<path d="M13 12L17 14L13 16" stroke="var(--cat-outline, #FFFFFF)"/>
+<path d="M27 12L23 14L27 16" stroke="var(--cat-outline, #FFFFFF)"/>
+</g>
+</svg>
