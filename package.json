@@ -22,7 +22,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "start:linux": "./run-linux.sh",
     "start:desktop": "powershell -ExecutionPolicy Bypass -File .\\scripts\\launch-catjang.ps1",
+    "test:mascots": "node scripts/test-mascot.js",
     "smoke": "electron . --catjang-smoke-test",
     "setup:hooks": "node -e \"const i=require('./hooks/install'); i.registerAntigravityHooks(); i.registerClaudeHooks(); i.registerCursorHooks(); console.log('Hooks installed successfully.');\"",
     "notify": "node scripts/notify-catjang.js",
