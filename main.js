@@ -1462,15 +1462,22 @@ function createPetWindow() {
 
   attachWindowDiagnostics(petWin, "pet");
   keepWindowOnTop(petWin);
-  petWin.once("ready-to-show", () => {
-    if (!petWin || petWin.isDestroyed()) return;
+
+  const showPetWindow = () => {
+    if (!petWin || petWin.isDestroyed() || petWin.isVisible()) return;
     keepWindowOnTop(petWin);
     petWin.showInactive();
     logInfo("[Catjang] pet window shown", {
       bounds: petWin.getBounds(),
       visible: petWin.isVisible(),
     });
+  };
+
+  petWin.once("ready-to-show", showPetWindow);
+  petWin.webContents.once("did-finish-load", () => {
+    setTimeout(showPetWindow, 40);
   });
+  setTimeout(showPetWindow, 250);
   petWin.on("system-context-menu", (event) => {
     event.preventDefault();
     showPetContextMenu();
@@ -1591,11 +1598,16 @@ function createLicenseWindow(initialReason = "") {
       nodeIntegration: false,
     },
   });
-  licenseWin.once("ready-to-show", () => {
-    if (!licenseWin || licenseWin.isDestroyed()) return;
+  const showLicenseWindow = () => {
+    if (!licenseWin || licenseWin.isDestroyed() || licenseWin.isVisible()) return;
     licenseWin.show();
     licenseWin.focus();
+  };
+  licenseWin.once("ready-to-show", showLicenseWindow);
+  licenseWin.webContents.once("did-finish-load", () => {
+    setTimeout(showLicenseWindow, 40);
   });
+  setTimeout(showLicenseWindow, 300);
   licenseWin.setMenu(null);
   attachWindowDiagnostics(licenseWin, "license");
   licenseWin.webContents.on("before-input-event", (event, input) => {
