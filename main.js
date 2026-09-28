@@ -25,6 +25,7 @@ const IS_MAC = process.platform === "darwin";
 const IS_WINDOWS = process.platform === "win32";
 const IS_LINUX = process.platform === "linux";
 const IS_SMOKE_TEST = process.argv.includes("--catjang-smoke-test");
+const IS_STRETCH_TEST = process.argv.includes("--catjang-test-stretch");
 const IS_LINUX_WAYLAND_SESSION = IS_LINUX && process.env.XDG_SESSION_TYPE === "wayland";
 const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().toLowerCase();
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
@@ -108,6 +109,7 @@ let licenseWin = null;
 let agentConnectWin = null;
 let shareOverlayWin = null;
 let shareControlsWin = null;
+let stretchWin = null;
 let shareCaptureSession = null;
 let cursorPollTimer = null;
 let nativeMoveEndTimer = null;
@@ -1508,6 +1510,25 @@ function createPetWindow() {
         if (!petWin || petWin.isDestroyed() || agentOnboardingShown) return;
         openAgentConnectWindow();
       }, 1400);
+    }
+    if (IS_STRETCH_TEST) {
+      setTimeout(() => {
+        logInfo("[Catjang Test] Triggering stretch sequence for test...");
+        triggerStretchSequence();
+        setTimeout(() => {
+          logInfo("[Catjang Test] Stretch overlay status:", {
+            stretchWinExists: !!stretchWin && !stretchWin.isDestroyed(),
+            stretchWinBounds: stretchWin && !stretchWin.isDestroyed() ? stretchWin.getBounds() : null,
+          });
+        }, 600);
+        setTimeout(() => {
+          logInfo("[Catjang Test] Stretch completed, shutting down cleanly:", {
+            stretchWinClosed: !stretchWin || stretchWin.isDestroyed(),
+            petWinBounds: petWin && !petWin.isDestroyed() ? petWin.getBounds() : null,
+          });
+          app.quit();
+        }, STRETCH_DURATION_MS + 800);
+      }, 1000);
     }
   });
   if (!app.isPackaged) petWin.webContents.openDevTools({ mode: "detach" });
@@ -2931,51 +2952,106 @@ let savedStretchBounds = null;
 let focusStartInProgress = false;
 let savedFocusStartBounds = null;
 
+function closeStretchOverlay() {
+  if (stretchWin && !stretchWin.isDestroyed()) {
+    try {
+      stretchWin.close();
+    } catch {}
+  }
+  stretchWin = null;
+}
+
 function triggerStretchSequence() {
   if (!petWin || petWin.isDestroyed() || stretchInProgress) return;
   stretchInProgress = true;
-  if (IS_NATIVE_WAYLAND) {
-    petWin.webContents.send("do-stretch");
-    setTimeout(() => { stretchInProgress = false; }, STRETCH_DURATION_MS + STRETCH_SHRINK_DELAY_MS);
+
+  if (IS_LINUX) {
+    try {
+      savedStretchBounds = petWin.getBounds();
+      const display = screen.getDisplayMatching(savedStretchBounds) || screen.getPrimaryDisplay();
+      const bounds = display.bounds || display.workArea;
+
+      // Ocultar temporalmente el sprite en petWin para que no se duplique
+      petWin.webContents.send("stretch-started");
+
+      closeStretchOverlay();
+
+      stretchWin = new BrowserWindow({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        frame: false,
+        transparent: true,
+        backgroundColor: "#00000000",
+        resizable: false,
+        movable: false,
+        focusable: false,
+        skipTaskbar: true,
+        hasShadow: false,
+        alwaysOnTop: true,
+        webPreferences: {
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: true,
+        },
+      });
+
+      stretchWin.setIgnoreMouseEvents(true);
+      keepWindowOnTop(stretchWin);
+
+      const mascotParam = encodeURIComponent(currentMascot || "cat");
+      stretchWin.loadFile(
+        path.join(__dirname, "renderer", "stretch-overlay.html"),
+        { query: { mascot: mascotParam } }
+      );
+
+      stretchWin.once("ready-to-show", () => {
+        if (stretchWin && !stretchWin.isDestroyed()) {
+          keepWindowOnTop(stretchWin);
+          stretchWin.showInactive();
+        }
+      });
+
+      setTimeout(() => {
+        closeStretchOverlay();
+        if (petWin && !petWin.isDestroyed()) {
+          petWin.webContents.send("stretch-ended");
+        }
+        stretchInProgress = false;
+      }, STRETCH_DURATION_MS);
+    } catch (err) {
+      logWarn("[Catjang] Linux stretch overlay failed:", err);
+      closeStretchOverlay();
+      if (petWin && !petWin.isDestroyed()) {
+        petWin.webContents.send("stretch-ended");
+      }
+      stretchInProgress = false;
+    }
     return;
   }
-  savedStretchBounds = petWin.getBounds();
 
-  // 캣짱이 현재 있는 디스플레이에서 실행한다. 커서 기준이면 자동 스트레칭이
-  // 다른 모니터로 튀어 애니메이션이 안 보이는 것처럼 느껴질 수 있다.
+  // Implementación nativa para Windows y macOS: setBounds animado
+  savedStretchBounds = petWin.getBounds();
   const display = screen.getDisplayMatching(savedStretchBounds);
   const { x: dispX, y: dispY, width: dispW, height: dispH } = display.workArea;
 
   petWin.setResizable(true);
-  if (IS_LINUX && typeof petWin.setShape === "function") {
-    try {
-      petWin.setShape([]);
-    } catch {}
-  }
-
-  // 화면 작업영역 전체로 확대하여 와이드스크린/울트라와이드에서도 완벽히 적응
   petWin.setBounds(
     { x: dispX, y: dispY, width: dispW, height: dispH },
     false
   );
 
-  // 윈도우 확대 후 SVG 애니메이션 시작
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("do-stretch");
     }
   }, STRETCH_GROW_MS);
 
-  // 시퀀스 종료 후 원래 bounds 복원
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed()) {
       petWin.webContents.send("stretch-ended");
       if (savedStretchBounds) {
-        if (IS_LINUX && typeof petWin.setShape === "function") {
-          try {
-            petWin.setShape([]);
-          } catch {}
-        }
         petWin.setBounds(savedStretchBounds, false);
         petWin.setResizable(false);
       }

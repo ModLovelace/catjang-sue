@@ -15,11 +15,10 @@ for arg in "$@"; do
   fi
 done
 
-# Electron cannot programmatically position a native Wayland toplevel. Use
-# XWayland by default to retain the complete elastic drag and saved position.
-# Native Wayland stays available as an explicit compatibility option.
-if [[ "${XDG_SESSION_TYPE:-}" == "wayland" && "$HAS_OZONE_PLATFORM" == "0" && "${CATJANG_NATIVE_WAYLAND:-0}" != "1" ]]; then
-  OZONE_ARGS+=(--ozone-platform=x11)
+# Modern Linux: Native Wayland by default on Wayland sessions, X11 on X11 sessions.
+# Set CATJANG_FORCE_X11=1 only if you explicitly want to fall back to XWayland.
+if [[ "${XDG_SESSION_TYPE:-}" == "wayland" && "$HAS_OZONE_PLATFORM" == "0" && "${CATJANG_FORCE_X11:-0}" != "1" ]]; then
+  OZONE_ARGS+=(--ozone-platform=wayland --enable-features=WaylandWindowDecorations)
 fi
 
 SANDBOX_ARGS=()

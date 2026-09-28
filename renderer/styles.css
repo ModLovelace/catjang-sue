@@ -919,7 +919,8 @@ body[data-press="left"] #press-left { display: block; }
 body[data-press="right"] #cat { display: none; }
 body[data-press="right"] #press-right { display: block; }
 
-body.dragging #stretch-svg-end { animation: sprite-fadein 50ms ease-out; }
+body.dragging #stretch-svg-end,
+body.native-dragging #stretch-svg-end { animation: sprite-fadein 50ms ease-out; }
 
 body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #cat,
 body:not([data-mascot="schnauzer"]):not([data-mascot="peruperro"])[data-scroll] #press-left,
@@ -1162,25 +1163,31 @@ body[data-mascot="peruperro"][data-jump="ing"] #peruperro { display: none !impor
 body[data-mascot="peruperro"][data-jump="ing"] #peruperro-jump-ing { display: block !important; }
 
 /* Dragging */
-body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]).dragging #stretch-svg-end { display: block !important; }
-body[data-mascot="schnauzer"].dragging #schnauzer-drag { display: block !important; }
-body[data-mascot="chisi"].dragging #chisi-drag { display: block !important; }
-body[data-mascot="milo"].dragging #milo-drag { display: block !important; }
-body[data-mascot="musubi"].dragging #musubi-drag { display: block !important; }
-body[data-mascot="peruperro"].dragging #peruperro-drag { display: block !important; }
-body.dragging #cat,
-body.dragging #schnauzer,
-body.dragging #chisi,
-body.dragging #milo,
-body.dragging #musubi,
-body.dragging #peruperro,
-body.dragging .mascot-idle,
-body.dragging .mascot-press-left,
-body.dragging .mascot-press-right,
-body.dragging .mascot-scroll,
-body.dragging .mascot-jump-start,
-body.dragging .mascot-jump-ing,
-body.dragging .mascot-stretch { display: none !important; }
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]).dragging #stretch-svg-end,
+body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"]).native-dragging #stretch-svg-end { display: block !important; }
+body[data-mascot="schnauzer"].dragging #schnauzer-drag,
+body[data-mascot="schnauzer"].native-dragging #schnauzer-drag { display: block !important; }
+body[data-mascot="chisi"].dragging #chisi-drag,
+body[data-mascot="chisi"].native-dragging #chisi-drag { display: block !important; }
+body[data-mascot="milo"].dragging #milo-drag,
+body[data-mascot="milo"].native-dragging #milo-drag { display: block !important; }
+body[data-mascot="musubi"].dragging #musubi-drag,
+body[data-mascot="musubi"].native-dragging #musubi-drag { display: block !important; }
+body[data-mascot="peruperro"].dragging #peruperro-drag,
+body[data-mascot="peruperro"].native-dragging #peruperro-drag { display: block !important; }
+body.dragging #cat, body.native-dragging #cat,
+body.dragging #schnauzer, body.native-dragging #schnauzer,
+body.dragging #chisi, body.native-dragging #chisi,
+body.dragging #milo, body.native-dragging #milo,
+body.dragging #musubi, body.native-dragging #musubi,
+body.dragging #peruperro, body.native-dragging #peruperro,
+body.dragging .mascot-idle, body.native-dragging .mascot-idle,
+body.dragging .mascot-press-left, body.native-dragging .mascot-press-left,
+body.dragging .mascot-press-right, body.native-dragging .mascot-press-right,
+body.dragging .mascot-scroll, body.native-dragging .mascot-scroll,
+body.dragging .mascot-jump-start, body.native-dragging .mascot-jump-start,
+body.dragging .mascot-jump-ing, body.native-dragging .mascot-jump-ing,
+body.dragging .mascot-stretch, body.native-dragging .mascot-stretch { display: none !important; }
 
 /* Stretching */
 body:not([data-mascot="schnauzer"]):not([data-mascot="chisi"]):not([data-mascot="milo"]):not([data-mascot="musubi"]):not([data-mascot="peruperro"])[data-stretching] #stretch-pose-default { display: block !important; }
@@ -1230,6 +1237,12 @@ body[data-stretching] #sleep-bubble,
 body[data-stretching] #alert-exclamation,
 body[data-stretching] #completion-confetti {
   display: none !important;
+}
+
+/* Ocultar mascota en petWin durante la secuencia de estiramiento en overlay nativo */
+body.pet-hidden-for-stretch {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* ── SLEEP / NAP ANIMATION ── */

@@ -4010,6 +4010,7 @@ function setStretchPoseAnimating(active) {
 }
 
 function endStretchAnimation() {
+  document.body.classList.remove("pet-hidden-for-stretch");
   clearStretchingTimers();
   pendingStretchAnimation += 1;
   clearPendingStretchLoadListener();
@@ -4019,8 +4020,16 @@ function endStretchAnimation() {
   scheduleNativeWindowShapeUpdate();
 }
 
+if (window.electronAPI && typeof window.electronAPI.onStretchStarted === "function") {
+  window.electronAPI.onStretchStarted(() => {
+    document.body.classList.add("pet-hidden-for-stretch");
+    scheduleNativeWindowShapeUpdate();
+  });
+}
+
 if (window.electronAPI && typeof window.electronAPI.onStretchEnded === "function") {
   window.electronAPI.onStretchEnded(() => {
+    document.body.classList.remove("pet-hidden-for-stretch");
     endStretchAnimation();
   });
 }

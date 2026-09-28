@@ -15,6 +15,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("mouse-wheel", (_evt, event) => callback(event)),
   onDoStretch: (callback) =>
     ipcRenderer.on("do-stretch", () => callback()),
+  onStretchStarted: (callback) =>
+    ipcRenderer.on("stretch-started", () => callback()),
+  onStretchOverlayMode: (callback) =>
+    ipcRenderer.on("stretch-overlay-mode", (_evt, mascot) => callback(mascot)),
   onStretchEnded: (callback) =>
     ipcRenderer.on("stretch-ended", () => callback()),
   onDoJump: (callback) =>
