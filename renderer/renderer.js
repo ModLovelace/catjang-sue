@@ -3425,14 +3425,18 @@ dragHandle.addEventListener("mousedown", (e) => {
   if (e.button === 0) {
     if (isStretching()) return; // 스트레칭 중에는 드래그 시작 차단
     setPetMouseEventsEnabled(true);
-    pendingDrag = {
-      screenX: e.screenX,
-      screenY: e.screenY,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      startedAt: Date.now(),
-    };
-    e.preventDefault();
+    if (windowBackend === "wayland") {
+      document.body.classList.add("native-dragging");
+    } else {
+      pendingDrag = {
+        screenX: e.screenX,
+        screenY: e.screenY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        startedAt: Date.now(),
+      };
+      e.preventDefault();
+    }
   }
 });
 
@@ -3567,6 +3571,7 @@ window.addEventListener("mousemove", (e) => {
 });
 
 window.addEventListener("mouseup", (e) => {
+  document.body.classList.remove("native-dragging");
   clearPendingDrag();
   if (dragging || releasing) {
     finishDragStretch(true);
@@ -3577,6 +3582,10 @@ window.addEventListener("mouseup", (e) => {
     window.electronAPI.setStretchMode(false);
   }
   updateMouseEventPassthrough(e);
+});
+
+window.addEventListener("blur", () => {
+  document.body.classList.remove("native-dragging");
 });
 
 window.addEventListener("mouseleave", (e) => {

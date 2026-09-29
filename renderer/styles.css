@@ -53,15 +53,6 @@ body[data-window-backend="wayland"] #petting-handle {
   cursor: default;
 }
 
-body[data-window-backend="wayland"].native-dragging #cat,
-body[data-window-backend="wayland"].native-dragging #press-left,
-body[data-window-backend="wayland"].native-dragging #press-right,
-body[data-window-backend="wayland"].native-dragging #scroll-unroll,
-body[data-window-backend="wayland"].native-dragging #jump-start,
-body[data-window-backend="wayland"].native-dragging #jump-ing {
-  scale: 1 1.06;
-  transform-origin: 50% 20%;
-}
 #drag-handle:active {
   cursor: grabbing;
 }

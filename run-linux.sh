@@ -15,10 +15,15 @@ for arg in "$@"; do
   fi
 done
 
-# Modern Linux: Native Wayland by default on Wayland sessions, X11 on X11 sessions.
-# Set CATJANG_FORCE_X11=1 only if you explicitly want to fall back to XWayland.
-if [[ "${XDG_SESSION_TYPE:-}" == "wayland" && "$HAS_OZONE_PLATFORM" == "0" && "${CATJANG_FORCE_X11:-0}" != "1" ]]; then
-  OZONE_ARGS+=(--ozone-platform=wayland --enable-features=WaylandWindowDecorations)
+# Use XWayland by default on Wayland sessions to retain the complete elastic drag animation,
+# pendulum swing physics, global cursor tracking, and saved pet position.
+# Native Wayland remains available via CATJANG_NATIVE_WAYLAND=1 or --ozone-platform=wayland.
+if [[ "${XDG_SESSION_TYPE:-}" == "wayland" && "$HAS_OZONE_PLATFORM" == "0" ]]; then
+  if [[ "${CATJANG_NATIVE_WAYLAND:-0}" == "1" ]]; then
+    OZONE_ARGS+=(--ozone-platform=wayland --enable-features=WaylandWindowDecorations)
+  else
+    OZONE_ARGS+=(--ozone-platform=x11)
+  fi
 fi
 
 SANDBOX_ARGS=()

@@ -39,22 +39,24 @@ El proyecto soporta 6 mascotas con equivalencia del 100% (8 poses SVG cada una: 
 - **Nunca romper Windows ni macOS:** Todo ajuste específico para Linux debe protegerse con condicionales de plataforma (`if (IS_LINUX) { ... } else { ... }`).
 - Mantener la unificación en la rama `main`.
 
-### 2. Linux: Wayland Nativo por Defecto
-- El ejecutable `./run-linux.sh` detecta sesiones Wayland y activa `--ozone-platform=wayland --enable-features=WaylandWindowDecorations` de forma predeterminada.
-- Se preserva el fallback manual `CATJANG_FORCE_X11=1` para entornos heredados o compatibilidad con XWayland.
+### 2. Linux: XWayland por Defecto para Física Elástica y Posicionamiento
+- El ejecutable `./run-linux.sh` utiliza `--ozone-platform=x11` (XWayland en sesiones Wayland) de forma predeterminada.
+- **Razón técnica:** En Wayland nativo, Chromium delega el arrastre a `xdg_toplevel.move`, bloqueando los eventos `mousemove` en JavaScript y haciendo imposible la física elástica tipo péndulo, el spine de 16 segmentos y el guardado programático de coordenadas de la ventana. Con XWayland se preserva la experiencia interactiva completa (física elástica, oscilación, soltado suave y guardado de posición).
+- Para ejecutar en Wayland nativo puro sin XWayland, se puede activar con `CATJANG_NATIVE_WAYLAND=1 ./run-linux.sh` o pasando `--ozone-platform=wayland`.
 - En Ubuntu 24.04+ / 26.04+, el script gestiona `--no-sandbox` automáticamente si las restricciones de espacios de nombres de usuario sin privilegios están activadas.
 
 ### 3. Animación de Estiramiento (*Break Stretch*) en Linux
-- **Causa raíz:** En Wayland y GNOME Mutter, redimensionar la ventana principal `petWin` mediante `setBounds()` descoloca la ventana, pierde las coordenadas y corrompe las máscaras de forma (`setShape`).
+- **Causa raíz:** En Linux (tanto en Wayland como en GNOME Mutter), redimensionar la ventana principal `petWin` mediante `setBounds()` de 500x480 a pantalla completa descoloca la ventana, pierde las coordenadas y corrompe las máscaras de forma (`setShape`).
 - **Solución implementada:**
   - En Linux, `petWin` se oculta temporalmente mediante la clase CSS `body.pet-hidden-for-stretch` y **no se mueve ni redimensiona**.
   - Se despliega una ventana overlay transparente a pantalla completa (`renderer/stretch-overlay.html`) cubriendo `display.bounds` (probado en monitores UltraWide 2560x1080 centrado a relación de aspecto 72:56).
   - Tras 3 segundos (`STRETCH_DURATION_MS`), el overlay se destruye y `petWin` reaparece intacta en su posición original.
   - En Windows y macOS se mantiene intacto el resize animado nativo con `petWin.setBounds()`.
 
-### 4. Arrastre en Wayland Nativo
-- En Wayland nativo, el movimiento de la ventana emite `native-window-drag-state`, que activa la clase `.native-dragging` en el `body`.
-- `renderer/styles.css` debe mantener las reglas de visualización de sprites de arrastre tanto para `.dragging` como para `.native-dragging` en todas las mascotas (`#peruperro-drag`, `#schnauzer-drag`, etc.).
+### 4. Arrastre y Animación de Drag
+- **En X11 / XWayland:** Se ejecuta el sistema de arrastre elástico completo (`pendingDrag`, cálculo de velocidad, oscilación pendular con amortiguación, animación de soltado y visualización de sprite `#<mascot>-drag`).
+- **En Wayland nativo (`CATJANG_NATIVE_WAYLAND=1`):** Al no haber eventos de cursor durante el drag del compositor, se activa inmediatamente la clase `.native-dragging` en el `body` al hacer `mousedown` para mostrar el sprite de arrastre (`#<mascot>-drag`) mientras el compositor desplaza la ventana.
+- `renderer/styles.css` mantiene las reglas de visualización de sprites de arrastre tanto para `.dragging` como para `.native-dragging` en todas las mascotas (`#peruperro-drag`, `#schnauzer-drag`, `#cat-drag`, etc.).
 
 ### 5. Integridad de Recursos
 - Cada vez que se modifique o agregue una pose, mascota o estilo visual, es mandatario ejecutar `npm run test:mascots` para asegurar que las 54 validaciones pasen al 100%.
