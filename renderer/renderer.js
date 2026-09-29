@@ -2481,9 +2481,10 @@ let nativeShapeObserversStarted = false;
 let nativeDragStateActive = false;
 
 function scheduleNativeWindowShapeUpdate() {
-  if (!windowShapeSupported || nativeShapeRaf !== null) return;
+  if (!windowShapeSupported || dragging || nativeShapeRaf !== null) return;
   nativeShapeRaf = requestAnimationFrame(() => {
     nativeShapeRaf = null;
+    if (dragging) return;
     const staticElements = document.querySelectorAll(
       "#drag-handle, #share-name-badge, #cat-speech-bubble, #cat-thinking-dots, " +
       "#reminder-clock-button, #reminder-panel, #cat-name-editor, #user-name-editor, " +
@@ -3310,6 +3311,7 @@ function chainTick() {
       document.body.classList.remove("dragging");
       window.electronAPI.setStretchMode(false);
       chainRafId = null;
+      scheduleNativeWindowShapeUpdate();
       return;
     }
     chainRafId = requestAnimationFrame(chainTick);
@@ -3414,6 +3416,7 @@ function chainTick() {
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
     chainRafId = null;
+    scheduleNativeWindowShapeUpdate();
     return;
   }
 
@@ -3430,6 +3433,7 @@ function chainTick() {
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
     chainRafId = null;
+    scheduleNativeWindowShapeUpdate();
   }
 }
 
@@ -3454,6 +3458,9 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
   if (stretchEndObj) stretchEndObj.style.transform = "translateX(-50%)";
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
   document.body.classList.add("dragging");
+  if (windowShapeSupported) {
+    window.electronAPI.setWindowShape([]);
+  }
   window.electronAPI.setStretchMode(true);
   startChain();
 }
@@ -3480,6 +3487,7 @@ function finishDragStretch(notifyMain = true) {
         document.body.classList.remove("dragging");
         window.electronAPI.setStretchMode(false);
         chainRafId = null;
+        scheduleNativeWindowShapeUpdate();
       }
     }, 450);
   } else if (currentMascot !== "cat" && Math.abs(pendulumAngle) > 0.5) {
@@ -3496,6 +3504,7 @@ function finishDragStretch(notifyMain = true) {
         document.body.classList.remove("dragging");
         window.electronAPI.setStretchMode(false);
         chainRafId = null;
+        scheduleNativeWindowShapeUpdate();
       }
     }, 450);
   } else {
@@ -3509,6 +3518,7 @@ function finishDragStretch(notifyMain = true) {
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
     chainRafId = null;
+    scheduleNativeWindowShapeUpdate();
   }
 }
 
@@ -3520,6 +3530,22 @@ window.addEventListener("mousedown", (e) => {
   pointerDownScreenX = e.screenX;
   pointerDownScreenY = e.screenY;
 }, { capture: true });
+
+dragHandle.addEventListener("pointerdown", (e) => {
+  if (e.button === 0 && typeof dragHandle.setPointerCapture === "function") {
+    try {
+      dragHandle.setPointerCapture(e.pointerId);
+    } catch {}
+  }
+});
+
+dragHandle.addEventListener("pointerup", (e) => {
+  if (typeof dragHandle.releasePointerCapture === "function") {
+    try {
+      dragHandle.releasePointerCapture(e.pointerId);
+    } catch {}
+  }
+});
 
 dragHandle.addEventListener("mousedown", (e) => {
   if (!isCatHitPoint(e.clientX, e.clientY)) return;
@@ -3681,6 +3707,7 @@ window.addEventListener("mouseup", (e) => {
     releasing = false;
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
+    scheduleNativeWindowShapeUpdate();
   }
   updateMouseEventPassthrough(e);
 });

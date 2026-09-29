@@ -19,6 +19,7 @@ const fs = require("fs");
 const os = require("os");
 const http = require("http");
 const vm = require("vm");
+const readline = require("readline");
 const { spawn } = require("child_process");
 
 const IS_MAC = process.platform === "darwin";
@@ -1427,6 +1428,45 @@ function attachWindowDiagnostics(win, label) {
   });
 }
 
+let linuxCursorProcess = null;
+let lastKnownGlobalCursor = null;
+
+function startLinuxCursorTracker() {
+  if (!IS_LINUX || linuxCursorProcess) return;
+  try {
+    const scriptPath = path.join(__dirname, "scripts", "linux-cursor-tracker.py");
+    if (!fs.existsSync(scriptPath)) return;
+    linuxCursorProcess = spawn("python3", [scriptPath], {
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const rl = readline.createInterface({ input: linuxCursorProcess.stdout });
+    rl.on("line", (line) => {
+      const parts = line.trim().split(" ");
+      if (parts.length >= 2) {
+        const x = parseInt(parts[0], 10);
+        const y = parseInt(parts[1], 10);
+        if (!isNaN(x) && !isNaN(y)) {
+          lastKnownGlobalCursor = { x, y };
+        }
+      }
+    });
+    linuxCursorProcess.on("exit", () => {
+      linuxCursorProcess = null;
+    });
+  } catch {
+    linuxCursorProcess = null;
+  }
+}
+
+function stopLinuxCursorTracker() {
+  if (linuxCursorProcess) {
+    try {
+      linuxCursorProcess.kill();
+    } catch {}
+    linuxCursorProcess = null;
+  }
+}
+
 function createPetWindow() {
   if (petWin && !petWin.isDestroyed()) return;
   const display = screen.getPrimaryDisplay();
@@ -1540,18 +1580,24 @@ function createPetWindow() {
   });
   if (!app.isPackaged) petWin.webContents.openDevTools({ mode: "detach" });
 
-  // X11/XWayland exposes global coordinates. The renderer uses this poll for
-  // eye tracking and petting even before the window receives a DOM mousemove.
+  // X11/XWayland exposes coordinates. On Linux Wayland sessions, screen.getCursorScreenPoint()
+  // freezes when the cursor is over native Wayland apps; linux-cursor-tracker provides the
+  // true global pointer position via DBus.
   // Start the poll after did-finish-load so the renderer's IPC listener is
   // registered and the initial cursor position is not silently dropped.
   if (!IS_NATIVE_WAYLAND) {
     const startCursorPoll = () => {
       if (cursorPollTimer || !petWin || petWin.isDestroyed()) return;
+      if (IS_LINUX) {
+        startLinuxCursorTracker();
+      }
       let lastCursorDx = null;
       let lastCursorDy = null;
       cursorPollTimer = setInterval(() => {
         if (!petWin || petWin.isDestroyed()) return;
-        const cursor = screen.getCursorScreenPoint();
+        const cursor = (IS_LINUX && lastKnownGlobalCursor)
+          ? lastKnownGlobalCursor
+          : screen.getCursorScreenPoint();
         const b = petWin.getBounds();
         const cx = b.x + b.width / 2;
         const cy = b.y + Math.round(b.height * 0.32);
@@ -1577,6 +1623,7 @@ function createPetWindow() {
   petWin.on("closed", () => {
     if (cursorPollTimer) clearInterval(cursorPollTimer);
     if (nativeMoveEndTimer) clearTimeout(nativeMoveEndTimer);
+    stopLinuxCursorTracker();
     cursorPollTimer = null;
     nativeMoveEndTimer = null;
     petWin = null;
@@ -3648,6 +3695,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("will-quit", () => {
+  stopLinuxCursorTracker();
   stopKeyHook();
   if (stretchTimer) {
     clearInterval(stretchTimer);

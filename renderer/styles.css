@@ -870,9 +870,9 @@ body[data-purring] #purr-hearts {
   top: var(--cat-top);
   left: 50%;
   transform: translateX(-50%);
-  width: calc(var(--cat-size) * 1.5);
+  width: calc(var(--cat-size) * 1.5) !important;
   /* viewBox 확장 후 비율: 80:148 (외곽선 dilate 여유 위/아래 2씩 추가) */
-  aspect-ratio: 80 / 148;
+  aspect-ratio: 80 / 148 !important;
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
