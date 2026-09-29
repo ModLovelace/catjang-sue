@@ -9,9 +9,9 @@
 
 const TRACKING_LAYERS = {
   pupils: { ids: ["pupil-left", "pupil-right"], maxOffset: 1.6, ease: 0.42 },
-  eyes:   { ids: ["eyes-js"],                    maxOffset: 0.8, ease: 0.30 },
+  eyes:   { ids: ["eyes-js", "eye-left", "eye-right"], maxOffset: 0.8, ease: 0.30 },
   face:   { ids: ["face-js"],                    maxOffset: 2.2, ease: 0.20 },
-  body:   { ids: ["body"],                       maxOffset: 0.7, ease: 0.09 },
+  body:   { ids: ["body", "idle-body"],          maxOffset: 0.7, ease: 0.09 },
 };
 
 const MAX_RAW_DIST_PX = 400;
@@ -2534,6 +2534,10 @@ window.electronAPI.windowCapabilities().then((capabilities) => {
   if (windowShapeSupported) {
     setPetMouseEventsEnabled(true);
     startNativeWindowShapeObservers();
+    // Chromium does not load <object> content when the element has display:none.
+    // On Linux with setShape(), most mascot sprites start hidden and never fire
+    // their load event. Temporarily override visibility so Chromium loads them.
+    preloadHiddenSvgObjects();
   } else if (windowBackend === "wayland") {
     setPetMouseEventsEnabled(true);
   } else {
@@ -2545,6 +2549,43 @@ window.electronAPI.windowCapabilities().then((capabilities) => {
   document.body.dataset.windowBackend = windowBackend;
   requestAnimationFrame(() => setPetMouseEventsEnabled(false));
 });
+
+function preloadHiddenSvgObjects() {
+  const objects = document.querySelectorAll("object.mascot-sprite");
+  for (const obj of objects) {
+    if (obj.contentDocument) continue; // already loaded
+    const style = getComputedStyle(obj);
+    if (style.display === "none") {
+      // Force the browser to load the SVG by making the element visible but
+      // invisible to the user. The element is positioned off-screen at 0x0 so
+      // the pet window shape is not affected.
+      obj.style.setProperty("display", "block", "important");
+      obj.style.setProperty("visibility", "hidden", "important");
+      obj.style.setProperty("width", "1px", "important");
+      obj.style.setProperty("height", "1px", "important");
+      obj.style.setProperty("overflow", "hidden", "important");
+      obj.style.setProperty("position", "absolute", "important");
+      obj.style.setProperty("left", "-9999px", "important");
+      obj.style.setProperty("pointer-events", "none", "important");
+      const clearOverrides = () => {
+        obj.style.removeProperty("display");
+        obj.style.removeProperty("visibility");
+        obj.style.removeProperty("width");
+        obj.style.removeProperty("height");
+        obj.style.removeProperty("overflow");
+        obj.style.removeProperty("position");
+        obj.style.removeProperty("left");
+        obj.style.removeProperty("pointer-events");
+        scheduleNativeWindowShapeUpdate();
+      };
+      obj.addEventListener("load", clearOverrides, { once: true });
+      // Safety: if load never fires, clean up after 4 seconds.
+      setTimeout(() => {
+        if (!obj.contentDocument) clearOverrides();
+      }, 4000);
+    }
+  }
+}
 
 window.electronAPI.onNativeWindowDragState((active) => {
   if (windowBackend !== "wayland") return;
@@ -2907,7 +2948,19 @@ function isStretchBaseRect(rect) {
     !rect.closest("clipPath");
 }
 
-// start.svg는 fetch로 텍스트 받아서 파싱 (rect y 좌표 추출 전용 — 화면에 안 띄움)
+function tryInitStretchEnd(doc) {
+  const targetDoc = doc || (stretchEndObj && stretchEndObj.contentDocument);
+  if (!targetDoc) return;
+  registerSvgDoc(targetDoc, "stretch-end");
+  if (startYsByIdx.length === 0) {
+    pendingEndDoc = targetDoc;
+    return;
+  }
+  endData = setupStretchChain(targetDoc);
+  applyStretchChain();
+  if (dragging || releasing) startChain();
+}
+
 fetch("../svg/stretch-start.svg")
   .then((r) => r.text())
   .then((text) => {
@@ -2936,17 +2989,11 @@ fetch("../svg/stretch-start.svg")
   .catch((err) => console.error("Failed to load stretch-start.svg:", err));
 
 stretchEndObj.addEventListener("load", () => {
-  const doc = stretchEndObj.contentDocument;
-  if (!doc) return;
-  registerSvgDoc(doc, "stretch-end");
-  if (startYsByIdx.length === 0) {
-    pendingEndDoc = doc;
-    return;
-  }
-  endData = setupStretchChain(doc);
-  applyStretchChain();
-  if (dragging || releasing) startChain();
+  tryInitStretchEnd(stretchEndObj.contentDocument);
 });
+if (stretchEndObj && stretchEndObj.contentDocument) {
+  tryInitStretchEnd(stretchEndObj.contentDocument);
+}
 
 function setupStretchChain(svgDoc) {
   const NS = "http://www.w3.org/2000/svg";
@@ -3236,14 +3283,55 @@ const WIGGLE_MAX_DX = 2.5;     // hard clamp on per-segment lateral offset (svg 
 let dragReleaseWatchdog = null;
 
 function chainTick() {
-  if (currentMascot !== "cat" || !endData) {
-    releasing = false;
-    stretchT = 0;
-    stretchTVel = 0;
-    document.body.classList.remove("dragging");
-    window.electronAPI.setStretchMode(false);
-    chainRafId = null;
+  if (currentMascot !== "cat") {
+    if (!dragging && !releasing) {
+      chainRafId = null;
+      return;
+    }
+    const activePendSpring = dragging ? 0.018 : PEND_SPRING;
+    const activePendDamp   = dragging ? 0.86  : PEND_DAMP;
+    pendulumVelAngle += -pendulumAngle * activePendSpring;
+    pendulumVelAngle *= activePendDamp;
+    pendulumAngle += pendulumVelAngle;
+    pendulumAngle = Math.max(-PEND_MAX_DEG, Math.min(PEND_MAX_DEG, pendulumAngle));
+
+    const dragPose = currentPoseElement();
+    if (dragPose) {
+      dragPose.style.transform = `translateX(-50%) rotate(${(-pendulumAngle * 0.4).toFixed(2)}deg)`;
+    }
+
+    if (releasing && Math.abs(pendulumAngle) < 0.25 && Math.abs(pendulumVelAngle) < 0.15) {
+      releasing = false;
+      pendulumAngle = 0;
+      pendulumVelAngle = 0;
+      if (dragPose) dragPose.style.transform = "translateX(-50%)";
+      document.body.classList.remove("dragging");
+      window.electronAPI.setStretchMode(false);
+      chainRafId = null;
+      return;
+    }
+    chainRafId = requestAnimationFrame(chainTick);
     return;
+  }
+
+  if (!endData) {
+    if (stretchEndObj && stretchEndObj.contentDocument && startYsByIdx.length > 0) {
+      endData = setupStretchChain(stretchEndObj.contentDocument);
+      applyStretchChain();
+    }
+    if (!endData) {
+      if (dragging) {
+        chainRafId = requestAnimationFrame(chainTick);
+        return;
+      }
+      releasing = false;
+      stretchT = 0;
+      stretchTVel = 0;
+      document.body.classList.remove("dragging");
+      window.electronAPI.setStretchMode(false);
+      chainRafId = null;
+      return;
+    }
   }
 
   // when mouse pauses mid-drag, decay prevDragDx so resuming movement gives a clean impulse
@@ -3368,10 +3456,7 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
   document.body.classList.add("dragging");
   window.electronAPI.setStretchMode(true);
-  // Catjang uses the dynamic 16-segment spine. The other mascots keep their
-  // dedicated drag sprite visible until mouseup; starting chainTick for them
-  // removes `.dragging` on the first animation frame.
-  if (currentMascot === "cat") startChain();
+  startChain();
 }
 
 function finishDragStretch(notifyMain = true) {
@@ -3382,9 +3467,6 @@ function finishDragStretch(notifyMain = true) {
   lastWiggleDx = 0;
   for (let i = 0; i < N_SEG; i++) { dxState[i] = 0; velState[i] = 0; }
 
-  // Only the original cat mascot uses the 16-segment dynamic SVG spine chain.
-  // All other mascots (schnauzer, chisi, milo, musubi, peruperro) use dedicated drag sprites
-  // and must restore immediately to idle upon mouse release.
   if (currentMascot === "cat" && endData && stretchT > 0.01) {
     releasing = true;
     stretchTVel = -stretchT * 0.55;
@@ -3401,10 +3483,30 @@ function finishDragStretch(notifyMain = true) {
         chainRafId = null;
       }
     }, 450);
+  } else if (currentMascot !== "cat" && Math.abs(pendulumAngle) > 0.5) {
+    releasing = true;
+    startChain();
+    clearTimeout(dragReleaseWatchdog);
+    dragReleaseWatchdog = setTimeout(() => {
+      if (releasing) {
+        releasing = false;
+        pendulumAngle = 0;
+        pendulumVelAngle = 0;
+        const dragPose = currentPoseElement();
+        if (dragPose) dragPose.style.transform = "translateX(-50%)";
+        document.body.classList.remove("dragging");
+        window.electronAPI.setStretchMode(false);
+        chainRafId = null;
+      }
+    }, 450);
   } else {
     releasing = false;
     stretchT = 0;
     stretchTVel = 0;
+    pendulumAngle = 0;
+    pendulumVelAngle = 0;
+    const dragPose = currentPoseElement();
+    if (dragPose) dragPose.style.transform = "translateX(-50%)";
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
     chainRafId = null;

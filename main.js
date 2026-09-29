@@ -1542,25 +1542,36 @@ function createPetWindow() {
 
   // X11/XWayland exposes global coordinates. The renderer uses this poll for
   // eye tracking and petting even before the window receives a DOM mousemove.
+  // Start the poll after did-finish-load so the renderer's IPC listener is
+  // registered and the initial cursor position is not silently dropped.
   if (!IS_NATIVE_WAYLAND) {
-    let lastCursorDx = null;
-    let lastCursorDy = null;
-    cursorPollTimer = setInterval(() => {
-      if (!petWin || petWin.isDestroyed()) return;
-      const cursor = screen.getCursorScreenPoint();
-      const b = petWin.getBounds();
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      const dx = cursor.x - cx;
-      const dy = cursor.y - cy;
-      if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;
-      lastCursorDx = dx;
-      lastCursorDy = dy;
-      petWin.webContents.send("cursor-pos", {
-        dx,
-        dy,
-      });
-    }, 32);
+    const startCursorPoll = () => {
+      if (cursorPollTimer || !petWin || petWin.isDestroyed()) return;
+      let lastCursorDx = null;
+      let lastCursorDy = null;
+      cursorPollTimer = setInterval(() => {
+        if (!petWin || petWin.isDestroyed()) return;
+        const cursor = screen.getCursorScreenPoint();
+        const b = petWin.getBounds();
+        const cx = b.x + b.width / 2;
+        const cy = b.y + b.height / 2;
+        const dx = cursor.x - cx;
+        const dy = cursor.y - cy;
+        if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;
+        lastCursorDx = dx;
+        lastCursorDy = dy;
+        petWin.webContents.send("cursor-pos", {
+          dx,
+          dy,
+        });
+      }, 32);
+    };
+
+    if (petWin.webContents.isLoading()) {
+      petWin.webContents.once("did-finish-load", startCursorPoll);
+    } else {
+      startCursorPoll();
+    }
   }
 
   petWin.on("closed", () => {
