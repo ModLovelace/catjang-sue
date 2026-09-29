@@ -1554,7 +1554,7 @@ function createPetWindow() {
         const cursor = screen.getCursorScreenPoint();
         const b = petWin.getBounds();
         const cx = b.x + b.width / 2;
-        const cy = b.y + b.height / 2;
+        const cy = b.y + Math.round(b.height * 0.32);
         const dx = cursor.x - cx;
         const dy = cursor.y - cy;
         if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;

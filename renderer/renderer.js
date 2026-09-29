@@ -8,13 +8,13 @@
  */
 
 const TRACKING_LAYERS = {
-  pupils: { ids: ["pupil-left", "pupil-right"], maxOffset: 1.6, ease: 0.42 },
-  eyes:   { ids: ["eyes-js", "eye-left", "eye-right"], maxOffset: 0.8, ease: 0.30 },
-  face:   { ids: ["face-js"],                    maxOffset: 2.2, ease: 0.20 },
-  body:   { ids: ["body", "idle-body"],          maxOffset: 0.7, ease: 0.09 },
+  pupils: { ids: ["pupil-left", "pupil-right"], maxOffset: 2.2, ease: 0.45 },
+  eyes:   { ids: ["eyes-js", "eye-left", "eye-right"], maxOffset: 1.2, ease: 0.32 },
+  face:   { ids: ["face-js"],                    maxOffset: 2.8, ease: 0.22 },
+  body:   { ids: ["body", "idle-body"],          maxOffset: 0.9, ease: 0.10 },
 };
 
-const MAX_RAW_DIST_PX = 400;
+const MAX_RAW_DIST_PX = 240;
 
 const obj = document.getElementById("cat");
 const dogObj = document.getElementById("schnauzer");
@@ -969,6 +969,7 @@ function initTracking() {
   for (const [name, cfg] of Object.entries(TRACKING_LAYERS)) {
     const wrappers = [];
     for (const id of cfg.ids) {
+      if ((id === "eye-left" || id === "eye-right") && svgDoc.getElementById("eyes-js")) continue;
       const el = svgDoc.getElementById(id);
       if (!el) continue;
       wrappers.push(wrapElement(el, "cat"));
@@ -1036,6 +1037,7 @@ function initDogTracking(specificDoc, mascotId = currentMascot) {
       };
     }
     for (const id of cfg.ids) {
+      if ((id === "eye-left" || id === "eye-right") && dogDoc.getElementById("eyes-js")) continue;
       const el = dogDoc.getElementById(id);
       if (!el) continue;
       layers[name].wrappers.push(wrapElement(el, mascotId));
@@ -3268,7 +3270,7 @@ let pointerDownScreenX = 0;
 let pointerDownScreenY = 0;
 const SPRING = 0.038;
 const DAMPING = 0.93;
-const STRETCH_HOLD_MS = 1600;
+const STRETCH_HOLD_MS = 260;
 const STRETCH_T_SPRING = 0.13;
 const STRETCH_T_DAMP = 0.78;
 const PEND_SPRING = 0.003;
@@ -3339,14 +3341,11 @@ function chainTick() {
     prevDragDx *= 0.78;
   }
 
-  // advance stretchT every RAF frame so the stretch grows smoothly while the mouse is held
   if (dragging && dragHoldStartAt > 0) {
     const holdMs = Date.now() - dragHoldStartAt;
     const holdT = Math.min(1, holdMs / STRETCH_HOLD_MS);
-    stretchT = holdT < 0.5
-      ? 4 * holdT * holdT * holdT
-      : 1 - Math.pow(-2 * holdT + 2, 3) / 2;
-    stretchT = Math.min(0.32, stretchT);
+    // Smooth ease-out to full stretch (1.0)
+    stretchT = 1 - Math.pow(1 - holdT, 2.4);
   }
 
   // Native Wayland owns the pointer drag, so Chromium cannot provide its
@@ -3621,15 +3620,15 @@ function updatePurringAtPoint(clientX, clientY, continuous = false) {
   }
 }
 
-function updateWaylandEyeTracking(event) {
-  if (windowBackend !== "wayland") return;
+function updatePointerEyeTracking(event) {
+  if (dragging) return;
   const pose = currentPoseElement();
   if (!pose) return;
   const rect = pose.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
   updateCursorTracking({
     dx: event.clientX - (rect.left + rect.width / 2),
-    dy: event.clientY - (rect.top + rect.height / 2),
+    dy: event.clientY - (rect.top + rect.height * 0.35),
   });
 }
 
@@ -3650,7 +3649,7 @@ window.addEventListener("mousemove", (e) => {
     }
   }
   updatePurringAtPoint(e.clientX, e.clientY);
-  updateWaylandEyeTracking(e);
+  updatePointerEyeTracking(e);
   if (!dragging) return;
   if (!(e.buttons & 1)) {
     finishDragStretch(true);
