@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# GNOME's default helper times out while long interaction/manual probes run.
+# It still exits through Scripting's normal Exit method when the probe ends.
+exec /usr/libexec/gnome-shell-perf-helper --idle-timeout=86400 "$@"

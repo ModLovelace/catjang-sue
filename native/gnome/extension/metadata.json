@@ -1,0 +1,10 @@
+{
+  "uuid": "catjang-prototype@modlovelace.github.io",
+  "name": "Catjang \u2014 GNOME prototype",
+  "description": "Isolated native drag, animated canonical poses and alpha-derived input regions. Experimental; no Electron integration.",
+  "shell-version": [
+    "50"
+  ],
+  "version": 2,
+  "url": "https://github.com/ModLovelace/catjang-sue"
+}

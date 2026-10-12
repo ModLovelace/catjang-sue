@@ -870,13 +870,18 @@ body[data-purring] #purr-hearts {
   top: var(--cat-top);
   left: 50%;
   transform: translateX(-50%);
-  width: calc(var(--cat-size) * 1.5) !important;
+  width: calc(var(--cat-size) * 1.5);
   /* viewBox 확장 후 비율: 80:148 (외곽선 dilate 여유 위/아래 2씩 추가) */
-  aspect-ratio: 80 / 148 !important;
+  aspect-ratio: 80 / 148;
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   display: none;
+}
+
+body[data-platform="linux"] #stretch-svg-end {
+  width: calc(var(--cat-size) * 1.5) !important;
+  aspect-ratio: 80 / 148 !important;
 }
 
 /* Press/scroll/jump SVG들 — viewBox 외곽선 여유가 포함된 별도 포즈들 */
@@ -1188,9 +1193,9 @@ body[data-mascot="milo"][data-stretching] #milo-stretch { display: block !import
 body[data-mascot="musubi"][data-stretching] #musubi-stretch { display: block !important; }
 body[data-mascot="peruperro"][data-stretching] #peruperro-stretch { display: block !important; }
 
-/* Adaptación universal de pantalla completa / ultrawide para el estiramiento */
-body[data-stretching] .mascot-sprite.mascot-stretch,
-body[data-stretching] #stretch-pose-default {
+/* Linux fullscreen / ultrawide stretch; preserve other platforms' layout. */
+body[data-platform="linux"][data-stretching] .mascot-sprite.mascot-stretch,
+body[data-platform="linux"][data-stretching] #stretch-pose-default {
   position: absolute;
   top: 50% !important;
   left: 50% !important;
@@ -1217,21 +1222,21 @@ body[data-stretching] .mascot-jump-start,
 body[data-stretching] .mascot-jump-ing,
 body[data-stretching] .mascot-drag { display: none !important; }
 
-body[data-stretching] #drag-handle,
-body[data-stretching] #petting-handle,
-body[data-stretching] #reminder-clock-button,
-body[data-stretching] #reminder-panel,
-body[data-stretching] #cat-speech-bubble,
-body[data-stretching] #cat-thinking-dots,
-body[data-stretching] #share-name-badge,
-body[data-stretching] #sleep-bubble,
-body[data-stretching] #alert-exclamation,
-body[data-stretching] #completion-confetti {
+body[data-platform="linux"][data-stretching] #drag-handle,
+body[data-platform="linux"][data-stretching] #petting-handle,
+body[data-platform="linux"][data-stretching] #reminder-clock-button,
+body[data-platform="linux"][data-stretching] #reminder-panel,
+body[data-platform="linux"][data-stretching] #cat-speech-bubble,
+body[data-platform="linux"][data-stretching] #cat-thinking-dots,
+body[data-platform="linux"][data-stretching] #share-name-badge,
+body[data-platform="linux"][data-stretching] #sleep-bubble,
+body[data-platform="linux"][data-stretching] #alert-exclamation,
+body[data-platform="linux"][data-stretching] #completion-confetti {
   display: none !important;
 }
 
 /* Ocultar mascota en petWin durante la secuencia de estiramiento en overlay nativo */
-body.pet-hidden-for-stretch {
+body[data-platform="linux"].pet-hidden-for-stretch {
   opacity: 0 !important;
   pointer-events: none !important;
 }
@@ -1361,4 +1366,3 @@ body[data-confetti="1"] #completion-confetti {
     opacity: 0;
   }
 }
-

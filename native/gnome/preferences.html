@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:">
+<title>Catjang — Configuración</title><link rel="stylesheet" href="preferences.css"></head>
+<body><main><h1>Catjang</h1><p id="status" role="status">Conectando con la mascota…</p>
+<p id="keyboard" class="note"></p>
+<form id="settings"><label>Mascota<select id="mascot"><option value="cat">Catjang</option></select></label>
+<p class="note">Esta versión nativa incluye Catjang. Las otras mascotas siguen disponibles con el arranque clásico.</p>
+<label>Nombre<input id="name" maxlength="24" autocomplete="off"></label>
+<label class="check"><input id="nameVisible" type="checkbox">Mostrar nombre</label>
+<label>Tamaño en píxeles<input id="size" type="number" min="40" max="400" step="10"></label>
+<button type="submit">Guardar</button></form>
+<p class="note">Arrastra la mascota con el botón izquierdo. El botón derecho abre esta configuración.</p>
+<div class="actions"><button data-animation="jump">Saltar</button><button data-animation="stretch">Estirarse</button><button data-animation="typing">Probar una tecla</button></div>
+<p class="note">Puedes cerrar esta ventana y seguir usando la mascota. Para detener Catjang, pulsa Salir.</p>
+<div class="actions"><button id="reconnect">Reconectar</button><button id="quit">Salir de Catjang</button></div>
+</main><script src="preferences.js"></script></body></html>

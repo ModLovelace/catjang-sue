@@ -21,10 +21,15 @@
   },
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node scripts/start.js",
     "start:linux": "./run-linux.sh",
     "start:desktop": "powershell -ExecutionPolicy Bypass -File .\\scripts\\launch-catjang.ps1",
     "test:mascots": "node scripts/test-mascot.js",
+    "test:linux-cursor": "node --test scripts/test-linux-cursor-tracker.js",
+    "test:linux-startup": "node --test scripts/test-linux-startup.js",
+    "test:linux-window": "electron --ozone-platform=x11 scripts/test-linux-window.js",
+    "test:linux-packages": "node scripts/test-linux-packages.js",
+    "test:platform-isolation": "electron scripts/test-platform-isolation.js",
     "smoke": "electron . --catjang-smoke-test",
     "setup:hooks": "node -e \"const i=require('./hooks/install'); i.registerAntigravityHooks(); i.registerClaudeHooks(); i.registerCursorHooks(); console.log('Hooks installed successfully.');\"",
     "notify": "node scripts/notify-catjang.js",
@@ -32,7 +37,10 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist:linux": "electron-builder --linux",
+    "start:linux:gnome": "CATJANG_LINUX_BACKEND=gnome ./run-linux.sh",
+    "build:linux:gnome": "python3 native/gnome/build.py --application",
+    "setup:linux:gnome": "bash native/gnome/install.sh"
   },
   "dependencies": {},
   "optionalDependencies": {
@@ -49,6 +57,7 @@
     "copyright": "Copyright © 2026",
     "publish": null,
     "npmRebuild": false,
+    "afterPack": "scripts/after-pack-linux.js",
     "electronLanguages": [
       "en-US",
       "es",
@@ -152,6 +161,14 @@
       "icon": "assets/catjang-logo.png",
       "extraResources": [
         {
+          "from": "scripts/linux-cursor-tracker.py",
+          "to": "linux-cursor-tracker.py"
+        },
+        {
+          "from": "scripts/linux-backend.sh",
+          "to": "linux-backend.sh"
+        },
+        {
           "from": "node_modules/ffmpeg-static",
           "to": "ffmpeg",
           "filter": [
@@ -160,9 +177,30 @@
             "ffmpeg.README",
             "LICENSE"
           ]
+        },
+        {
+          "from": "native/gnome",
+          "to": "gnome",
+          "filter": [
+            "bridge.js",
+            "client.py",
+            "preferences*.js",
+            "preferences.html",
+            "preferences.css",
+            "keyboard-counter.py"
+          ]
+        },
+        {
+          "from": ".tmp/gnome-prototype/catjang-native@modlovelace.github.io.shell-extension.zip",
+          "to": "gnome/catjang-native@modlovelace.github.io.shell-extension.zip"
+        },
+        {
+          "from": "workspace/assets/sound/purring.m4a",
+          "to": "gnome/purring.m4a"
         }
       ],
       "syncDesktopName": true
-    }
+    },
+    "beforePack": "./native/gnome/before-pack.cjs"
   }
 }

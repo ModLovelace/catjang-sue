@@ -6,25 +6,8 @@ RUNTIME_DIR="${CATJANG_RUNTIME_DIR:-$BASE_DIR/runtime}"
 
 mkdir -p "$RUNTIME_DIR/config" "$RUNTIME_DIR/cache" "$RUNTIME_DIR/data"
 
-OZONE_ARGS=()
-HAS_OZONE_PLATFORM=0
-for arg in "$@"; do
-  if [[ "$arg" == --ozone-platform=* ]]; then
-    HAS_OZONE_PLATFORM=1
-    break
-  fi
-done
-
-# Use XWayland by default on Wayland sessions to retain the complete elastic drag animation,
-# pendulum swing physics, global cursor tracking, and saved pet position.
-# Native Wayland remains available via CATJANG_NATIVE_WAYLAND=1 or --ozone-platform=wayland.
-if [[ "${XDG_SESSION_TYPE:-}" == "wayland" && "$HAS_OZONE_PLATFORM" == "0" ]]; then
-  if [[ "${CATJANG_NATIVE_WAYLAND:-0}" == "1" ]]; then
-    OZONE_ARGS+=(--ozone-platform=wayland --enable-features=WaylandWindowDecorations)
-  else
-    OZONE_ARGS+=(--ozone-platform=x11)
-  fi
-fi
+source "$BASE_DIR/scripts/linux-backend.sh"
+catjang_select_backend "$@"
 
 SANDBOX_ARGS=()
 if command -v unshare >/dev/null 2>&1 && ! unshare -Ur true 2>/dev/null; then
@@ -33,7 +16,7 @@ fi
 
 # By default, run repository source with local Electron so working tree changes take effect immediately.
 # Set CATJANG_USE_APPIMAGE=1 only if you explicitly want to run the pre-built AppImage in dist/.
-ELECTRON_BIN="$BASE_DIR/node_modules/electron/dist/electron"
+ELECTRON_BIN="${CATJANG_ELECTRON_BIN:-$BASE_DIR/node_modules/electron/dist/electron}"
 if [[ ! -x "$ELECTRON_BIN" ]]; then
   ELECTRON_BIN="electron"
 fi

@@ -1,0 +1,8 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #17212f; color: #f1f5f9; }
+body { margin: 0; } main { padding: 24px; } h1 { margin-top: 0; font-size: 24px; }
+label { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; }
+label.check { flex-direction: row; align-items: center; }
+input, select, button { font: inherit; padding: 9px; border-radius: 7px; border: 1px solid #536377; background: #233248; color: inherit; }
+button { cursor: pointer; } button:hover { background: #354860; } input[type=checkbox] { margin: 0; }
+.note { color: #bac6d6; font-size: 13px; line-height: 1.5; } .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+#status { line-height: 1.5; overflow-wrap: anywhere; }

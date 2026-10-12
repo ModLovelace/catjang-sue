@@ -85,6 +85,94 @@ node scripts/test-package.js
 
 ## 🐾 Guía de Control del Objeto: Paso a Paso
 
+### Backend nativo GNOME: validación independiente
+
+El backend opt-in `CATJANG_LINUX_BACKEND=gnome` está integrado en
+`feature/linux-adaptation` y admite Catjang en GNOME 50/Wayland. Electron conserva
+licencia, ajustes y audio; la extensión dibuja la mascota y recibe el puntero.
+Los controles de Windows/macOS y los ocho SVG de cada mascota se conservan.
+
+```bash
+npm run build:linux:gnome
+native/gnome/run-nested.sh --verify
+native/gnome/run-nested.sh --refine
+native/gnome/run-nested.sh --matrix
+native/gnome/run-nested.sh --integration
+native/gnome/run-nested.sh --isolation
+```
+
+Son sondas sobre Mutter/Wayland real, con perfil y bus privados. `--refine`
+comprueba el acordeón, la transparencia a mitad del estiramiento, una pata por
+pulsación y calor continuo; incluye eventos de un dispositivo uinput de prueba
+propio y exclusivo. `--integration` usa main.js y el IPC reales; admite las rutas
+`CATJANG_GNOME_PACKAGED`, `CATJANG_GNOME_APPIMAGE` y `CATJANG_GNOME_DEB_BINARY` para
+comprobar las distribuciones. `--isolation` verifica ramas simuladas del renderer
+para Windows/macOS/Linux dentro de Electron; no reemplaza sus runtimes nativos.
+
+La aprobación humana del visor («Funciona bien») cubre acordeón/retorno,
+transparencia y teclado desde otra aplicación con rojo progresivo. La aceptación
+en la sesión habitual sigue pendiente de reiniciar sesión y activar la extensión.
+`bash native/gnome/run-desktop-trial.sh` prepara una prueba con perfil demo propio,
+sin alterar los ajustes normales ni activar hooks de agentes.
+
+Resultados y límites: [QA de integración GNOME](QA_2026-10-12-gnome-integration.md)
+y [guía del backend](../native/gnome/README.md). Los antiguos tests de Linux que
+siguen a continuación corresponden al backend clásico y no se usan como evidencia
+de funcionamiento del backend GNOME.
+
+### Regresión adicional de Linux
+
+En `feature/linux-adaptation`, ejecutar también:
+
+```bash
+npm run test:linux-cursor
+npm run test:linux-startup
+npm run test:linux-window
+npm run dist:linux -- --publish never
+node scripts/test-package.js
+npm run test:linux-packages
+```
+
+La prueba de ventanas utiliza un perfil temporal, no activa hooks de agentes y
+comprueba el overlay de estiramiento de las seis mascotas, el borde SVG,
+transparencia del renderer, cierre del overlay y restauración de posición.
+Guarda capturas de Catjang y Chuño en `.tmp/qa-linux/`.
+También verifica cierre anticipado, fallo de carga y cierre de la ventana padre;
+la mascota debe reaparecer y poder iniciar otro estiramiento.
+Si el entorno de pruebas no permite el sandbox de Chromium, se puede añadir
+`--no-sandbox` al comando de Electron de la prueba y al verificador del paquete.
+
+`npm start`, `./run-linux.sh` y los paquetes Linux eligen XWayland antes de
+iniciar Electron en una sesión Wayland. Para probar el backend nativo, usar
+`CATJANG_NATIVE_WAYLAND=1` o `--ozone-platform=wayland`; una opción explícita
+tiene prioridad. Windows y macOS siguen utilizando el CLI original de Electron.
+
+La prueba de paquetes requiere `dpkg-deb`, `xprop`, `xwininfo` y una sesión
+con XWayland. Extrae AppImage y `.deb` en `/tmp`, compara los recursos con el
+directorio compilado y verifica una ventana X11 visible por PID en cada formato.
+Utiliza perfiles temporales, sin instalar paquetes ni hooks, y `--no-sandbox`
+para este entorno de QA. Comprueba la ventana inicial de licencia, sin activarla.
+
+El seguimiento global en GNOME Wayland requiere `python3`, el módulo Python
+`dbus` y la extensión `kando-integration` habilitada. El helper Python debe
+existir en `resources/linux-cursor-tracker.py`, fuera de `app.asar`.
+Si no está disponible o no envía datos durante un segundo, Catjang vuelve a
+`screen.getCursorScreenPoint()`; esta API conserva la limitación de XWayland
+sobre aplicaciones Wayland. Reiniciar Catjang después de habilitar la extensión.
+
+El smoke comprueba el arranque de Electron y la carga del proceso principal;
+la prueba de ventanas comprueba las ventanas de producción. Ninguna sustituye
+la validación humana de mirada, arrastre, teclado global y compositor real.
+Ver [registro de validación Linux del 29 de septiembre](QA_2026-09-29.md).
+
+Para comprobar que las mejoras Linux no se aplican a Windows/macOS, ejecutar
+`npm run test:platform-isolation`. Simula las tres plataformas en el renderer
+y verifica las secuencias de ventana con dobles de prueba. No sustituye las
+pruebas nativas en Windows y macOS. Ver
+[reversión e aislamiento del 30 de septiembre](QA_2026-09-30.md).
+La continuación con arranque y paquetes Linux está registrada en
+[QA Linux del 30 de septiembre](QA_2026-09-30-linux.md).
+
 ---
 
 ### Fase 1: Configuración Inicial y Onboarding (Licencia)

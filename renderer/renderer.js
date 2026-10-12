@@ -7,14 +7,23 @@
  * - 우클릭으로 컨텍스트 메뉴 (IPC show-context-menu)
  */
 
-const TRACKING_LAYERS = {
+const IS_LINUX = window.electronAPI.platform === "linux";
+document.body.dataset.platform = window.electronAPI.platform;
+
+// Keep the pre-Linux-adaptation behavior on Windows and macOS.
+const TRACKING_LAYERS = IS_LINUX ? {
   pupils: { ids: ["pupil-left", "pupil-right"], maxOffset: 2.2, ease: 0.45 },
   eyes:   { ids: ["eyes-js", "eye-left", "eye-right"], maxOffset: 1.2, ease: 0.32 },
   face:   { ids: ["face-js"],                    maxOffset: 2.8, ease: 0.22 },
   body:   { ids: ["body", "idle-body"],          maxOffset: 0.9, ease: 0.10 },
+} : {
+  pupils: { ids: ["pupil-left", "pupil-right"], maxOffset: 1.6, ease: 0.42 },
+  eyes:   { ids: ["eyes-js"],                    maxOffset: 0.8, ease: 0.30 },
+  face:   { ids: ["face-js"],                    maxOffset: 2.2, ease: 0.20 },
+  body:   { ids: ["body"],                       maxOffset: 0.7, ease: 0.09 },
 };
 
-const MAX_RAW_DIST_PX = 240;
+const MAX_RAW_DIST_PX = IS_LINUX ? 240 : 400;
 
 const obj = document.getElementById("cat");
 const dogObj = document.getElementById("schnauzer");
@@ -2994,7 +3003,7 @@ fetch("../svg/stretch-start.svg")
 stretchEndObj.addEventListener("load", () => {
   tryInitStretchEnd(stretchEndObj.contentDocument);
 });
-if (stretchEndObj && stretchEndObj.contentDocument) {
+if (IS_LINUX && stretchEndObj && stretchEndObj.contentDocument) {
   tryInitStretchEnd(stretchEndObj.contentDocument);
 }
 
@@ -3271,7 +3280,7 @@ let pointerDownScreenX = 0;
 let pointerDownScreenY = 0;
 const SPRING = 0.038;
 const DAMPING = 0.93;
-const STRETCH_HOLD_MS = 260;
+const STRETCH_HOLD_MS = IS_LINUX ? 260 : 1600;
 const STRETCH_T_SPRING = 0.13;
 const STRETCH_T_DAMP = 0.78;
 const PEND_SPRING = 0.003;
@@ -3286,6 +3295,15 @@ const WIGGLE_MAX_DX = 2.5;     // hard clamp on per-segment lateral offset (svg 
 let dragReleaseWatchdog = null;
 
 function chainTick() {
+  if (!IS_LINUX && (currentMascot !== "cat" || !endData)) {
+    releasing = false;
+    stretchT = 0;
+    stretchTVel = 0;
+    document.body.classList.remove("dragging");
+    window.electronAPI.setStretchMode(false);
+    chainRafId = null;
+    return;
+  }
   if (currentMascot !== "cat") {
     if (!dragging && !releasing) {
       chainRafId = null;
@@ -3346,8 +3364,14 @@ function chainTick() {
   if (dragging && dragHoldStartAt > 0) {
     const holdMs = Date.now() - dragHoldStartAt;
     const holdT = Math.min(1, holdMs / STRETCH_HOLD_MS);
-    // Smooth ease-out to full stretch (1.0)
-    stretchT = 1 - Math.pow(1 - holdT, 2.4);
+    if (IS_LINUX) {
+      stretchT = 1 - Math.pow(1 - holdT, 2.4);
+    } else {
+      stretchT = holdT < 0.5
+        ? 4 * holdT * holdT * holdT
+        : 1 - Math.pow(-2 * holdT + 2, 3) / 2;
+      stretchT = Math.min(0.32, stretchT);
+    }
   }
 
   // Native Wayland owns the pointer drag, so Chromium cannot provide its
@@ -3462,7 +3486,7 @@ function beginDragStretch(startEvent, currentEvent = startEvent) {
     window.electronAPI.setWindowShape([]);
   }
   window.electronAPI.setStretchMode(true);
-  startChain();
+  if (IS_LINUX || currentMascot === "cat") startChain();
 }
 
 function finishDragStretch(notifyMain = true) {
@@ -3490,7 +3514,7 @@ function finishDragStretch(notifyMain = true) {
         scheduleNativeWindowShapeUpdate();
       }
     }, 450);
-  } else if (currentMascot !== "cat" && Math.abs(pendulumAngle) > 0.5) {
+  } else if (IS_LINUX && currentMascot !== "cat" && Math.abs(pendulumAngle) > 0.5) {
     releasing = true;
     startChain();
     clearTimeout(dragReleaseWatchdog);
@@ -3511,10 +3535,12 @@ function finishDragStretch(notifyMain = true) {
     releasing = false;
     stretchT = 0;
     stretchTVel = 0;
-    pendulumAngle = 0;
-    pendulumVelAngle = 0;
-    const dragPose = currentPoseElement();
-    if (dragPose) dragPose.style.transform = "translateX(-50%)";
+    if (IS_LINUX) {
+      pendulumAngle = 0;
+      pendulumVelAngle = 0;
+      const dragPose = currentPoseElement();
+      if (dragPose) dragPose.style.transform = "translateX(-50%)";
+    }
     document.body.classList.remove("dragging");
     window.electronAPI.setStretchMode(false);
     chainRafId = null;
@@ -3532,7 +3558,7 @@ window.addEventListener("mousedown", (e) => {
 }, { capture: true });
 
 dragHandle.addEventListener("pointerdown", (e) => {
-  if (e.button === 0 && typeof dragHandle.setPointerCapture === "function") {
+  if (IS_LINUX && e.button === 0 && typeof dragHandle.setPointerCapture === "function") {
     try {
       dragHandle.setPointerCapture(e.pointerId);
     } catch {}
@@ -3540,7 +3566,7 @@ dragHandle.addEventListener("pointerdown", (e) => {
 });
 
 dragHandle.addEventListener("pointerup", (e) => {
-  if (typeof dragHandle.releasePointerCapture === "function") {
+  if (IS_LINUX && typeof dragHandle.releasePointerCapture === "function") {
     try {
       dragHandle.releasePointerCapture(e.pointerId);
     } catch {}
@@ -3647,7 +3673,7 @@ function updatePurringAtPoint(clientX, clientY, continuous = false) {
 }
 
 function updatePointerEyeTracking(event) {
-  if (dragging) return;
+  if (!IS_LINUX || dragging) return;
   const pose = currentPoseElement();
   if (!pose) return;
   const rect = pose.getBoundingClientRect();
@@ -4157,14 +4183,14 @@ function endStretchAnimation() {
   scheduleNativeWindowShapeUpdate();
 }
 
-if (window.electronAPI && typeof window.electronAPI.onStretchStarted === "function") {
+if (IS_LINUX && typeof window.electronAPI.onStretchStarted === "function") {
   window.electronAPI.onStretchStarted(() => {
     document.body.classList.add("pet-hidden-for-stretch");
     scheduleNativeWindowShapeUpdate();
   });
 }
 
-if (window.electronAPI && typeof window.electronAPI.onStretchEnded === "function") {
+if (IS_LINUX && typeof window.electronAPI.onStretchEnded === "function") {
   window.electronAPI.onStretchEnded(() => {
     document.body.classList.remove("pet-hidden-for-stretch");
     endStretchAnimation();
@@ -4202,8 +4228,15 @@ window.electronAPI.onDoStretch(() => {
   }, STRETCH_DURATION_MS * 0.7));
   // 종료: fallback idle 복귀
   stretchingTimers.push(setTimeout(() => {
-    endStretchAnimation();
-  }, STRETCH_DURATION_MS + 250));
+    if (IS_LINUX) {
+      endStretchAnimation();
+    } else {
+      pendingStretchAnimation += 1;
+      clearPendingStretchLoadListener();
+      setStretchPoseAnimating(false);
+      delete document.body.dataset.stretching;
+    }
+  }, STRETCH_DURATION_MS + (IS_LINUX ? 250 : 0)));
 });
 
 const TYPING_TRIGGER_COUNT = 5;

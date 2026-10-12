@@ -28,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install native resource build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-gi gir1.2-gdkpixbuf-2.0 librsvg2-common
+
+      - name: Build the GNOME extension bundle
+        run: npm run build:linux:gnome
+
       - name: Audit dependencies
         run: npm audit --omit=dev --omit=optional
 

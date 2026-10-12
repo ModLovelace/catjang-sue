@@ -19,15 +19,17 @@ const fs = require("fs");
 const os = require("os");
 const http = require("http");
 const vm = require("vm");
-const readline = require("readline");
 const { spawn } = require("child_process");
 
 const IS_MAC = process.platform === "darwin";
 const IS_WINDOWS = process.platform === "win32";
 const IS_LINUX = process.platform === "linux";
+const USE_GNOME_NATIVE = IS_LINUX && process.env.CATJANG_LINUX_BACKEND === "gnome";
 const IS_SMOKE_TEST = process.argv.includes("--catjang-smoke-test");
 const IS_STRETCH_TEST = process.argv.includes("--catjang-test-stretch");
 const IS_LINUX_WAYLAND_SESSION = IS_LINUX && process.env.XDG_SESSION_TYPE === "wayland";
+// The Linux launchers select Ozone before Electron starts. Changing it here
+// can leave native windows and renderer processes using different backends.
 const OZONE_PLATFORM = app.commandLine.getSwitchValue("ozone-platform").trim().toLowerCase();
 const IS_NATIVE_WAYLAND = IS_LINUX_WAYLAND_SESSION && OZONE_PLATFORM !== "x11";
 const WINDOW_BACKEND = IS_NATIVE_WAYLAND ? "wayland" : "x11";
@@ -41,7 +43,7 @@ let agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === true;
 // Typing and wheel gestures are core pet interactions. Keep them enabled when
 // uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
 // for installations that do not want a global input hook.
-const ENABLE_GLOBAL_INPUT_HOOK = process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
+const ENABLE_GLOBAL_INPUT_HOOK = !USE_GNOME_NATIVE && process.env.CATJANG_ENABLE_GLOBAL_INPUT !== "0";
 
 if (IS_LINUX_WAYLAND_SESSION) {
   app.disableHardwareAcceleration();
@@ -104,6 +106,7 @@ try {
 }
 
 let petWin = null;
+let gnomeController = null;
 let patternWin = null;
 let mappingWin = null;
 let licenseWin = null;
@@ -790,7 +793,7 @@ function normalizePetSize(size) {
 }
 
 function normalizePetPosition(position) {
-  if (IS_NATIVE_WAYLAND) return null;
+  if (IS_NATIVE_WAYLAND && !USE_GNOME_NATIVE) return null;
   if (!position || typeof position !== "object") return null;
   const x = Math.round(Number(position.x));
   const y = Math.round(Number(position.y));
@@ -913,6 +916,10 @@ function saveSettings() {
 }
 
 function setMascot(mascot) {
+  if (USE_GNOME_NATIVE && mascot !== "cat") {
+    dialog.showErrorBox("Catjang", "El backend GNOME experimental admite Catjang. Para otras mascotas utiliza el arranque clásico.");
+    return;
+  }
   if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi" && mascot !== "peruperro") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
@@ -1370,6 +1377,12 @@ function petPositionIsVisible(position, width, height) {
 }
 
 function resizePetBy(delta) {
+  if (gnomeController) {
+    currentPetSize = normalizePetSize(currentPetSize + delta);
+    saveSettings();
+    gnomeController.synchronize();
+    return;
+  }
   if (!petWin || petWin.isDestroyed()) return;
   if (Date.now() - lastPetDragAt < 500) return;
   const b = petWin.getBounds();
@@ -1381,6 +1394,12 @@ function resizePetBy(delta) {
 }
 
 function setPetSize(size) {
+  if (gnomeController) {
+    currentPetSize = normalizePetSize(size);
+    saveSettings();
+    gnomeController.synchronize();
+    return;
+  }
   if (!petWin || petWin.isDestroyed()) return;
   if (Date.now() - lastPetDragAt < 500) return;
   const b = petWin.getBounds();
@@ -1392,6 +1411,12 @@ function setPetSize(size) {
 }
 
 function resetPetSize() {
+  if (gnomeController) {
+    currentPetSize = normalizePetSize(DEFAULT_SIZE);
+    saveSettings();
+    gnomeController.synchronize();
+    return;
+  }
   if (!petWin || petWin.isDestroyed()) return;
   const b = petWin.getBounds();
   currentPetSize = normalizePetSize(DEFAULT_SIZE);
@@ -1428,47 +1453,46 @@ function attachWindowDiagnostics(win, label) {
   });
 }
 
-let linuxCursorProcess = null;
-let lastKnownGlobalCursor = null;
+const linuxCursorScriptPath = app.isPackaged
+  ? path.join(process.resourcesPath, "linux-cursor-tracker.py")
+  : path.join(__dirname, "scripts", "linux-cursor-tracker.py");
+const linuxCursorTracker = IS_LINUX ? require("./agents/linux-cursor-tracker").createLinuxCursorTracker({
+  scriptPath: linuxCursorScriptPath,
+  onWarning: (error) => logWarn("[Catjang] Linux cursor tracker unavailable:", error.message),
+}) : null;
 
 function startLinuxCursorTracker() {
-  if (!IS_LINUX || linuxCursorProcess) return;
-  try {
-    const scriptPath = path.join(__dirname, "scripts", "linux-cursor-tracker.py");
-    if (!fs.existsSync(scriptPath)) return;
-    linuxCursorProcess = spawn("python3", [scriptPath], {
-      stdio: ["ignore", "pipe", "ignore"],
-    });
-    const rl = readline.createInterface({ input: linuxCursorProcess.stdout });
-    rl.on("line", (line) => {
-      const parts = line.trim().split(" ");
-      if (parts.length >= 2) {
-        const x = parseInt(parts[0], 10);
-        const y = parseInt(parts[1], 10);
-        if (!isNaN(x) && !isNaN(y)) {
-          lastKnownGlobalCursor = { x, y };
-        }
-      }
-    });
-    linuxCursorProcess.on("exit", () => {
-      linuxCursorProcess = null;
-    });
-  } catch {
-    linuxCursorProcess = null;
-  }
+  if (!IS_LINUX_WAYLAND_SESSION || !fs.existsSync(linuxCursorScriptPath)) return;
+  linuxCursorTracker.start();
 }
 
 function stopLinuxCursorTracker() {
-  if (linuxCursorProcess) {
-    try {
-      linuxCursorProcess.kill();
-    } catch {}
-    linuxCursorProcess = null;
-  }
+  if (linuxCursorTracker) linuxCursorTracker.stop();
 }
 
 function createPetWindow() {
   if (petWin && !petWin.isDestroyed()) return;
+  if (USE_GNOME_NATIVE) {
+    const nativePath = app.isPackaged ? path.join(process.resourcesPath, "gnome", "bridge.js") :
+      path.join(__dirname, "native", "gnome", "bridge.js");
+    const { createNativeController } = require(nativePath);
+    gnomeController = createNativeController({
+      app, BrowserWindow, ipcMain,
+      getSettings: () => ({mascot: currentMascot, name: catName, nameVisible: showCatName,
+        size: currentPetSize, position: currentPetPosition}),
+      updateSettings: settings => {
+        setMascot(settings.mascot);
+        setCatName(settings.name);
+        setShowCatName(settings.nameVisible);
+        currentPetSize = normalizePetSize(settings.size);
+        saveSettings();
+      },
+      onPosition: position => { currentPetPosition = position; lastPetDragAt = Date.now(); saveSettings(); },
+      onClosed: () => { petWin = null; gnomeController = null; },
+    });
+    petWin = gnomeController.window;
+    return;
+  }
   const display = screen.getPrimaryDisplay();
   const { width: W, height: H } = windowDims(currentPetSize);
   const initialPosition = petPositionIsVisible(currentPetPosition, W, H) ?
@@ -1514,10 +1538,12 @@ function createPetWindow() {
   };
 
   petWin.once("ready-to-show", showPetWindow);
-  petWin.webContents.once("did-finish-load", () => {
-    setTimeout(showPetWindow, 40);
-  });
-  setTimeout(showPetWindow, 250);
+  if (IS_LINUX) {
+    petWin.webContents.once("did-finish-load", () => {
+      setTimeout(showPetWindow, 40);
+    });
+    setTimeout(showPetWindow, 250);
+  }
   petWin.on("system-context-menu", (event) => {
     event.preventDefault();
     showPetContextMenu();
@@ -1558,7 +1584,7 @@ function createPetWindow() {
         openAgentConnectWindow();
       }, 1400);
     }
-    if (IS_STRETCH_TEST) {
+    if (IS_LINUX && IS_STRETCH_TEST) {
       setTimeout(() => {
         logInfo("[Catjang Test] Triggering stretch sequence for test...");
         triggerStretchSequence();
@@ -1595,12 +1621,10 @@ function createPetWindow() {
       let lastCursorDy = null;
       cursorPollTimer = setInterval(() => {
         if (!petWin || petWin.isDestroyed()) return;
-        const cursor = (IS_LINUX && lastKnownGlobalCursor)
-          ? lastKnownGlobalCursor
-          : screen.getCursorScreenPoint();
+        const cursor = (IS_LINUX && linuxCursorTracker.getPosition()) || screen.getCursorScreenPoint();
         const b = petWin.getBounds();
         const cx = b.x + b.width / 2;
-        const cy = b.y + Math.round(b.height * 0.32);
+        const cy = b.y + (IS_LINUX ? Math.round(b.height * 0.32) : b.height / 2);
         const dx = cursor.x - cx;
         const dy = cursor.y - cy;
         if (lastCursorDx !== null && Math.abs(dx - lastCursorDx) < 1 && Math.abs(dy - lastCursorDy) < 1) return;
@@ -1613,7 +1637,7 @@ function createPetWindow() {
       }, 32);
     };
 
-    if (petWin.webContents.isLoading()) {
+    if (IS_LINUX && petWin.webContents.isLoading()) {
       petWin.webContents.once("did-finish-load", startCursorPoll);
     } else {
       startCursorPoll();
@@ -1662,10 +1686,12 @@ function createLicenseWindow(initialReason = "") {
     licenseWin.focus();
   };
   licenseWin.once("ready-to-show", showLicenseWindow);
-  licenseWin.webContents.once("did-finish-load", () => {
-    setTimeout(showLicenseWindow, 40);
-  });
-  setTimeout(showLicenseWindow, 300);
+  if (IS_LINUX) {
+    licenseWin.webContents.once("did-finish-load", () => {
+      setTimeout(showLicenseWindow, 40);
+    });
+    setTimeout(showLicenseWindow, 300);
+  }
   licenseWin.setMenu(null);
   attachWindowDiagnostics(licenseWin, "license");
   licenseWin.webContents.on("before-input-event", (event, input) => {
@@ -1745,7 +1771,8 @@ function returnToLicenseWindow(reason = "invalid") {
   if (patternWin && !patternWin.isDestroyed()) patternWin.close();
   if (mappingWin && !mappingWin.isDestroyed()) mappingWin.close();
   if (agentConnectWin && !agentConnectWin.isDestroyed()) agentConnectWin.close();
-  if (petWin && !petWin.isDestroyed()) petWin.close();
+  if (gnomeController) gnomeController.close();
+  else if (petWin && !petWin.isDestroyed()) petWin.close();
 }
 
 function confirmAndPerformFullReset() {
@@ -2563,6 +2590,9 @@ ipcMain.handle("license-activate", async (_evt, licenseKey) => {
 });
 
 ipcMain.handle("license-start", async (_evt, options = {}) => {
+  if (USE_GNOME_NATIVE && options.mascot && options.mascot !== "cat") {
+    throw new Error("La mascota seleccionada aún no está disponible en GNOME. Selecciona Catjang para continuar.");
+  }
   const state = await validateSavedLicense();
   if (!state.ok) throw new Error(String(state.reason || t("licenseActivateFailed")));
 
@@ -3014,15 +3044,20 @@ ipcMain.on("show-context-menu", showPetContextMenu);
 
 // ── 스트레칭 시퀀스: 윈도우 확대 + 중앙으로 → SVG 애니메이션 → 복원 ──
 const STRETCH_DURATION_MS = 3000;
-const STRETCH_GROW_MS = 250;       // 확대 transition 시간
+const STRETCH_GROW_MS = IS_LINUX ? 250 : 400;
 const STRETCH_SHRINK_DELAY_MS = 200; // 종료 후 복원까지 여유
 const STRETCH_FILL_RATIO = 0.90;    // 화면 높이의 90%를 채우도록 (정사각 윈도우)
 let stretchInProgress = false;
 let savedStretchBounds = null;
 let focusStartInProgress = false;
 let savedFocusStartBounds = null;
+let linuxStretchCleanup = null;
 
 function closeStretchOverlay() {
+  if (linuxStretchCleanup) {
+    linuxStretchCleanup();
+    return;
+  }
   if (stretchWin && !stretchWin.isDestroyed()) {
     try {
       stretchWin.close();
@@ -3032,25 +3067,23 @@ function closeStretchOverlay() {
 }
 
 function triggerStretchSequence() {
+  if (gnomeController) { gnomeController.animate("stretch"); return; }
   if (!petWin || petWin.isDestroyed() || stretchInProgress) return;
   stretchInProgress = true;
 
   if (IS_LINUX) {
+    const parent = petWin;
     try {
-      savedStretchBounds = petWin.getBounds();
+      savedStretchBounds = parent.getBounds();
       const display = screen.getDisplayMatching(savedStretchBounds) || screen.getPrimaryDisplay();
       const bounds = display.bounds || display.workArea;
 
-      // Ocultar temporalmente el sprite en petWin para que no se duplique
-      petWin.webContents.send("stretch-started");
-
-      closeStretchOverlay();
-
-      stretchWin = new BrowserWindow({
+      const overlay = new BrowserWindow({
         x: bounds.x,
         y: bounds.y,
         width: bounds.width,
         height: bounds.height,
+        show: false,
         frame: false,
         transparent: true,
         backgroundColor: "#00000000",
@@ -3066,36 +3099,63 @@ function triggerStretchSequence() {
           sandbox: true,
         },
       });
-
-      stretchWin.setIgnoreMouseEvents(true);
-      keepWindowOnTop(stretchWin);
-
-      const mascotParam = encodeURIComponent(currentMascot || "cat");
-      stretchWin.loadFile(
-        path.join(__dirname, "renderer", "stretch-overlay.html"),
-        { query: { mascot: mascotParam } }
-      );
-
-      stretchWin.once("ready-to-show", () => {
-        if (stretchWin && !stretchWin.isDestroyed()) {
-          keepWindowOnTop(stretchWin);
-          stretchWin.showInactive();
-        }
-      });
-
-      setTimeout(() => {
-        closeStretchOverlay();
-        if (petWin && !petWin.isDestroyed()) {
-          petWin.webContents.send("stretch-ended");
-        }
+      stretchWin = overlay;
+      let completed = false;
+      let shown = false;
+      let durationTimer = null;
+      let loadTimer = null;
+      let showTimer = null;
+      const finish = () => {
+        if (completed) return;
+        completed = true;
+        clearTimeout(durationTimer);
+        clearTimeout(loadTimer);
+        clearTimeout(showTimer);
+        parent.removeListener("closed", finish);
+        if (linuxStretchCleanup === finish) linuxStretchCleanup = null;
+        if (stretchWin === overlay) stretchWin = null;
         stretchInProgress = false;
-      }, STRETCH_DURATION_MS);
+        if (shown && !parent.isDestroyed()) parent.webContents.send("stretch-ended");
+        if (!overlay.isDestroyed()) overlay.close();
+      };
+      linuxStretchCleanup = finish;
+      const fail = (error) => {
+        if (completed) return;
+        logWarn("[Catjang] Linux stretch overlay failed:", error);
+        finish();
+      };
+      const show = () => {
+        if (completed || shown) return;
+        if (parent.isDestroyed() || overlay.isDestroyed()) { finish(); return; }
+        shown = true;
+        clearTimeout(loadTimer);
+        parent.webContents.send("stretch-started");
+        keepWindowOnTop(overlay);
+        overlay.showInactive();
+        // Start the three-second sequence after the overlay can be displayed.
+        durationTimer = setTimeout(finish, STRETCH_DURATION_MS);
+      };
+      parent.once("closed", finish);
+      overlay.once("closed", finish);
+      attachWindowDiagnostics(overlay, "Linux stretch");
+      overlay.webContents.once("render-process-gone", (_event, details) => fail(details.reason));
+      overlay.webContents.once("did-fail-load", (_event, code, description, _url, isMainFrame) => {
+        if (isMainFrame !== false) fail(`${code}: ${description}`);
+      });
+      overlay.once("ready-to-show", show);
+      overlay.webContents.once("did-finish-load", () => {
+        showTimer = setTimeout(show, 40);
+      });
+      overlay.setIgnoreMouseEvents(true);
+      keepWindowOnTop(overlay);
+      loadTimer = setTimeout(() => fail("load timed out"), 5000);
+      overlay.loadFile(
+        path.join(__dirname, "renderer", "stretch-overlay.html"),
+        { query: { mascot: currentMascot || "cat" } }
+      ).catch(fail);
     } catch (err) {
       logWarn("[Catjang] Linux stretch overlay failed:", err);
       closeStretchOverlay();
-      if (petWin && !petWin.isDestroyed()) {
-        petWin.webContents.send("stretch-ended");
-      }
       stretchInProgress = false;
     }
     return;
@@ -3106,10 +3166,12 @@ function triggerStretchSequence() {
   const display = screen.getDisplayMatching(savedStretchBounds);
   const { x: dispX, y: dispY, width: dispW, height: dispH } = display.workArea;
 
-  petWin.setResizable(true);
+  const targetSize = Math.round(dispH * STRETCH_FILL_RATIO);
+  const newX = dispX + Math.round((dispW - targetSize) / 2);
+  const newY = dispY + Math.round((dispH - targetSize) / 2);
   petWin.setBounds(
-    { x: dispX, y: dispY, width: dispW, height: dispH },
-    false
+    { x: newX, y: newY, width: targetSize, height: targetSize },
+    true
   );
 
   setTimeout(() => {
@@ -3119,12 +3181,8 @@ function triggerStretchSequence() {
   }, STRETCH_GROW_MS);
 
   setTimeout(() => {
-    if (petWin && !petWin.isDestroyed()) {
-      petWin.webContents.send("stretch-ended");
-      if (savedStretchBounds) {
-        petWin.setBounds(savedStretchBounds, false);
-        petWin.setResizable(false);
-      }
+    if (petWin && !petWin.isDestroyed() && savedStretchBounds) {
+      petWin.setBounds(savedStretchBounds, true);
     }
     stretchInProgress = false;
   }, STRETCH_GROW_MS + STRETCH_DURATION_MS + STRETCH_SHRINK_DELAY_MS);
@@ -3145,8 +3203,8 @@ function triggerPomodoroFocusStartSequence() {
   const newX = dispX + Math.round((dispW - targetSize) / 2);
   const newY = dispY + Math.round((dispH - targetSize) / 2);
 
-  petWin.setResizable(true);
-  petWin.setBounds({ x: newX, y: newY, width: targetSize, height: targetSize }, false);
+  if (IS_LINUX) petWin.setResizable(true);
+  petWin.setBounds({ x: newX, y: newY, width: targetSize, height: targetSize }, !IS_LINUX);
 
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed()) {
@@ -3156,8 +3214,8 @@ function triggerPomodoroFocusStartSequence() {
 
   setTimeout(() => {
     if (petWin && !petWin.isDestroyed() && savedFocusStartBounds) {
-      petWin.setBounds(savedFocusStartBounds, false);
-      petWin.setResizable(false);
+      petWin.setBounds(savedFocusStartBounds, !IS_LINUX);
+      if (IS_LINUX) petWin.setResizable(false);
     }
     focusStartInProgress = false;
     savedFocusStartBounds = null;
@@ -3675,6 +3733,7 @@ app.whenReady().then(async () => {
     }
 
     app.on("activate", () => {
+      if (gnomeController) { gnomeController.present(); return; }
       if (BrowserWindow.getAllWindows().length > 0) return;
       validateSavedLicense()
         .then((state) => {
@@ -3695,6 +3754,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("will-quit", () => {
+  if (IS_LINUX) closeStretchOverlay();
   stopLinuxCursorTracker();
   stopKeyHook();
   if (stretchTimer) {

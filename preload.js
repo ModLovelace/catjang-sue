@@ -3,6 +3,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  platform: process.platform,
   onCursorPos: (callback) =>
     ipcRenderer.on("cursor-pos", (_evt, data) => callback(data)),
   windowCapabilities: () => ipcRenderer.invoke("window-capabilities"),

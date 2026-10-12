@@ -51,3 +51,5 @@ temp/
 # Optional npm/yarn/pnpm lockfiles — keep package-lock.json if you use npm
 # yarn.lock
 # pnpm-lock.yaml
+
+native/gnome/__pycache__/
