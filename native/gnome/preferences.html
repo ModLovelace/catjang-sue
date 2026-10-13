@@ -2,16 +2,28 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:">
 <title>Catjang — Configuración</title><link rel="stylesheet" href="preferences.css"></head>
-<body><main><h1>Catjang</h1><p id="status" role="status">Conectando con la mascota…</p>
-<p id="keyboard" class="note"></p>
-<form id="settings"><label>Mascota<select id="mascot"><option value="cat">Catjang</option></select></label>
-<p class="note">Esta versión nativa incluye Catjang. Las otras mascotas siguen disponibles con el arranque clásico.</p>
+<body><main><header><h1>Catjang</h1><p id="status" role="status">Conectando con la mascota…</p><p id="keyboard" class="note"></p></header>
+<nav aria-label="Configuración"><button data-panel="settings">Mascota</button><button data-panel="pomodoro">Pomodoro</button><button data-panel="reminders">Recordatorios</button></nav>
+<section id="panel-settings"><form id="settings"><h2>Mascota</h2>
+<label>Mascota<select id="mascot"><option value="cat">Catjang</option></select></label>
+<p class="note">Las otras mascotas todavía requieren adaptar sus animaciones al backend GNOME.</p>
 <label>Nombre<input id="name" maxlength="24" autocomplete="off"></label>
 <label class="check"><input id="nameVisible" type="checkbox">Mostrar nombre</label>
-<label>Tamaño en píxeles<input id="size" type="number" min="40" max="400" step="10"></label>
-<button type="submit">Guardar</button></form>
-<p class="note">Arrastra la mascota con el botón izquierdo. El botón derecho abre esta configuración.</p>
+<label>Tamaño en píxeles<input id="size" type="number" min="40" max="400" step="10"></label><button type="submit">Guardar mascota</button></form>
+<form id="preferences"><h2>Preferencias</h2>
+<label>Tu nombre<input id="userName" maxlength="24" autocomplete="off"></label>
+<label>Mensaje fijo<input id="fixedMessage" maxlength="80"></label>
+<label>Estiramiento periódico<select id="stretchIntervalMin"><option value="0">Desactivado</option><option value="10">Cada 10 minutos</option><option value="15">Cada 15 minutos</option><option value="20">Cada 20 minutos</option><option value="30">Cada 30 minutos</option><option value="45">Cada 45 minutos</option><option value="60">Cada hora</option><option value="90">Cada 90 minutos</option><option value="120">Cada 2 horas</option></select></label>
+<label>Volumen de avisos<select id="volume"><option value="0">Silencio</option><option value="0.1">Bajo</option><option value="0.6">Normal</option><option value="0.9">Alto</option></select></label><button type="submit">Guardar preferencias</button></form>
 <div class="actions"><button data-animation="jump">Saltar</button><button data-animation="stretch">Estirarse</button><button data-animation="typing">Probar una tecla</button></div>
-<p class="note">Puedes cerrar esta ventana y seguir usando la mascota. Para detener Catjang, pulsa Salir.</p>
+<button id="agents">Configurar agentes de IA</button><p id="agentsNote" class="note"></p></section>
+<section id="panel-pomodoro" hidden><h2>Pomodoro</h2><p id="pomodoroState" class="timer" role="status"></p>
+<div class="actions"><button id="pomodoroStart">Iniciar / continuar</button><button id="pomodoroPause">Pausar</button><button id="pomodoroReset">Reiniciar</button></div>
+<form id="pomodoroSettings"><label>Enfoque en minutos<input id="focusMin" type="number" min="1" max="180" step="1"></label><label>Descanso en minutos<input id="restMin" type="number" min="0.5" max="60" step="0.5"></label><button type="submit">Guardar duración</button></form>
+<p class="note">Al terminar el enfoque, Catjang avisa y se estira. El reloj continúa aunque cierres esta ventana.</p></section>
+<section id="panel-reminders" hidden><h2>Recordatorios</h2><ul id="reminderList"></ul><form id="reminderForm"><input id="reminderId" type="hidden"><label>Mensaje<input id="reminderMessage" maxlength="80" required></label><label>Hora local<input id="reminderTime" type="time" required></label><label>Repetición<select id="reminderRepeat"><option value="none">Una vez</option><option value="daily">Todos los días</option><option value="weekdays">Lunes a viernes</option><option value="weekends">Fin de semana</option><option value="custom">Elegir días</option></select></label>
+<fieldset id="reminderDays" hidden><legend>Días</legend><label><input type="checkbox" value="1">Lun</label><label><input type="checkbox" value="2">Mar</label><label><input type="checkbox" value="3">Mié</label><label><input type="checkbox" value="4">Jue</label><label><input type="checkbox" value="5">Vie</label><label><input type="checkbox" value="6">Sáb</label><label><input type="checkbox" value="0">Dom</label></fieldset>
+<div class="actions"><button type="submit">Guardar recordatorio</button><button id="reminderNew" type="button">Nuevo</button></div></form></section>
+<p class="note">El botón derecho sobre Catjang abre su menú. Cerrar esta ventana mantiene la mascota y sus temporizadores.</p>
 <div class="actions"><button id="reconnect">Reconectar</button><button id="quit">Salir de Catjang</button></div>
 </main><script src="preferences.js"></script></body></html>

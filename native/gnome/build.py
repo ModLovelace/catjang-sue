@@ -24,7 +24,7 @@ ET.register_namespace('', NS)
 RENDERER = (ROOT / 'renderer/renderer.js').read_text()
 
 
-def freeze_svg(destination, pose='idle', phase=0, blink=False, look=(0, 0), petting=False, heat=0, stretch_progress=0, dimensions=(SIZE, SIZE), chain=False, extension=0):
+def freeze_svg(destination, pose='idle', phase=0, blink=False, look=(0, 0), petting=False, heat=0, stretch_progress=0, dimensions=(SIZE, SIZE), chain=False, extension=0, hunting_time=None, hunting_return=False):
     source = ROOT / f'svg/cat/{pose}.svg'
     tree = ET.parse(source)
     svg = tree.getroot()
@@ -107,6 +107,34 @@ def freeze_svg(destination, pose='idle', phase=0, blink=False, look=(0, 0), pett
         if pose == 'drag' and element.get('id', '').startswith('leg-'):
             origin = element.get('data-patch-frame', '0 0').split()
             element.set('transform', f'rotate({7 * wave} {origin[0]} {origin[1]})')
+    if hunting_time is not None:
+        # Canonical idle.svg hunting CSS: 420ms crouch/grow/rise, 680ms
+        # body/tail wiggle, enlarged pupils, then a 420ms ease-out return.
+        fraction = min(1, max(0, hunting_time / .42))
+        lo, hi = 0, 1
+        for _ in range(20):
+            u = (lo + hi) / 2
+            x = 3 * (1-u) * u*u * .58 + u**3
+            if x < fraction: lo = u
+            else: hi = u
+        eased = 3 * (1-u) * u*u + u**3
+        amount = 1 - eased if hunting_return else eased
+        wiggle = 0 if hunting_return else -math.sin(hunting_time / .68 * math.tau)
+        tail_wiggle = 0 if hunting_return or hunting_time < .12 else -math.sin((hunting_time-.12) / .68 * math.tau)
+        for element in svg.iter():
+            classes = element.get('class', '').split()
+            if 'breathe-anim' in classes: element.attrib.pop('transform', None)
+            if element.get('id') == 'face-js': element.set('transform', f'translate(0 {11*amount})')
+            if 'hunting-body-grow' in classes: element.set('transform', f'translate(16 28) scale({1+.2*amount}) translate(-16 -28)')
+            if element.get('id') == 'body': element.set('transform', f'translate({wiggle} 0)')
+            if 'hunting-tail-rise' in classes: element.set('transform', f'translate(0 {-5*amount})')
+            if 'tail-sway' in classes: element.set('transform', f'translate({tail_wiggle} 0)')
+            if 'pupil-left' in classes or 'pupil-right' in classes:
+                # CSS transform-box: fill-box / transform-origin: center.
+                x, y = float(element.get('x', 0)), float(element.get('y', 0))
+                width, height = float(element.get('width', 1)), float(element.get('height', 1))
+                factor = 1 if hunting_return else 1.33
+                element.set('transform', f'{element.get("transform", "")} translate({x+width/2} {y+height/2}) scale({factor}) translate({-x-width/2} {-y-height/2})')
     if pose == 'drag' and chain:
         start = ET.parse(ROOT / 'svg/stretch-start.svg').getroot()
         start_rects = list(start.iter(f'{{{NS}}}rect'))
@@ -233,9 +261,12 @@ def main():
         specs += [('scroll-alt', 'scroll', math.pi / 2, False),
                   ('drag-alt', 'drag', math.pi / 2, False)]
         specs += [('purr', 'idle', 0, False), ('purr-alt', 'idle', math.pi / 2, False)]
+        specs += [(f'hunt-{i}', 'idle', 0, False) for i in range(28)]
+        specs += [(f'hunt-return-{i}', 'idle', 0, False) for i in range(12)]
         frames = {}
         for name, pose, phase, blink in specs:
-            source = freeze_svg(assets / f'{name}.svg', pose, phase, blink, petting=name.startswith('purr'))
+            hunting = dict(hunting_time=int(name.split('-')[-1]) * .04, hunting_return=name.startswith('hunt-return-')) if name.startswith('hunt-') else {}
+            source = freeze_svg(assets / f'{name}.svg', pose, phase, blink, petting=name.startswith('purr'), **hunting)
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(assets / f'{name}.svg'))
             pixbuf.savev(str(assets / f'{name}.png'), 'png', [], [])
             frames[name] = {
@@ -252,7 +283,7 @@ def main():
                         if dx == dy == 0:
                             continue
                         stem = f'{name}-look-{dx}-{dy}'
-                        freeze_svg(assets / f'{stem}.svg', pose, phase, blink, look=(dx, dy))
+                        freeze_svg(assets / f'{stem}.svg', pose, phase, blink, look=(dx, dy), **hunting)
                         looked = GdkPixbuf.Pixbuf.new_from_file(str(assets / f'{stem}.svg'))
                         if regions_from_alpha(looked) != frames[name]['rects']:
                             raise ValueError(f'Eye tracking changed the input silhouette: {stem}')
@@ -265,7 +296,7 @@ def main():
                     dx, dy = map(int, key.split(','))
                     stem = f'{name}-mask-{dx}-{dy}'
                     cold_file = frames[name].get('looks', {}).get(key, frames[name]['file'])
-                    freeze_svg(assets / f'{stem}.svg', pose, phase, blink, look=(dx,dy), petting=name.startswith('purr'), heat=1)
+                    freeze_svg(assets / f'{stem}.svg', pose, phase, blink, look=(dx,dy), petting=name.startswith('purr'), heat=1, **hunting)
                     hot = GdkPixbuf.Pixbuf.new_from_file(str(assets / f'{stem}.svg'))
                     cold = GdkPixbuf.Pixbuf.new_from_file(str(assets / cold_file))
                     heat_mask(cold, hot).savev(str(assets / f'{stem}.png'), 'png', [], [])

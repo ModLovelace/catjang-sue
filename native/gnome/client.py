@@ -57,10 +57,10 @@ def handle(line):
             raise ValueError('Bridge request exceeds its size limit')
         request = json.loads(line)
         method = request.get('method')
-        if method not in {'Attach', 'Update', 'Animate', 'Notify', 'Detach', 'GetState'}:
+        if method not in {'Attach', 'Update', 'SetControls', 'Animate', 'Notify', 'Detach', 'GetState'}:
             raise ValueError('Unknown bridge request')
         value = request.get('value')
-        if method in {'Attach', 'Update'}:
+        if method in {'Attach', 'Update', 'SetControls'}:
             value = json.dumps(value, separators=(',', ':'))
         elif method in {'Animate', 'Notify'} and not isinstance(value, str):
             raise ValueError('Request requires text')
@@ -109,12 +109,19 @@ def on_petting(_connection, _sender, _path, _interface, _signal, parameters):
         emit({'event': 'petting', 'active': parameters.unpack()[0]})
 
 
+def on_context(_connection, _sender, _path, _interface, _signal, parameters):
+    if attached:
+        emit({'event': 'context', 'action': parameters.unpack()[0]})
+
+
 connection.signal_subscribe('org.gnome.Shell', INTERFACE, 'PettingChanged', OBJECT,
     None, Gio.DBusSignalFlags.NONE, on_petting)
 connection.signal_subscribe('org.gnome.Shell', INTERFACE, 'PositionChanged', OBJECT,
     None, Gio.DBusSignalFlags.NONE, on_position)
 connection.signal_subscribe('org.gnome.Shell', INTERFACE, 'PreferencesRequested', OBJECT,
     None, Gio.DBusSignalFlags.NONE, on_preferences)
+connection.signal_subscribe('org.gnome.Shell', INTERFACE, 'ContextAction', OBJECT,
+    None, Gio.DBusSignalFlags.NONE, on_context)
 GLib.io_add_watch(sys.stdin.fileno(), GLib.IOCondition.IN | GLib.IOCondition.HUP | GLib.IOCondition.ERR, on_input)
 GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, stop)
 GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, stop)

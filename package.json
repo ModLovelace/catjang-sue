@@ -183,6 +183,7 @@
           "to": "gnome",
           "filter": [
             "bridge.js",
+            "features.js",
             "client.py",
             "preferences*.js",
             "preferences.html",
@@ -197,6 +198,14 @@
         {
           "from": "workspace/assets/sound/purring.m4a",
           "to": "gnome/purring.m4a"
+        },
+        {
+          "from": "workspace/assets/sound/meow.m4a",
+          "to": "gnome/meow.m4a"
+        },
+        {
+          "from": "workspace/assets/sound/meow-alert.m4a",
+          "to": "gnome/meow-alert.m4a"
         }
       ],
       "syncDesktopName": true

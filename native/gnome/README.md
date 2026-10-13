@@ -3,7 +3,8 @@
 Backend Linux integrado con la aplicación Electron mediante un helper Python y
 D-Bus. GNOME Shell dibuja las poses, anima el reposo y recibe entrada sobre la
 silueta. Electron conserva la licencia, los ajustes y una ventana de preferencias.
-La aceptación en el escritorio habitual sigue pendiente de observación física.
+El usuario aprobó la integración en el escritorio habitual. La extensión v3 añade
+el gesto de caza y controles nativos; esta actualización requiere recargar la sesión.
 
 El desarrollo y la aprobación física se realizaron en el worktree
 `codex/ubuntu-gnome-prototype`, desde `1961458`. El backend se integró después en
@@ -20,23 +21,25 @@ El 12 de octubre de 2026 se instaló la extensión en la sesión habitual de GNO
 validado y la lista de extensiones activas quedó intacta. El visor, su aplicación
 y su lector de teclado se cerraron sin procesos residuales.
 
-**Activación pendiente:** GNOME no reconoce todavía el nuevo UUID en la sesión
-actual. Cerrar sesión y volver a entrar es un paso manual. Después ejecutar:
+Tras reiniciar la sesión, el usuario confirmó el funcionamiento local:
+«Listo, funciona genial». La aplicación usa el perfil demo independiente de
+`.tmp/gnome-prototype/desktop-trial/runtime/`, sin cambiar la licencia normal ni
+activar integraciones de agentes.
+
+El 13 de octubre se verificó y aprobó físicamente la caza del cursor en el visor.
+La extensión **v3** también incorpora menú contextual, pomodoro, recordatorios,
+mensaje fijo y preferencias de los temporizadores compartidos. Actualizar el ZIP
+no recarga módulos de una extensión que GNOME ya tiene activa: cerrar y volver
+a iniciar sesión es necesario para cargar este código en el escritorio habitual.
+Después ejecutar:
 
 ```bash
 bash native/gnome/run-desktop-trial.sh
 ```
 
-El comando activa únicamente esta extensión y abre el código del worktree con
-licencia demo y perfil separado en `.tmp/gnome-prototype/desktop-trial/runtime/`.
-No modifica la licencia/configuración normal ni habilita integraciones de agentes.
-Cerrar preferencias conserva la mascota; Salir debe retirar mascota y lector.
-Volver a ejecutar debe restaurar la posición/tamaño guardados en el perfil demo.
-
-La prueba debe comprobar arrastre/soltar, teclado desde otra aplicación,
-estiramiento, clics transparentes, ojos/caricias/audio, overview y fullscreen.
-La activación y estas interacciones en la sesión habitual siguen pendientes;
-instalar el ZIP no acredita su funcionamiento en el escritorio.
+Cerrar preferencias conserva la mascota; Salir retira la mascota y su lector.
+Los resultados y límites de la actualización están en
+`docs/QA_2026-10-13-gnome-controls.md`.
 
 Para retirar exclusivamente la extensión de esta prueba, salir primero de Catjang:
 
@@ -78,8 +81,14 @@ El estado previo y el resultado de instalación están en
   proceden de Electron. Escape cancela; clic breve anima una pata.
 - Durante el arrastre se captura entrada nativa hasta soltar, cancelar, ocultar
   o desactivar; en reposo el padre vuelve a ser no reactivo.
-- Rueda sobre la mascota: animación del rollo de papel. Botón derecho: abre las
-  preferencias en la aplicación; en el prototipo muestra la máscara roja.
+- Rueda sobre la mascota: animación del rollo de papel. Botón derecho: menú
+  contextual nativo en la aplicación; en el prototipo muestra la máscara roja.
+- Círculos en ambos sentidos alrededor de la mascota: postura de caza del SVG
+  original, agachando la cabeza y agrandando el cuerpo durante 420 ms, con cola
+  elevada, cuerpo/cola oscilantes y pupilas ampliadas. Mantiene la mirada; la caza
+  dura 1.100 ms y vuelve al reposo durante 420 ms. Movimiento rápido repetido usa
+  además la energía de agitación de Electron. Arrastre, teclas, rueda, estiramiento,
+  menú y ocultación cancelan el gesto. Nunca captura el cursor para cazar.
 - Teclado del escritorio: lector evdev pasivo de dispositivos que el usuario
   ya puede leer. Cuenta presión y repetición, ignora liberaciones y atajos con
   Ctrl/Alt/Meta; transmite únicamente actividad, sin caracteres ni identificador
@@ -92,13 +101,18 @@ El estado previo y el resultado de instalación están en
   pantalla completa por monitor y transición al modo de bloqueo se verificaron
   en aislamiento; el bloqueo físico y su diálogo de contraseña siguen pendientes.
 - Física, opacidad y calor se actualizan cada 16 ms; reposo usa poses cada
-  140 ms y mirada/caricia se muestrean cada 32 ms. Desactivar elimina el
+  140 ms y mirada/caricia/caza se muestrean cada 32 ms. Desactivar elimina el
   temporizador, suscripciones, conexiones, actores y captura activa.
 
 Compatibilidad declarada únicamente con **GNOME Shell 50**. Las preferencias
-permiten disparar salto, estiramiento y una tecla; los eventos existentes pueden
-enviar animaciones y avisos. Siguen pendientes otras mascotas, grabación de
-pantalla y la interfaz completa de pomodoro/recordatorios.
+permiten salto, estiramiento y una tecla, nombre/tamaño, usuario, mensaje fijo,
+intervalo de estiramiento y volumen. Pomodoro y recordatorios reutilizan los
+relojes, persistencia y eventos de `main.js`, sin duplicar lógica. Las alertas
+nativas conservan el texto y reproducen los sonidos originales. El menú abre
+estos paneles, ofrece salto/estiramiento/tamaño/nombre y abre el onboarding de
+agentes, que conserva su consentimiento explícito. Otras mascotas aparecen
+como pendientes y no se pueden seleccionar todavía. Siguen pendientes otras
+mascotas nativas, grabación de pantalla e instalación automática de la extensión.
 GNOME 46 de Ubuntu 24.04, KDE y otros escritorios requieren trabajo independiente.
 Los archivos nuevos están en `native/gnome/`. Los puntos de conexión en `main.js`
 están condicionados a Linux y a la selección explícita del backend. Los renderers
@@ -388,3 +402,16 @@ Referencias de la implementación: [arquitectura de extensiones GNOME](https://g
 [LayoutManager de GNOME 50.1](https://raw.githubusercontent.com/GNOME/gnome-shell/50.1/js/ui/layout.js),
 [seat Wayland de Mutter 50.1](https://raw.githubusercontent.com/GNOME/mutter/50.1/src/wayland/meta-wayland-seat.c)
 y [Mutter Development Kit](https://raw.githubusercontent.com/GNOME/mutter/50.1/src/core/meta-mdk.c).
+
+### Verificación de los controles y la caza
+
+```bash
+native/gnome/run-nested.sh --features
+native/gnome/run-nested.sh --hunting
+```
+
+`--features` recorre menú y formularios reales, pomodoro hasta el descanso,
+recordatorio de una sola ejecución y audio decodificado en un servidor privado.
+`--hunting` mueve un puntero virtual real en círculos en ambos sentidos y verifica
+retorno, mirada, prioridades y limpieza. Son sondas del compositor GNOME 50; no
+sustituyen la revisión humana. El usuario aprobó el gesto circular en el visor.

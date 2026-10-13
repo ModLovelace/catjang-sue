@@ -58,6 +58,14 @@ app.whenReady().then(async () => {
       } else if (command.action === "reconnect-burst") {
         await win.webContents.executeJavaScript("Promise.all([window.catjangNative.reconnect(),window.catjangNative.reconnect(),window.catjangNative.reconnect()])", true);
         await sleep(900);
+      } else if (command.action === 'feature') {
+        await win.webContents.executeJavaScript(`window.catjangNative.feature(${JSON.stringify(command.settings.action)},${JSON.stringify(command.settings.payload)})`, true);
+      } else if (command.action === 'ui') {
+        await win.webContents.executeJavaScript(command.settings, true);
+        await sleep(200);
+      } else if (command.action === 'capture-window') {
+        win.show(); await sleep(150);
+        fs.writeFileSync(path.join(output,command.settings),(await win.webContents.capturePage()).toPNG());
       } else if (command.action === "configure") {
         await win.webContents.executeJavaScript(`window.catjangNative.set(${JSON.stringify(command.settings)})`, true);
       } else if (command.action === "animate") {
@@ -90,6 +98,7 @@ app.whenReady().then(async () => {
       }
       const state = await win.webContents.executeJavaScript("window.catjangNative.get()", true);
       write("reply.json", {id: command.id, ok: true, state,
+        features: await win.webContents.executeJavaScript('window.catjangNative.getFeatures()', true),
         windowVisible: win.isVisible(),
         audio: await win.webContents.executeJavaScript("({paused:purringAudio.paused,time:purringAudio.currentTime,ready:purringAudio.readyState,network:purringAudio.networkState,transitions:window.qaPurr,error:purringAudio.error?.message??null})", true),
         saved: JSON.parse(fs.readFileSync(path.join(profile, "settings.json"), "utf8"))});

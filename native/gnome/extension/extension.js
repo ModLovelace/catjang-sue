@@ -6,15 +6,17 @@ import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {Accordion} from './animation.js';
+import {Accordion, HuntingMotion} from './animation.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 const CONTROL_PATH = '/dev/catjang/GnomePet';
 const CONTROL_IFACE = 'dev.catjang.GnomePet1';
 const CONTROL_XML = `<node><interface name="${CONTROL_IFACE}">
     <method name="Attach"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Update"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
+    <method name="SetControls"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Animate"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Notify"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Detach"><arg type="s" direction="out"/></method>
@@ -22,6 +24,7 @@ const CONTROL_XML = `<node><interface name="${CONTROL_IFACE}">
     <signal name="PositionChanged"><arg type="i"/><arg type="i"/></signal>
     <signal name="PreferencesRequested"/>
     <signal name="PettingChanged"><arg type="b"/></signal>
+    <signal name="ContextAction"><arg type="s"/></signal>
 </interface></node>`;
 
 
@@ -36,6 +39,8 @@ export default class CatjangPrototype extends Extension {
         this._gesture = null;
         this._dragging = false;
         this._effect = null;
+        this._hunting = null;
+        this._huntingMotion = new HuntingMotion();
         this._frame = null;
         this._tick = 0;
         this._positioned = false;
@@ -57,6 +62,9 @@ export default class CatjangPrototype extends Extension {
         this._size = 200;
         this._owner = null;
         this._ownerWatch = 0;
+        this._menu = null;
+        this._menuManager = null;
+        this._controls = {pomodoroRunning: false, stretchIntervalMin: 0, nameVisible: true};
         this._requestedVisible = this.uuid === 'catjang-prototype@modlovelace.github.io';
         try {
             const [, bytes] = Gio.File.new_for_path(`${this.path}/assets/input-regions.json`).load_contents(null);
@@ -111,6 +119,10 @@ export default class CatjangPrototype extends Extension {
             this._nameLabel = new St.Label({text: '', reactive: false, style: 'font-size: 12px; color: white;'});
             this._nameLabel.set_position(0, geometry.height + 2);
             this._actor.add_child(this._nameLabel);
+            this._messageLabel = new St.Label({text: '', reactive: false, visible: false,
+                style: 'font-size: 12px; color: white; background-color: rgba(25,35,48,.9); padding: 8px; border-radius: 8px;'});
+            this._messageLabel.clutter_text.set_line_wrap(true);
+            this._actor.add_child(this._messageLabel);
             this._hearts = [];
             for (let index = 0; index < 3; index++) {
                 const heart = new St.Label({text: '♥', reactive: false, visible: false,
@@ -155,7 +167,7 @@ export default class CatjangPrototype extends Extension {
                     this._typingPulse();
                 });
             const api = {};
-            for (const method of ['Attach', 'Update', 'Animate', 'Notify', 'Detach', 'GetState'])
+            for (const method of ['Attach', 'Update', 'SetControls', 'Animate', 'Notify', 'Detach', 'GetState'])
                 api[`${method}Async`] = (parameters, invocation) => this._control(method, parameters, invocation);
             this._controlObject = Gio.DBusExportedObject.wrapJSObject(CONTROL_XML, api);
             this._controlObject.export(Gio.DBus.session, CONTROL_PATH);
@@ -175,7 +187,7 @@ export default class CatjangPrototype extends Extension {
         return {connected: Boolean(this._owner), visible: Boolean(this._actor?.visible),
             size: this._size, name: this._nameLabel?.text ?? '',
             x: Math.round(this._actor?.x ?? 0), y: Math.round(this._actor?.y ?? 0),
-            frame: this._frame, heat: this._heat, fatigue: this._fatigue, accordion: this._physics?.t ?? 0, stretching: Boolean(this._stretchActor), look: this._look, purring: this._purring, mascot: 'cat', version: this.metadata.version};
+            frame: this._frame, heat: this._heat, fatigue: this._fatigue, accordion: this._physics?.t ?? 0, stretching: Boolean(this._stretchActor), look: this._look, hunting: Boolean(this._hunting), purring: this._purring, mascot: 'cat', version: this.metadata.version};
     }
 
     _configuration(json) {
@@ -196,6 +208,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _apply(settings) {
+        this._cancelHunting();
         this._finishStretch();
         this._endGesture(true);
         this._resetAccordion();
@@ -207,6 +220,7 @@ export default class CatjangPrototype extends Extension {
         this._nameLabel.text = settings.name;
         this._nameRequestedVisible = settings.nameVisible;
         this._nameLabel.visible = settings.nameVisible;
+        this._updateMessage();
         this._requestedVisible = settings.visible;
         if (settings.position) {
             this._actor.set_position(settings.position.x, settings.position.y);
@@ -218,6 +232,10 @@ export default class CatjangPrototype extends Extension {
     }
 
     _detachController() {
+        this._cancelHunting();
+        this._menu?.close();
+        this._controls = {pomodoroRunning: false, stretchIntervalMin: 0, nameVisible: true, fixedMessage: ''};
+        if (this._actor && this._messageLabel) { this._messageLabel.text = ''; this._messageLabel.hide(); }
         this._finishStretch();
         this._resetAccordion();
         this._keyTimes = [];
@@ -253,6 +271,16 @@ export default class CatjangPrototype extends Extension {
                     throw new Error('Caller does not own the native pet');
                 if (method === 'Update')
                     this._apply(this._configuration(parameters[0]));
+                else if (method === 'SetControls') {
+                    if (parameters[0].length > 1024) throw new Error('Controls exceed size limit');
+                    const controls = JSON.parse(parameters[0]);
+                    if (!controls || typeof controls.pomodoroRunning !== 'boolean' || typeof controls.nameVisible !== 'boolean' ||
+                        typeof controls.fixedMessage !== 'string' || controls.fixedMessage.length > 80 ||
+                        ![0, 1, 10, 15, 20, 30, 45, 60, 90, 120].includes(controls.stretchIntervalMin))
+                        throw new Error('Invalid native controls');
+                    this._controls = controls;
+                    this._updateMessage();
+                }
                 else if (method === 'Detach')
                     this._detachController();
                 else if (method === 'Animate') {
@@ -321,11 +349,18 @@ export default class CatjangPrototype extends Extension {
         const look = `${direction(nx - .4)},${direction(ny - .33)}`;
         if (look !== this._look) { this._look = look; this._refreshVisual(); }
         const now = GLib.get_monotonic_time() / 1000;
+        if (!this._gesture && !this._effect && !this._menu?.isOpen && (!this._hunting || now < this._hunting.until)) {
+            if (this._huntingMotion.sample(x, y, this._actor.x + this._size*.4, this._actor.y + this._size*.45, this._size, now)) {
+                if (!this._hunting) this._hunting = {start: now, until: now + 1100};
+                else this._hunting.until = now + 1100;
+                this._setPurring(false); this._stroke = null;
+            }
+        } else this._huntingMotion.reset();
         const opaque = this._frames[this._frame].rects.some(rect =>
             nx * 200 >= rect.x && nx * 200 < rect.x + rect.width &&
             ny * 200 >= rect.y && ny * 200 < rect.y + rect.height);
         const head = opaque && ((nx - .4) / .25) ** 2 + ((ny - .33) / .23) ** 2 <= 1;
-        if (this._gesture || this._effect || !head) {
+        if (this._gesture || this._effect || this._hunting || this._menu?.isOpen || !head) {
             if (this._stroke && now - this._stroke.lastMove > 250) this._stroke = null;
             this._setPurring(false);
             return;
@@ -369,7 +404,13 @@ export default class CatjangPrototype extends Extension {
         });
     }
 
+    _cancelHunting() {
+        this._hunting = null;
+        this._huntingMotion?.reset();
+    }
+
     _play(frames, milliseconds) {
+        this._cancelHunting();
         this._setPurring(false);
         this._stroke = null;
         this._effect = {frames, start: GLib.get_monotonic_time(), duration: milliseconds * 1000};
@@ -417,6 +458,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _startStretch() {
+        this._cancelHunting();
         this._finishStretch();
         this._resetAccordion();
         this._endGesture(true);
@@ -466,6 +508,7 @@ export default class CatjangPrototype extends Extension {
         this._physics = new Accordion(); this._motionTime = GLib.get_monotonic_time();
         this._dragLayer.visible = true; this._visual.visible = false; this._visualHeat.visible = false;
         this._nameLabel.visible = false;
+        this._messageLabel.visible = false;
         this._renderAccordion();
     }
 
@@ -509,6 +552,7 @@ export default class CatjangPrototype extends Extension {
         if (!this._actor || !this._dragLayer) return;
         this._dragLayer.visible = false; this._visual.visible = true; this._visualHeat.visible = true;
         this._nameLabel.visible = this._nameRequestedVisible ?? false;
+        this._updateMessage();
         this._updateRegions();
     }
 
@@ -533,10 +577,85 @@ export default class CatjangPrototype extends Extension {
             }
             this._effect = null;
         }
+        if (this._hunting) {
+            const now = GLib.get_monotonic_time() / 1000, elapsed = Math.max(0, now - this._hunting.start);
+            if (now < this._hunting.until) {
+                const index = elapsed < 440 ? Math.floor(elapsed/40) : 11 + Math.floor((elapsed-440)/40) % 17;
+                this._setFrame(`hunt-${index}`); return;
+            }
+            const returned = now - this._hunting.until;
+            if (returned < 420) { this._setFrame(`hunt-return-${Math.min(11, Math.floor(returned/40))}`); return; }
+            this._cancelHunting();
+        }
         if (this._purring) { this._setFrame(this._tick % 2 ? 'purr' : 'purr-alt'); return; }
         const phase = this._tick % 28;
         const wave = Math.floor(phase / 3) % 8;
         this._setFrame(phase === 26 ? 'blink' : (wave === 0 ? 'idle' : `idle-${wave}`));
+    }
+
+    _updateMessage() {
+        if (!this._messageLabel || !this._actor) return;
+        const scale = this._size / 200;
+        const width = Math.max(120, Math.min(280, this._size * 1.5));
+        this._messageLabel.set_scale(1 / scale, 1 / scale);
+        this._messageLabel.set_width(width);
+        this._messageLabel.text = this._controls.fixedMessage ?? '';
+        const [, height] = this._messageLabel.get_preferred_height(width);
+        this._messageLabel.set_position((200 - width / scale) / 2, -height / scale - 8);
+        this._messageLabel.visible = Boolean(this._messageLabel.text) && !this._physics;
+    }
+
+    _openContextMenu() {
+        if (!this._owner || !this._actor?.visible || this._gesture) return;
+        this._cancelHunting();
+        this._setPurring(false); this._stroke = null;
+        if (!this._menu) {
+            const menu = new PopupMenu.PopupMenu(this._actor, .5, St.Side.LEFT);
+            this._menu = menu;
+            this._menuManager = new PopupMenu.PopupMenuManager(this._actor);
+            this._menuManager.addMenu(menu);
+            Main.uiGroup.add_child(menu.actor);
+            menu.actor.hide();
+            menu.actor.connect('destroy', () => {
+                this._menuManager?.removeMenu(menu);
+                if (this._menu === menu) { this._menu = null; this._menuManager = null; }
+            });
+        }
+        if (this._menu.isOpen) { this._menu.close(); return; }
+        this._menu.removeAll();
+        this._contextItems = new Map();
+        const action = (id, label, parent = this._menu) => {
+            const item = parent.addAction(label, () => {
+                this._menu?.close();
+                if (this._owner) this._controlObject.emit_signal('ContextAction', new GLib.Variant('(s)', [id]));
+            });
+            this._contextItems.set(id, item); return item;
+        };
+        action('preferences', 'Configuración');
+        const pomodoro = new PopupMenu.PopupSubMenuMenuItem('Pomodoro');
+        this._menu.addMenuItem(pomodoro);
+        action('pomodoro-toggle', this._controls.pomodoroRunning ? 'Pausar' : 'Iniciar / continuar', pomodoro.menu);
+        action('pomodoro-reset', 'Reiniciar', pomodoro.menu);
+        action('pomodoro-settings', 'Duración y estado…', pomodoro.menu);
+        action('reminders', 'Recordatorios…');
+        action('stretch', 'Estirarse ahora');
+        action('jump', 'Saltar');
+        const size = new PopupMenu.PopupSubMenuMenuItem('Tamaño');
+        this._menu.addMenuItem(size);
+        action('size-smaller', 'Más pequeño', size.menu); action('size-larger', 'Más grande', size.menu);
+        action('name-toggle', this._controls.nameVisible ? 'Ocultar nombre' : 'Mostrar nombre');
+        action('agents-setup', 'Configurar agentes de IA…');
+        const mascots = new PopupMenu.PopupSubMenuMenuItem('Mascotas');
+        this._menu.addMenuItem(mascots);
+        const cat = mascots.menu.addAction('Catjang', () => {}); cat.setOrnament(PopupMenu.Ornament.DOT);
+        for (const name of ['Toto', 'Chisi', 'Milo', 'Musubi', 'Chuño']) {
+            const item = new PopupMenu.PopupMenuItem(`${name} (pendiente en GNOME)`); item.setSensitive(false); mascots.menu.addMenuItem(item);
+        }
+        this._menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        action('quit', 'Salir de Catjang');
+        const area = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex());
+        this._menu.actor.set_style(`max-height: ${area.height - 32}px;`);
+        this._menu.open();
     }
 
     _onEvent(event) {
@@ -544,6 +663,7 @@ export default class CatjangPrototype extends Extension {
         case Clutter.EventType.BUTTON_PRESS:
             if (event.get_button() === Clutter.BUTTON_PRIMARY && !this._gesture) {
                 const [x, y] = event.get_coords();
+                this._cancelHunting();
                 this._resetAccordion();
                 this._effect = null;
                 this._setPurring(false);
@@ -585,7 +705,7 @@ export default class CatjangPrototype extends Extension {
                 this._endGesture(false);
             else if (event.get_button() === Clutter.BUTTON_SECONDARY) {
                 if (this._owner) {
-                    this._controlObject.emit_signal('PreferencesRequested', null);
+                    this._openContextMenu();
                     return Clutter.EVENT_STOP;
                 }
                 this._debug = !this._debug;
@@ -674,6 +794,8 @@ export default class CatjangPrototype extends Extension {
         const visible = this._requestedVisible && Main.sessionMode.hasWindows && !Main.sessionMode.isLocked &&
             !Main.overview.visible && !fullscreen;
         if (!visible) {
+            this._cancelHunting();
+            this._menu?.close();
             this._finishStretch();
             this._endGesture(true);
             this._setPurring(false);
@@ -686,6 +808,10 @@ export default class CatjangPrototype extends Extension {
         if (this._disabling) return;
         this._disabling = true;
         this._detachController();
+        this._menu?.destroy();
+        this._menu = null;
+        this._menuManager = null;
+        this._contextItems = null;
         this._controlObject?.unexport();
         this._controlObject = null;
         if (this._animationSource)
@@ -706,6 +832,7 @@ export default class CatjangPrototype extends Extension {
         this._dragPieces = [];
         this._chainFrames = null;
         this._nameLabel = null;
+        this._messageLabel = null;
         this._hearts = [];
         this._steam = [];
         this._stretchFrames = null;

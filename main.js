@@ -1489,6 +1489,21 @@ function createPetWindow() {
       },
       onPosition: position => { currentPetPosition = position; lastPetDragAt = Date.now(); saveSettings(); },
       onClosed: () => { petWin = null; gnomeController = null; },
+      features: {
+        get: () => ({stretchIntervalMin, userName, fixedMessage, taskCompleteSoundVolume,
+          pomodoro: pomodoroState(), reminders: reminderList(), agentsEnabled: agentIntegrationsEnabled,
+          agentsAvailable: AGENT_INTEGRATIONS_OVERRIDE !== false}),
+        configure: patch => {
+          if (Object.hasOwn(patch, "stretchIntervalMin")) setStretchInterval(patch.stretchIntervalMin);
+          if (Object.hasOwn(patch, "focusMin")) setPomodoroFocusMin(patch.focusMin);
+          if (Object.hasOwn(patch, "restSec")) setPomodoroRestSec(patch.restSec);
+          if (Object.hasOwn(patch, "userName")) setUserName(patch.userName);
+          if (Object.hasOwn(patch, "fixedMessage")) setFixedMessage(patch.fixedMessage);
+          if (Object.hasOwn(patch, "taskCompleteSoundVolume")) setTaskCompleteSoundVolume(patch.taskCompleteSoundVolume);
+        },
+        startPomodoro, pausePomodoro, resetPomodoro, addReminder, updateReminder,
+        deleteReminder, setReminderEnabled, openAgents: openAgentConnectWindow,
+      },
     });
     petWin = gnomeController.window;
     return;

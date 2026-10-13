@@ -6,3 +6,10 @@ input, select, button { font: inherit; padding: 9px; border-radius: 7px; border:
 button { cursor: pointer; } button:hover { background: #354860; } input[type=checkbox] { margin: 0; }
 .note { color: #bac6d6; font-size: 13px; line-height: 1.5; } .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 #status { line-height: 1.5; overflow-wrap: anywhere; }
+
+nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; } nav [aria-pressed=true] { background:#3e5d87; }
+[hidden] { display:none !important; } h2 { margin-top:24px; font-size:18px; }
+form { margin-bottom:20px; } .timer { font-size:24px; font-variant-numeric:tabular-nums; }
+#reminderList { padding:0; list-style:none; } #reminderList li { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+#reminderList span { flex-basis:100%; overflow-wrap:anywhere; } fieldset { display:flex; flex-wrap:wrap; gap:10px; border:1px solid #536377; }
+fieldset label { flex-direction:row; margin:4px; } #agents { margin-top:20px; }

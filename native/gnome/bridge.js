@@ -5,7 +5,9 @@ const path = require("node:path");
 const {pathToFileURL} = require("node:url");
 
 // Loaded only by the explicit Linux GNOME branch in main.js.
-function createNativeController({ app, BrowserWindow, ipcMain, getSettings, updateSettings, onPosition, onClosed }) {
+function createNativeController({ app, BrowserWindow, ipcMain, getSettings, updateSettings, onPosition, onClosed, features }) {
+  const featureService = require('./features').createFeatures(features);
+  let controlsSupported = false;
   let child = null;
   let reader = null;
   let sequence = 0;
@@ -19,7 +21,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   let keyboard = {mode: 'local', devices: 0};
   const requests = new Map();
   const root = __dirname;
-  const win = new BrowserWindow({width: 460, height: 600, title: "Catjang — Configuración",
+  const win = new BrowserWindow({width: 560, height: 760, title: "Catjang — Configuración",
     show: false, backgroundColor: "#17212f", webPreferences: {
       preload: path.join(root, "preferences-preload.js"), contextIsolation: true,
       nodeIntegration: false, sandbox: true, autoplayPolicy: "no-user-gesture-required",
@@ -33,6 +35,39 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     if (win.isDestroyed()) return;
     win.show();
     win.focus();
+  }
+  function openPanel(panel = 'settings') {
+    present();
+    win.webContents.send('gnome:panel', panel);
+  }
+  function controls() {
+    const state = featureService.get();
+    return {pomodoroRunning: state.pomodoro.running, stretchIntervalMin: state.stretchIntervalMin,
+      nameVisible: getSettings().nameVisible, fixedMessage: state.fixedMessage};
+  }
+  async function synchronizeControls() {
+    if (connected && controlsSupported) await request('SetControls', controls());
+  }
+  function publishFeatures() {
+    if (!win.isDestroyed()) win.webContents.send('gnome:features', featureService.get());
+    synchronizeControls().catch(report);
+  }
+  async function contextAction(action) {
+    const panels = {preferences: 'settings', reminders: 'reminders', 'pomodoro-settings': 'pomodoro'};
+    if (panels[action]) { openPanel(panels[action]); return; }
+    if (action === 'quit') { app.quit(); return; }
+    if (['jump', 'stretch'].includes(action)) { await animate(action); return; }
+    if (['size-smaller', 'size-larger', 'name-toggle'].includes(action)) {
+      const current = getSettings();
+      updateSettings({...current, size: action === 'name-toggle' ? current.size :
+        Math.max(40, Math.min(400, current.size + (action === 'size-larger' ? 20 : -20))),
+        nameVisible: action === 'name-toggle' ? !current.nameVisible : current.nameVisible});
+      await synchronize(); publishFeatures(); return;
+    }
+    if (action === 'pomodoro-toggle') action = featureService.get().pomodoro.running ? 'pomodoro-pause' : 'pomodoro-start';
+    if (['pomodoro-start', 'pomodoro-pause', 'pomodoro-reset', 'agents-setup'].includes(action)) {
+      featureService.execute(action); publishFeatures();
+    }
   }
   function publish(message) {
     if (!connected && !win.isDestroyed()) win.webContents.send("gnome:petting", false);
@@ -68,6 +103,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     if (!connected) return;
     try {
       await request("Update", settings());
+      await synchronizeControls();
     } catch (error) { report(error); }
   }
   async function animate(name) {
@@ -75,12 +111,18 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     try { await request("Animate", name); } catch (error) { report(error); }
   }
   async function forward(channel, data) {
+    if (['pomodoro-state', 'reminders-changed', 'user-name-changed', 'fixed-message-changed',
+      'task-complete-sound-volume', 'language-changed'].includes(channel)) publishFeatures();
     if (["cat-name-changed", "mascot-changed"].includes(channel)) await synchronize();
     const animations = {"key-pressed": "typing", "mouse-wheel": "scroll", "do-jump": "jump",
       "do-stretch": "stretch", "stretch-started": "stretch", "pomodoro-focus-start": "jump"};
     if (animations[channel]) await animate(animations[channel]);
     if (["reminder-triggered", "ai-task-complete", "ai-task-notification", "pomodoro-complete"].includes(channel) && connected) {
-      const text = String(data?.message || data?.title || "Tarea completada").slice(0, 512);
+      const text = channel === 'pomodoro-complete'
+        ? (data?.completedMode === 'focus' ? 'Terminó el enfoque. Es momento de descansar.' : 'Terminó el descanso. Volvemos al enfoque.')
+        : String(data?.text || data?.message || data?.title || "Tarea completada").slice(0, 512);
+      if (!win.isDestroyed()) win.webContents.send('gnome:alert', {text,
+        sound: channel === 'reminder-triggered' ? 'reminder' : 'completion', volume: featureService.get().taskCompleteSoundVolume});
       try { await request("Notify", text); } catch (error) { report(error); }
     }
   }
@@ -164,9 +206,11 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
         else pending.reject(new Error(event.error || "Solicitud rechazada por GNOME"));
       } else if (event.event === "ready") {
         try {
-          await request("Attach", settings());
+          const attached = await request("Attach", settings());
           if (child !== process) return;
           connected = true;
+          controlsSupported = attached.version >= 3;
+          await synchronizeControls();
           startKeyboard();
           publish("Mascota conectada a GNOME");
           heartbeat = setInterval(() => request("GetState").catch(error => { if (child === process) report(error); }), 5000);
@@ -174,6 +218,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
       } else if (connected && event.event === "position" && Number.isInteger(event.x) && Number.isInteger(event.y)) {
         onPosition({x: event.x, y: event.y});
       } else if (connected && event.event === "preferences") present();
+      else if (connected && event.event === 'context') contextAction(event.action).catch(error => publish(`No se pudo realizar la acción: ${error.message}`));
       else if (connected && event.event === "petting") win.webContents.send("gnome:petting", event.active === true);
     });
     process.once("error", error => { if (child === process) { failPending(); report(error); } });
@@ -188,7 +233,14 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   function authorized(event) {
     if (event.sender !== win.webContents) throw new Error("Ventana de configuración no autorizada");
   }
-  ipcMain.handle("gnome:get-settings", event => { authorized(event); return { ...getSettings(), connected, status, keyboard, purringSound: pathToFileURL(app.isPackaged ? path.join(root, "purring.m4a") : path.join(root, "../../workspace/assets/sound/purring.m4a")).href }; });
+  const sound = name => pathToFileURL(app.isPackaged ? path.join(root, name) : path.join(root, '../../workspace/assets/sound', name)).href;
+  ipcMain.handle("gnome:get-settings", event => { authorized(event); return { ...getSettings(), connected, status, keyboard,
+    purringSound: sound('purring.m4a'), completionSound: sound('meow.m4a'), reminderSound: sound('meow-alert.m4a') }; });
+  ipcMain.handle('gnome:get-features', event => { authorized(event); return featureService.get(); });
+  ipcMain.handle('gnome:feature-action', (event, action, payload) => {
+    authorized(event);
+    const result = featureService.execute(action, payload); publishFeatures(); return result;
+  });
   ipcMain.handle("gnome:set-settings", async (event, patch) => {
     authorized(event);
     if (!patch || patch.mascot !== "cat" || typeof patch.name !== "string" || patch.name.length > 24 ||
@@ -226,7 +278,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   win.on("close", event => { if (!stopping) { event.preventDefault(); win.hide(); } });
   win.on("closed", () => {
     stopping = true; stopHelper();
-    for (const name of ["gnome:get-settings", "gnome:set-settings", "gnome:reconnect", "gnome:animate"]) ipcMain.removeHandler(name);
+    for (const name of ["gnome:get-settings", "gnome:set-settings", "gnome:reconnect", "gnome:animate", 'gnome:get-features', 'gnome:feature-action']) ipcMain.removeHandler(name);
     ipcMain.removeListener("gnome:quit", quit);
     // Remove only this controller's forwarding listener and lifecycle handler.
     ipcMain.removeListener("gnome:forward", forwardListener);

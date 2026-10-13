@@ -138,8 +138,13 @@ export async function run() {
         assert(!pet._grab && pet._actor.x >= area.x && pet._actor.x + pet._size <= area.x + area.width, 'Removing a monitor cancels capture and relocates the pet into the remaining work area');
         await command(dir, 'hide');
         await click(pointer, pet._actor.x + 100, pet._actor.y + 100, Clutter.BUTTON_SECONDARY);
+        assert(pet._menu?.isOpen, 'Native right click opens a GNOME context menu');
+        const preferencesItem = pet._contextItems.get('preferences');
+        const [menuX, menuY] = preferencesItem.get_transformed_position();
+        const [menuWidth, menuHeight] = preferencesItem.get_transformed_size();
+        await click(pointer, menuX + menuWidth / 2, menuY + menuHeight / 2, Clutter.BUTTON_PRIMARY);
         const rightClick = await command(dir, 'query');
-        assert(rightClick.windowVisible, 'Native right click opens the real preferences window');
+        assert(rightClick.windowVisible && !pet._menu.isOpen, 'Context menu opens the real preferences and releases its modal grab');
         for (const pose of ['typing', 'scroll', 'jump', 'stretch']) {
             await command(dir, 'pose', pose);
             const prefix = pose === 'typing' ? 'press-' : pose;
