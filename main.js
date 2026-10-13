@@ -916,10 +916,6 @@ function saveSettings() {
 }
 
 function setMascot(mascot) {
-  if (USE_GNOME_NATIVE && mascot !== "cat") {
-    dialog.showErrorBox("Catjang", "El backend GNOME experimental admite Catjang. Para otras mascotas utiliza el arranque clásico.");
-    return;
-  }
   if (mascot !== "cat" && mascot !== "schnauzer" && mascot !== "chisi" && mascot !== "milo" && mascot !== "musubi" && mascot !== "peruperro") return;
   mascotNames[currentMascot] = catName;
   currentMascot = mascot;
@@ -1478,11 +1474,12 @@ function createPetWindow() {
     const { createNativeController } = require(nativePath);
     gnomeController = createNativeController({
       app, BrowserWindow, ipcMain,
-      getSettings: () => ({mascot: currentMascot, name: catName, nameVisible: showCatName,
+      getSettings: () => ({mascot: currentMascot, name: catName, names: {...mascotNames}, nameVisible: showCatName,
         size: currentPetSize, position: currentPetPosition}),
       updateSettings: settings => {
+        const changingMascot = currentMascot !== settings.mascot;
         setMascot(settings.mascot);
-        setCatName(settings.name);
+        if (!changingMascot) setCatName(settings.name);
         setShowCatName(settings.nameVisible);
         currentPetSize = normalizePetSize(settings.size);
         saveSettings();
@@ -2605,9 +2602,6 @@ ipcMain.handle("license-activate", async (_evt, licenseKey) => {
 });
 
 ipcMain.handle("license-start", async (_evt, options = {}) => {
-  if (USE_GNOME_NATIVE && options.mascot && options.mascot !== "cat") {
-    throw new Error("La mascota seleccionada aún no está disponible en GNOME. Selecciona Catjang para continuar.");
-  }
   const state = await validateSavedLicense();
   if (!state.ok) throw new Error(String(state.reason || t("licenseActivateFailed")));
 

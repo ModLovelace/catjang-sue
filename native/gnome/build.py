@@ -2,6 +2,7 @@
 """Freeze the canonical idle SVG and derive its native input map from PNG alpha."""
 import argparse
 import hashlib
+import importlib.util
 import json
 import math
 import re
@@ -330,6 +331,10 @@ def main():
         geometry = {**frames['idle'], 'alphaThreshold': ALPHA_THRESHOLD, 'frames': frames, 'stretch': stretch, 'dragChain': chain_frames}
         (assets / 'input-regions.json').write_text(json.dumps(geometry, indent=2) + '\n')
         stamp.write_text(digest)
+    spec = importlib.util.spec_from_file_location('mascot_assets', ROOT / 'native/gnome/mascot-assets.py')
+    mascots = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mascots)
+    mascots.build_all(ROOT, assets, regions_from_alpha, heat_mask)
     # A standard extension ZIP also builds on CI without running GNOME Shell.
     bundle = output / f'{uuid}.shell-extension.zip'
     with zipfile.ZipFile(bundle, 'w', zipfile.ZIP_DEFLATED) as archive:

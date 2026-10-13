@@ -6,6 +6,8 @@ const {pathToFileURL} = require("node:url");
 
 // Loaded only by the explicit Linux GNOME branch in main.js.
 function createNativeController({ app, BrowserWindow, ipcMain, getSettings, updateSettings, onPosition, onClosed, features }) {
+  const catalog = require('./catalog.json');
+  let catalogSupported = false;
   const featureService = require('./features').createFeatures(features);
   let controlsSupported = false;
   let child = null;
@@ -55,6 +57,12 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   async function contextAction(action) {
     const panels = {preferences: 'settings', reminders: 'reminders', 'pomodoro-settings': 'pomodoro'};
     if (panels[action]) { openPanel(panels[action]); return; }
+    if (action.startsWith('mascot-')) {
+      const mascot = action.slice(7);
+      if (!Object.hasOwn(catalog,mascot)) return;
+      if (!catalogSupported) throw new Error('Actualiza la extensión y vuelve a iniciar sesión para elegir otras mascotas');
+      updateSettings({...getSettings(),mascot}); await synchronize(); await synchronizeControls(); publishSettings(); return;
+    }
     if (action === 'quit') { app.quit(); return; }
     if (['jump', 'stretch'].includes(action)) { await animate(action); return; }
     if (['size-smaller', 'size-larger', 'name-toggle'].includes(action)) {
@@ -113,7 +121,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   async function forward(channel, data) {
     if (['pomodoro-state', 'reminders-changed', 'user-name-changed', 'fixed-message-changed',
       'task-complete-sound-volume', 'language-changed'].includes(channel)) publishFeatures();
-    if (["cat-name-changed", "mascot-changed"].includes(channel)) await synchronize();
+    if (["cat-name-changed", "mascot-changed"].includes(channel)) { await synchronize(); publishSettings(); }
     const animations = {"key-pressed": "typing", "mouse-wheel": "scroll", "do-jump": "jump",
       "do-stretch": "stretch", "stretch-started": "stretch", "pomodoro-focus-start": "jump"};
     if (animations[channel]) await animate(animations[channel]);
@@ -209,10 +217,11 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
           const attached = await request("Attach", settings());
           if (child !== process) return;
           connected = true;
+          catalogSupported = attached.version >= 4;
           controlsSupported = attached.version >= 3;
           await synchronizeControls();
           startKeyboard();
-          publish("Mascota conectada a GNOME");
+          publish("Mascota conectada a GNOME"); publishSettings();
           heartbeat = setInterval(() => request("GetState").catch(error => { if (child === process) report(error); }), 5000);
         } catch (error) { if (child === process) report(error); }
       } else if (connected && event.event === "position" && Number.isInteger(event.x) && Number.isInteger(event.y)) {
@@ -234,8 +243,13 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     if (event.sender !== win.webContents) throw new Error("Ventana de configuración no autorizada");
   }
   const sound = name => pathToFileURL(app.isPackaged ? path.join(root, name) : path.join(root, '../../workspace/assets/sound', name)).href;
-  ipcMain.handle("gnome:get-settings", event => { authorized(event); return { ...getSettings(), connected, status, keyboard,
-    purringSound: sound('purring.m4a'), completionSound: sound('meow.m4a'), reminderSound: sound('meow-alert.m4a') }; });
+  function uiSettings() {
+    const current = getSettings(), dog = catalog[current.mascot]?.soundType === 'bark';
+    return {...current,connected,status,keyboard,catalog,catalogSupported,
+      purringSound:sound(dog?'dog-panting.m4a':'purring.m4a'),completionSound:sound(dog?'dog-bark.m4a':'meow.m4a'),reminderSound:sound('meow-alert.m4a')};
+  }
+  function publishSettings() { if (!win.isDestroyed()) win.webContents.send('gnome:settings',uiSettings()); }
+  ipcMain.handle("gnome:get-settings", event => { authorized(event); return uiSettings(); });
   ipcMain.handle('gnome:get-features', event => { authorized(event); return featureService.get(); });
   ipcMain.handle('gnome:feature-action', (event, action, payload) => {
     authorized(event);
@@ -243,13 +257,14 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   });
   ipcMain.handle("gnome:set-settings", async (event, patch) => {
     authorized(event);
-    if (!patch || patch.mascot !== "cat" || typeof patch.name !== "string" || patch.name.length > 24 ||
+    if (!patch || !Object.hasOwn(catalog, patch.mascot) || typeof patch.name !== "string" || patch.name.length > 24 ||
         typeof patch.nameVisible !== "boolean" || !Number.isInteger(patch.size) || patch.size < 40 || patch.size > 400)
       throw new Error("Ajustes inválidos para Catjang");
+    if (patch.mascot !== 'cat' && !catalogSupported) throw new Error('Actualiza la extensión y vuelve a iniciar sesión para elegir otras mascotas');
     updateSettings(patch);
-    await synchronize();
+    await synchronize(); await synchronizeControls(); publishSettings();
     if (!connected) await connect();
-    return {...getSettings(), connected, status};
+    return uiSettings();
   });
   ipcMain.handle("gnome:reconnect", event => { authorized(event); connect(); });
   ipcMain.handle("gnome:animate", (event, name) => {

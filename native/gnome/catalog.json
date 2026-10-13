@@ -1,0 +1,8 @@
+{
+  "cat": {"defaultName":"Catjang","soundType":"meow","petting":{"cx":0.40,"cy":0.33,"rx":0.25,"ry":0.23},"geometry":"input-regions.json","dragStyle":"accordion","hunting":true},
+  "schnauzer": {"defaultName":"Toto","soundType":"bark","petting":{"cx":0.50,"cy":0.34,"rx":0.28,"ry":0.26},"geometry":"schnauzer/input-regions.json","dragStyle":"pendulum","hunting":false},
+  "chisi": {"defaultName":"Chisi","soundType":"bark","petting":{"cx":0.50,"cy":0.35,"rx":0.28,"ry":0.26},"geometry":"chisi/input-regions.json","dragStyle":"pendulum","hunting":false},
+  "milo": {"defaultName":"Milo","soundType":"bark","petting":{"cx":0.50,"cy":0.34,"rx":0.28,"ry":0.26},"geometry":"milo/input-regions.json","dragStyle":"pendulum","hunting":false},
+  "musubi": {"defaultName":"Musubi","soundType":"meow","petting":{"cx":0.48,"cy":0.33,"rx":0.26,"ry":0.24},"geometry":"musubi/input-regions.json","dragStyle":"pendulum","hunting":false},
+  "peruperro": {"defaultName":"Chuño","soundType":"bark","petting":{"cx":0.50,"cy":0.33,"rx":0.26,"ry":0.24},"geometry":"peruperro/input-regions.json","dragStyle":"pendulum","hunting":false}
+}

@@ -3,7 +3,7 @@
   "productName": "Catjang",
   "desktopName": "catjang",
   "version": "0.1.40-experimental.1",
-  "description": "A companion cat on your desktop — pomodoro + health-aware pet for coders",
+  "description": "A companion cat on your desktop \u2014 pomodoro + health-aware pet for coders",
   "author": "jandev-png",
   "license": "CC-BY-NC-4.0",
   "licenseFile": "License.md",
@@ -54,7 +54,7 @@
   "build": {
     "appId": "dev.catjang.app",
     "productName": "Catjang",
-    "copyright": "Copyright © 2026",
+    "copyright": "Copyright \u00a9 2026",
     "publish": null,
     "npmRebuild": false,
     "afterPack": "scripts/after-pack-linux.js",
@@ -188,7 +188,8 @@
             "preferences*.js",
             "preferences.html",
             "preferences.css",
-            "keyboard-counter.py"
+            "keyboard-counter.py",
+            "catalog.json"
           ]
         },
         {
@@ -206,6 +207,22 @@
         {
           "from": "workspace/assets/sound/meow-alert.m4a",
           "to": "gnome/meow-alert.m4a"
+        },
+        {
+          "from": "workspace/assets/sound/dog-panting.m4a",
+          "to": "gnome/dog-panting.m4a"
+        },
+        {
+          "from": "workspace/assets/sound/dog-bark.m4a",
+          "to": "gnome/dog-bark.m4a"
+        },
+        {
+          "from": "native/gnome/installed-launcher.sh",
+          "to": "gnome/installed-launcher.sh"
+        },
+        {
+          "from": "assets/catjang-logo.png",
+          "to": "gnome/catjang-logo.png"
         }
       ],
       "syncDesktopName": true

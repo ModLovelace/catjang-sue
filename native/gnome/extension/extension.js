@@ -61,6 +61,7 @@ export default class CatjangPrototype extends Extension {
         this._stretchActor = null;
         this._size = 200;
         this._owner = null;
+        this._mascot = 'cat';
         this._ownerWatch = 0;
         this._menu = null;
         this._menuManager = null;
@@ -69,6 +70,12 @@ export default class CatjangPrototype extends Extension {
         try {
             const [, bytes] = Gio.File.new_for_path(`${this.path}/assets/input-regions.json`).load_contents(null);
             const geometry = JSON.parse(new TextDecoder().decode(bytes));
+            const readAsset = file => {
+                const [,data] = Gio.File.new_for_path(`${this.path}/assets/${file}`).load_contents(null);
+                return JSON.parse(new TextDecoder().decode(data));
+            };
+            this._catalog = readAsset('catalog.json');
+            this._geometries = new Map(Object.entries(this._catalog).map(([id,info]) => [id, id === 'cat' ? geometry : readAsset(info.geometry)]));
             this._frames = geometry.frames;
             this._stretchFrames = geometry.stretch;
             this._chainFrames = geometry.dragChain;
@@ -138,7 +145,7 @@ export default class CatjangPrototype extends Extension {
             }
             // Keep these actors alive across pose changes, including while a
             // button is held. Destroying a pressed child can cancel its sequence.
-            const capacity = Math.max(...Object.values(this._frames).map(frame => frame.rects.length));
+            const capacity = Math.max(...[...this._geometries.values()].flatMap(data => Object.values(data.frames).map(frame => frame.rects.length)));
             for (let index = 0; index < capacity; index++) {
                 const region = new Clutter.Actor({name: `catjang-prototype-hit-${index}`, reactive: true});
                 region.connect('event', (_region, event) => this._onEvent(event));
@@ -187,15 +194,15 @@ export default class CatjangPrototype extends Extension {
         return {connected: Boolean(this._owner), visible: Boolean(this._actor?.visible),
             size: this._size, name: this._nameLabel?.text ?? '',
             x: Math.round(this._actor?.x ?? 0), y: Math.round(this._actor?.y ?? 0),
-            frame: this._frame, heat: this._heat, fatigue: this._fatigue, accordion: this._physics?.t ?? 0, stretching: Boolean(this._stretchActor), look: this._look, hunting: Boolean(this._hunting), purring: this._purring, mascot: 'cat', version: this.metadata.version};
+            frame: this._frame, heat: this._heat, fatigue: this._fatigue, accordion: this._physics?.t ?? 0, stretching: Boolean(this._stretchActor), look: this._look, hunting: Boolean(this._hunting), purring: this._purring, mascot: this._mascot, version: this.metadata.version};
     }
 
     _configuration(json) {
         if (json.length > 4096)
             throw new Error('Configuration is too large');
         const settings = JSON.parse(json);
-        if (!settings || Array.isArray(settings) || settings.mascot !== 'cat')
-            throw new Error('This native backend currently supports Catjang only');
+        if (!settings || Array.isArray(settings) || !Object.hasOwn(this._catalog, settings.mascot))
+            throw new Error('Unknown native mascot');
         if (!Number.isInteger(settings.size) || settings.size < 40 || settings.size > 400 ||
             typeof settings.name !== 'string' || settings.name.length > 24 ||
             typeof settings.nameVisible !== 'boolean' || typeof settings.visible !== 'boolean')
@@ -212,6 +219,17 @@ export default class CatjangPrototype extends Extension {
         this._finishStretch();
         this._endGesture(true);
         this._resetAccordion();
+        if (settings.mascot !== this._mascot) {
+            this._setPurring(false); this._stroke = null; this._effect = null;
+            this._mascot = settings.mascot;
+            const geometry = this._geometries.get(this._mascot);
+            this._frames = geometry.frames; this._stretchFrames = geometry.stretch;
+            // The cat keeps its verified 16-band accordion; other canonical
+            // hanging poses use Electron's whole-body pendulum.
+            this._chainFrames = geometry.dragChain;
+            this._frame = null; this._texture = null; this._maskTexture = null;
+            this._look = '0,0'; this._setFrame('idle');
+        }
         this._size = settings.size;
         const scale = settings.size / 200;
         this._actor.set_scale(scale, scale);
@@ -346,10 +364,11 @@ export default class CatjangPrototype extends Extension {
         const nx = (x - this._actor.x) / this._size;
         const ny = (y - this._actor.y) / this._size;
         const direction = value => value > .2 ? 1 : value < -.2 ? -1 : 0;
-        const look = `${direction(nx - .4)},${direction(ny - .33)}`;
+        const hit = this._catalog[this._mascot].petting;
+        const look = `${direction(nx - hit.cx)},${direction(ny - hit.cy)}`;
         if (look !== this._look) { this._look = look; this._refreshVisual(); }
         const now = GLib.get_monotonic_time() / 1000;
-        if (!this._gesture && !this._effect && !this._menu?.isOpen && (!this._hunting || now < this._hunting.until)) {
+        if (this._catalog[this._mascot].hunting && !this._gesture && !this._effect && !this._menu?.isOpen && (!this._hunting || now < this._hunting.until)) {
             if (this._huntingMotion.sample(x, y, this._actor.x + this._size*.4, this._actor.y + this._size*.45, this._size, now)) {
                 if (!this._hunting) this._hunting = {start: now, until: now + 1100};
                 else this._hunting.until = now + 1100;
@@ -359,7 +378,7 @@ export default class CatjangPrototype extends Extension {
         const opaque = this._frames[this._frame].rects.some(rect =>
             nx * 200 >= rect.x && nx * 200 < rect.x + rect.width &&
             ny * 200 >= rect.y && ny * 200 < rect.y + rect.height);
-        const head = opaque && ((nx - .4) / .25) ** 2 + ((ny - .33) / .23) ** 2 <= 1;
+        const head = opaque && ((nx - hit.cx) / hit.rx) ** 2 + ((ny - hit.cy) / hit.ry) ** 2 <= 1;
         if (this._gesture || this._effect || this._hunting || this._menu?.isOpen || !head) {
             if (this._stroke && now - this._stroke.lastMove > 250) this._stroke = null;
             this._setPurring(false);
@@ -475,7 +494,7 @@ export default class CatjangPrototype extends Extension {
         this._stretchIndex = -1;
         this._stretchActor.set_pivot_point(.5, .5);
         Main.layoutManager.addChrome(this._stretchActor, {affectsStruts: false});
-        this._setFrame('stretch');
+        if (this._frames.stretch) this._setFrame('stretch');
         this._actor.visible = false;
         this._animateStretch();
     }
@@ -506,7 +525,9 @@ export default class CatjangPrototype extends Extension {
     _beginAccordion() {
         this._resetAccordion();
         this._physics = new Accordion(); this._motionTime = GLib.get_monotonic_time();
-        this._dragLayer.visible = true; this._visual.visible = false; this._visualHeat.visible = false;
+        const accordion = this._catalog[this._mascot].dragStyle === 'accordion';
+        this._dragLayer.visible = accordion; this._visual.visible = !accordion; this._visualHeat.visible = !accordion;
+        if (!accordion) this._setFrame('drag');
         this._nameLabel.visible = false;
         this._messageLabel.visible = false;
         this._renderAccordion();
@@ -526,11 +547,22 @@ export default class CatjangPrototype extends Extension {
     _renderAccordion() {
         if (!this._physics || !this._actor) return;
         const now = GLib.get_monotonic_time();
+        if (this._releaseStarted && now-this._releaseStarted >= 450000) {
+            this._resetAccordion(); this._setFrame('idle'); return;
+        }
         const area = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex());
         const room = (area.y + area.height - this._actor.y) * 200 / this._size - 36;
         const maxExtension = Math.max(0, Math.min(1, (room / 4 - 55) / 90));
         this._physics.update((now - this._motionTime) / 1000000, maxExtension);
         this._motionTime = now;
+        if (this._catalog[this._mascot].dragStyle !== 'accordion') {
+            for (const image of [this._visual,this._visualHeat]) {
+                image.set_pivot_point(.5,.15); image.set_rotation_angle(Clutter.RotateAxis.Z_AXIS, -this._physics.angle*.4);
+            }
+            this._setFrame(Math.floor(now / 140000) % 2 ? 'drag' : 'drag-alt');
+            if (this._releaseStarted && now-this._releaseStarted >= 450000) { this._resetAccordion(); this._setFrame('idle'); }
+            return;
+        }
         const index = Math.max(0, Math.min(20, Math.round(this._physics.t * 20)));
         const offsets = this._physics.offsets();
         const infos = this._chainFrames[index];
@@ -544,13 +576,14 @@ export default class CatjangPrototype extends Extension {
             }
             piece.heat.opacity = Math.round(this._heat * .9 * 255);
         });
-        if (this._releaseStarted && now - this._releaseStarted >= 450000) this._resetAccordion();
+        if (this._releaseStarted && GLib.get_monotonic_time() - this._releaseStarted >= 450000) this._resetAccordion();
     }
 
     _resetAccordion() {
         this._physics = null; this._releaseStarted = 0;
         if (!this._actor || !this._dragLayer) return;
         this._dragLayer.visible = false; this._visual.visible = true; this._visualHeat.visible = true;
+        for (const image of [this._visual,this._visualHeat]) image.set_rotation_angle(Clutter.RotateAxis.Z_AXIS, 0);
         this._nameLabel.visible = this._nameRequestedVisible ?? false;
         this._updateMessage();
         this._updateRegions();
@@ -647,9 +680,9 @@ export default class CatjangPrototype extends Extension {
         action('agents-setup', 'Configurar agentes de IA…');
         const mascots = new PopupMenu.PopupSubMenuMenuItem('Mascotas');
         this._menu.addMenuItem(mascots);
-        const cat = mascots.menu.addAction('Catjang', () => {}); cat.setOrnament(PopupMenu.Ornament.DOT);
-        for (const name of ['Toto', 'Chisi', 'Milo', 'Musubi', 'Chuño']) {
-            const item = new PopupMenu.PopupMenuItem(`${name} (pendiente en GNOME)`); item.setSensitive(false); mascots.menu.addMenuItem(item);
+        for (const [id,info] of Object.entries(this._catalog)) {
+            const item = action(`mascot-${id}`, info.defaultName, mascots.menu);
+            if (id === this._mascot) item.setOrnament(PopupMenu.Ornament.DOT);
         }
         this._menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         action('quit', 'Salir de Catjang');
@@ -743,7 +776,7 @@ export default class CatjangPrototype extends Extension {
         this._grab = null;
         if (this._actor) this._actor.reactive = false;
         grab?.dismiss();
-        this._setFrame('idle');
+        if (!this._physics || this._mascot === 'cat') this._setFrame('idle');
         this._updateRegions();
         if (!cancel && dragged && this._owner)
             this._controlObject.emit_signal('PositionChanged', new GLib.Variant('(ii)',

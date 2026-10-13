@@ -3,11 +3,11 @@ set -euo pipefail
 BASE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 MODE="${1:---manual}"
 case "$MODE" in
-  --manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting) ;;
-  *) printf 'Usage: %s [--manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting]\n' "$0" >&2; exit 2 ;;
+  --manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots) ;;
+  *) printf 'Usage: %s [--manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots]\n' "$0" >&2; exit 2 ;;
 esac
 UUID=catjang-prototype@modlovelace.github.io
-if [[ "$MODE" == --application || "$MODE" == --integration || "$MODE" == --matrix || "$MODE" == --performance || "$MODE" == --reference || "$MODE" == --refine || "$MODE" == --isolation || "$MODE" == --features || "$MODE" == --hunting ]]; then
+if [[ "$MODE" == --application || "$MODE" == --integration || "$MODE" == --matrix || "$MODE" == --performance || "$MODE" == --reference || "$MODE" == --refine || "$MODE" == --isolation || "$MODE" == --features || "$MODE" == --hunting || "$MODE" == --mascots ]]; then
   python3 "$BASE_DIR/build.py" --application
   UUID=catjang-native@modlovelace.github.io
 else
@@ -31,7 +31,7 @@ if [[ "$MODE" == --manual || "$MODE" == --application ]]; then
     exit 2
   fi
 else
-  rm -f -- "$CATJANG_PROTOTYPE_OUTPUT/native-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/application-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/matrix-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/performance.json" "$CATJANG_PROTOTYPE_OUTPUT/refined-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/electron-reference.json" "$CATJANG_PROTOTYPE_OUTPUT/isolation.json" "$CATJANG_PROTOTYPE_OUTPUT/features-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/hunting-observations.json"
+  rm -f -- "$CATJANG_PROTOTYPE_OUTPUT/native-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/application-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/matrix-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/performance.json" "$CATJANG_PROTOTYPE_OUTPUT/refined-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/electron-reference.json" "$CATJANG_PROTOTYPE_OUTPUT/isolation.json" "$CATJANG_PROTOTYPE_OUTPUT/features-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/hunting-observations.json" "$CATJANG_PROTOTYPE_OUTPUT/mascot-observations.json"
 fi
 # The tool installs/enables ONLY in its temporary XDG profile on a private bus.
 # The current desktop's extension list and Electron profile are not changed.

@@ -58,6 +58,7 @@ export async function capture(name) {
 export async function run() {
     // First D-Bus call applies the helper option parsed after its initial timer.
     await Scripting.waitTestWindows();
+    let extensionsService = null;
     const pointer = Clutter.get_default_backend().get_default_seat().create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
     await Scripting.sleep(500);
     Main.overview.hide();
@@ -120,9 +121,15 @@ export async function run() {
         standard.send_signal(15);
         await waitFor(() => !pet._owner && !pet._actor.visible, 'Standard project did not release its owner');
         for (const [variable, label] of [['CATJANG_GNOME_PACKAGED', 'Linux packaged'],
-            ['CATJANG_GNOME_APPIMAGE', 'AppImage extraction runtime'], ['CATJANG_GNOME_DEB_BINARY', 'Extracted deb']]) {
+            ['CATJANG_GNOME_APPIMAGE', 'AppImage extraction runtime'], ['CATJANG_GNOME_DEB_BINARY', 'Extracted deb'], ['CATJANG_GNOME_INSTALLER_BINARY', 'Manual installer laboratory']]) {
             const packagedBinary = GLib.getenv(variable);
             if (!packagedBinary) continue;
+            if (variable === 'CATJANG_GNOME_INSTALLER_BINARY') {
+                // No automatic service activation on this private bus. Start
+                // GNOME's real, short-lived facade immediately before the CLI.
+                extensionsService = Gio.Subprocess.new(['gjs','-m','/usr/share/gnome-shell/org.gnome.Shell.Extensions'],Gio.SubprocessFlags.NONE);
+                await Scripting.sleep(250);
+            }
             const packaged = launchApplication(packagedBinary, true);
             await waitFor(() => pet._owner && pet._actor.visible, 'Packaged application did not attach');
             assert(pet._size === 200, `${label} entry point loads its external GNOME bridge and preferences resources`);
@@ -149,9 +156,10 @@ export async function run() {
         }
         GLib.file_set_contents(`${output}/application-observations.json`, JSON.stringify({timestampUtc: GLib.DateTime.new_now_utc().format_iso8601(),
             observations, limitations: ['isolated GNOME; installation and full application acceptance on the regular desktop remain pending',
-                'Catjang only; owned-kernel/global keyboard checks and accordion physics are verified separately; other mascots and screen recording remain pending']}, null, 2));
+                'Catjang only; owned-kernel/global keyboard checks and accordion physics are verified separately; other mascots are verified by the mascot probe; screen recording remains pending']}, null, 2));
         console.log(`[Catjang GNOME] real application integration observations: ${observations.length}`);
     } finally {
+        extensionsService?.force_exit();
         first?.force_exit();
         second?.force_exit();
         await Scripting.sleep(500);

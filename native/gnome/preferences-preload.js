@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("catjangNative", {
   reconnect: () => ipcRenderer.invoke("gnome:reconnect"),
   animate: name => ipcRenderer.invoke("gnome:animate", name),
   quit: () => ipcRenderer.send("gnome:quit"),
+  onSettings: callback => { ipcRenderer.on('gnome:settings', (_event,state) => callback(state)); },
   onKeyboard: callback => { ipcRenderer.on("gnome:keyboard", (_event, state) => callback(state)); },
   onPetting: callback => { ipcRenderer.on("gnome:petting", (_event, active) => callback(active === true)); },
   onStatus: callback => { ipcRenderer.on("gnome:status", (_event, data) => callback(data)); },

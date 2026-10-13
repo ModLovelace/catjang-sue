@@ -3,8 +3,9 @@
 Backend Linux integrado con la aplicación Electron mediante un helper Python y
 D-Bus. GNOME Shell dibuja las poses, anima el reposo y recibe entrada sobre la
 silueta. Electron conserva la licencia, los ajustes y una ventana de preferencias.
-El usuario aprobó la integración en el escritorio habitual. La extensión v3 añade
-el gesto de caza y controles nativos; esta actualización requiere recargar la sesión.
+El usuario aprobó Catjang en el escritorio habitual y su caza del cursor en el
+visor. La extensión v4 añade las seis mascotas canónicas y un instalador manual;
+la aceptación física de las cinco familias nuevas está pendiente.
 
 El desarrollo y la aprobación física se realizaron en el worktree
 `codex/ubuntu-gnome-prototype`, desde `1961458`. El backend se integró después en
@@ -27,7 +28,7 @@ Tras reiniciar la sesión, el usuario confirmó el funcionamiento local:
 activar integraciones de agentes.
 
 El 13 de octubre se verificó y aprobó físicamente la caza del cursor en el visor.
-La extensión **v3** también incorpora menú contextual, pomodoro, recordatorios,
+La extensión **v3** incorporó menú contextual, pomodoro, recordatorios,
 mensaje fijo y preferencias de los temporizadores compartidos. Actualizar el ZIP
 no recarga módulos de una extensión que GNOME ya tiene activa: cerrar y volver
 a iniciar sesión es necesario para cargar este código en el escritorio habitual.
@@ -110,9 +111,11 @@ intervalo de estiramiento y volumen. Pomodoro y recordatorios reutilizan los
 relojes, persistencia y eventos de `main.js`, sin duplicar lógica. Las alertas
 nativas conservan el texto y reproducen los sonidos originales. El menú abre
 estos paneles, ofrece salto/estiramiento/tamaño/nombre y abre el onboarding de
-agentes, que conserva su consentimiento explícito. Otras mascotas aparecen
-como pendientes y no se pueden seleccionar todavía. Siguen pendientes otras
-mascotas nativas, grabación de pantalla e instalación automática de la extensión.
+agentes, que conserva su consentimiento explícito. El selector y el menú permiten
+Catjang, Toto, Chisi, Milo, Musubi y Chuño; cada familia usa sus ocho SVG canónicos,
+su hitbox de cabeza, sus colores y el audio de su especie. Catjang conserva el
+acordeón validado; las demás poses suspendidas usan el péndulo de Electron.
+Siguen pendientes grabación de pantalla y edición de patrones en el backend nativo.
 GNOME 46 de Ubuntu 24.04, KDE y otros escritorios requieren trabajo independiente.
 Los archivos nuevos están en `native/gnome/`. Los puntos de conexión en `main.js`
 están condicionados a Linux y a la selección explícita del backend. Los renderers
@@ -415,3 +418,36 @@ recordatorio de una sola ejecución y audio decodificado en un servidor privado.
 `--hunting` mueve un puntero virtual real en círculos en ambos sentidos y verifica
 retorno, mirada, prioridades y limpieza. Son sondas del compositor GNOME 50; no
 sustituyen la revisión humana. El usuario aprobó el gesto circular en el visor.
+
+## Instalador manual con las seis mascotas (v4)
+
+El instalador está en `dist/linux-manual/` y abre un asistente con Zenity:
+
+```bash
+./dist/linux-manual/Catjang-0.1.40-experimental.1-GNOME4-linux-x64.run
+```
+
+Instala para el usuario, sin sudo, en `~/.local/opt/catjang-gnome`, registra dos
+accesos al menú y prepara la extensión v4. **Catjang** usa el perfil habitual;
+**Catjang Laboratorio** activa la licencia demo del endpoint existente en un
+perfil independiente bajo `~/.local/share/catjang-laboratorio/runtime/`, con
+agentes desactivados. Cerrar y volver a iniciar sesión carga la extensión nueva.
+Después seleccionar las mascotas desde Configuración o el menú contextual.
+
+El archivo verifica el SHA-256 de su paquete antes de extraerlo. La actualización
+guarda revisiones separadas y cambia el acceso `current`, conservando perfiles.
+No sobrescribe una carpeta ajena. `--install` permite instalación desde terminal;
+`--prefix` y `--data-home` eligen destinos, `--extract` permite inspeccionar el
+contenido y `--skip-extension` se reserva para pruebas de empaquetado aisladas.
+La extracción exige un destino nuevo. No modifica permisos de dispositivos.
+
+Para generar el instalador a partir del directorio de electron-builder:
+
+```bash
+python3 native/gnome/build-installer.py /ruta/linux-unpacked dist/linux-manual
+```
+
+La prueba `native/gnome/run-nested.sh --mascots` recorre las seis familias con
+entrada, sonido y persistencia reales. La caza circular corresponde a Catjang,
+cuyo SVG tiene esa animación; las demás conservan sus gestos canónicos.
+Evidencia y límites: `docs/QA_2026-10-13-gnome-installer.md`.

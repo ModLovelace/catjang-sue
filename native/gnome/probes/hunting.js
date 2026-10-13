@@ -43,7 +43,9 @@ export async function run(){
   pointer.notify_button(GLib.get_monotonic_time(),Clutter.BUTTON_PRIMARY,Clutter.ButtonState.PRESSED);await Scripting.sleep(50);
   await move(pet._actor.x+150,pet._actor.y+90,80);
   assert(!pet._hunting&&pet._physics&&pet._grab,'A real drag cancels hunting and starts the accordion');
-  pointer.notify_button(GLib.get_monotonic_time(),Clutter.BUTTON_PRIMARY,Clutter.ButtonState.RELEASED);await Scripting.sleep(520);
+  pointer.notify_button(GLib.get_monotonic_time(),Clutter.BUTTON_PRIMARY,Clutter.ButtonState.RELEASED);
+  await waitFor(()=>!pet._grab,'Release event did not free capture',{interval:20,tries:50});
+  await waitFor(()=>!pet._physics,'Accordion did not restore after the actual release',{interval:20,tries:35});
   assert(!pet._physics&&!pet._grab,'Releasing a drag after hunting frees capture and restores the body');
   await orbit();await command(dir,'pose','stretch');
   assert(!pet._hunting&&pet._stretchActor,'Fullscreen stretch takes priority over hunting');await Scripting.sleep(3100);

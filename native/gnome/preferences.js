@@ -7,7 +7,27 @@ api.onPetting(active => {
   else { purringAudio.pause(); purringAudio.currentTime = 0; }
 });
 const field = id => document.getElementById(id);
-let features, renderedReminders;
+let features, renderedReminders, nativeSettings;
+function renderSettings(settings) {
+  nativeSettings=settings;
+  const selector=field('mascot');
+  if(selector.options.length!==Object.keys(settings.catalog).length){
+    selector.replaceChildren();for(const [id,info]of Object.entries(settings.catalog)){
+      const option=document.createElement('option');option.value=id;option.textContent=info.defaultName;
+      option.disabled=id!=='cat'&&!settings.catalogSupported;selector.append(option);
+    }
+  }
+  for(const option of selector.options)option.disabled=option.value!=='cat'&&!settings.catalogSupported;
+  selector.value=settings.mascot;
+  field('name').value=settings.name;field('nameVisible').checked=settings.nameVisible;field('size').value=settings.size;
+  purringAudio.pause();purringAudio.src=settings.purringSound;
+  completionAudio.src=settings.completionSound;reminderAudio.src=settings.reminderSound;
+}
+api.onSettings(renderSettings);
+field('mascot').addEventListener('change',async()=>{
+  const mascot=field('mascot').value;
+  try{renderSettings(await api.set({mascot,name:nativeSettings.names[mascot]??nativeSettings.catalog[mascot].defaultName,nameVisible:field('nameVisible').checked,size:Number(field('size').value)}));}catch(error){failure(error);field('mascot').value=nativeSettings.mascot;}
+});
 function showStatus(data) { field('status').textContent = data.status; }
 function failure(error) { showStatus({status: error.message}); }
 function panel(name) {
@@ -17,7 +37,7 @@ function panel(name) {
 }
 async function load() {
   const settings = await api.get();
-  purringAudio.src = settings.purringSound; completionAudio.src = settings.completionSound; reminderAudio.src = settings.reminderSound;
+  renderSettings(settings);
   field('name').value = settings.name; field('nameVisible').checked = settings.nameVisible; field('size').value = settings.size;
   showStatus(settings); showKeyboard(settings.keyboard);
   features = await api.getFeatures();
@@ -73,7 +93,7 @@ api.onAlert(async data=>{
 for(const button of document.querySelectorAll('[data-panel]'))button.addEventListener('click',()=>panel(button.dataset.panel));
 field('settings').addEventListener('submit',async event=>{
   event.preventDefault();
-  try {const updated=await api.set({mascot:'cat',name:field('name').value.trim(),nameVisible:field('nameVisible').checked,size:Number(field('size').value)});showStatus({status:updated.connected?'Ajustes guardados':updated.status});}catch(error){failure(error);}
+  try {const updated=await api.set({mascot:field('mascot').value,name:field('name').value.trim(),nameVisible:field('nameVisible').checked,size:Number(field('size').value)});showStatus({status:updated.connected?'Ajustes guardados':updated.status});}catch(error){failure(error);}
 });
 field('preferences').addEventListener('submit',async event=>{
   event.preventDefault(); await act('preferences',{userName:field('userName').value.trim(),fixedMessage:field('fixedMessage').value.trim(),stretchIntervalMin:Number(field('stretchIntervalMin').value),taskCompleteSoundVolume:Number(field('volume').value)}).catch(()=>{});
