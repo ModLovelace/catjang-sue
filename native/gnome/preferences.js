@@ -10,6 +10,9 @@ const field = id => document.getElementById(id);
 let features, renderedReminders, nativeSettings;
 function renderSettings(settings) {
   nativeSettings=settings;
+  const upgrade=field('upgrade');
+  upgrade.hidden=!settings.connected||settings.catalogSupported;
+  upgrade.textContent=`GNOME está usando la extensión v${settings.extensionVersion??'anterior'}. Puedes usar Catjang ahora. Para activar las seis mascotas y las funciones nuevas, guarda tu trabajo, cierra la sesión de Ubuntu y vuelve a entrar; después abre Catjang Laboratorio.`;
   const selector=field('mascot');
   if(selector.options.length!==Object.keys(settings.catalog).length){
     selector.replaceChildren();for(const [id,info]of Object.entries(settings.catalog)){
@@ -28,7 +31,7 @@ field('mascot').addEventListener('change',async()=>{
   const mascot=field('mascot').value;
   try{renderSettings(await api.set({mascot,name:nativeSettings.names[mascot]??nativeSettings.catalog[mascot].defaultName,nameVisible:field('nameVisible').checked,size:Number(field('size').value)}));}catch(error){failure(error);field('mascot').value=nativeSettings.mascot;}
 });
-function showStatus(data) { field('status').textContent = data.status; }
+function showStatus(data) { field('status').textContent = data.status; if(data.connected===false)field('upgrade').hidden=true; }
 function failure(error) { showStatus({status: error.message}); }
 function panel(name) {
   if (!['settings','pomodoro','reminders'].includes(name)) return;

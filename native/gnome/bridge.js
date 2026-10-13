@@ -8,6 +8,7 @@ const {pathToFileURL} = require("node:url");
 function createNativeController({ app, BrowserWindow, ipcMain, getSettings, updateSettings, onPosition, onClosed, features }) {
   const catalog = require('./catalog.json');
   let catalogSupported = false;
+  let extensionVersion = null;
   const featureService = require('./features').createFeatures(features);
   let controlsSupported = false;
   let child = null;
@@ -217,10 +218,12 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
           const attached = await request("Attach", settings());
           if (child !== process) return;
           connected = true;
+          extensionVersion = attached.version;
           catalogSupported = attached.version >= 4;
           controlsSupported = attached.version >= 3;
           await synchronizeControls();
           startKeyboard();
+          console.log(`[Catjang GNOME] Attached to extension v${extensionVersion}`);
           publish("Mascota conectada a GNOME"); publishSettings();
           heartbeat = setInterval(() => request("GetState").catch(error => { if (child === process) report(error); }), 5000);
         } catch (error) { if (child === process) report(error); }
@@ -245,7 +248,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   const sound = name => pathToFileURL(app.isPackaged ? path.join(root, name) : path.join(root, '../../workspace/assets/sound', name)).href;
   function uiSettings() {
     const current = getSettings(), dog = catalog[current.mascot]?.soundType === 'bark';
-    return {...current,connected,status,keyboard,catalog,catalogSupported,
+    return {...current,connected,status,keyboard,catalog,catalogSupported,extensionVersion,
       purringSound:sound(dog?'dog-panting.m4a':'purring.m4a'),completionSound:sound(dog?'dog-bark.m4a':'meow.m4a'),reminderSound:sound('meow-alert.m4a')};
   }
   function publishSettings() { if (!win.isDestroyed()) win.webContents.send('gnome:settings',uiSettings()); }

@@ -451,3 +451,15 @@ La prueba `native/gnome/run-nested.sh --mascots` recorre las seis familias con
 entrada, sonido y persistencia reales. La caza circular corresponde a Catjang,
 cuyo SVG tiene esa animación; las demás conservan sus gestos canónicos.
 Evidencia y límites: `docs/QA_2026-10-13-gnome-installer.md`.
+
+### Arranque mientras GNOME conserva una versión anterior
+
+GNOME puede seguir ejecutando v2/v3 aunque los archivos instalados ya sean v4.
+El acceso permite abrir Catjang con una extensión activa desde v2. El puente
+negocia controles y catálogo según la versión real; las otras cinco mascotas
+permanecen desactivadas hasta v4. Las preferencias muestran un aviso persistente
+para cerrar y volver a iniciar la sesión de Ubuntu. Esto permite usar Catjang
+sin bloquear toda la aplicación ni cerrar la sesión automáticamente.
+
+La corrección y su aceptación local están documentadas en
+`docs/QA_2026-10-13-gnome-startup.md`.

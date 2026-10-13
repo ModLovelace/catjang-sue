@@ -8,7 +8,10 @@ if [[ "${XDG_SESSION_TYPE:-}" != wayland ]] || [[ "$(gnome-shell --version 2>/de
   exit 2
 fi
 info="$(LC_ALL=C gnome-extensions info "$UUID" 2>/dev/null || true)"
-if [[ "$info" != *'Version: 4'* ]]; then
+version="$(printf '%s\n' "$info" | awk '/^[[:space:]]*Version:/ {print $2; exit}')"
+# v2/v3 can attach Catjang. The bridge negotiates newer controls/catalog,
+# so an extension waiting for a session reload must not block the entire app.
+if [[ ! "$version" =~ ^[0-9]+$ ]] || (( 10#$version < 2 )); then
   message='La extensión de Catjang está instalada, pero GNOME debe cargar su versión nueva. Cierra y vuelve a iniciar sesión; después abre Catjang desde el menú.'
   if command -v zenity >/dev/null; then zenity --info --title=Catjang --text="$message"; else printf '%s\n' "$message" >&2; fi
   exit 3
