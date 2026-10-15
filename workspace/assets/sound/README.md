@@ -45,7 +45,11 @@ en `audio-sources.json`.
 | `dog-bark.m4a` | Chuño | Dog bark 3, Sadiquecat; crédito completo arriba | CC0 1.0 |
 | `catjang-meow.m4a` | Catjang | [Cat Meow, qubodup](https://freesound.org/people/qubodup/sounds/813119/), derivado del CC0 de Jofae | CC0 1.0 |
 | `musubi-meow.m4a` | Musubi | [Cat meow, TRNGLE](https://freesound.org/people/TRNGLE/sounds/362652/) | CC0 1.0 |
-| `dog-contentment.m4a` | Caricias de los cuatro perros | [Whining Dog, Breviceps](https://freesound.org/people/Breviceps/sounds/462660/) | CC0 1.0 |
+| `chisi-petting.m4a` | Caricias de Chisi | [Whining Dog, Breviceps](https://freesound.org/people/Breviceps/sounds/462660/) | CC0 1.0 |
+| `toto-petting.m4a` | Caricias de Toto | [Short Dog Grunt, qubodup](https://freesound.org/people/qubodup/sounds/829503/) | CC0 1.0 |
+| `milo-petting.m4a` | Caricias de Milo | [Small dog vocalizations, felix.blume](https://freesound.org/people/felix.blume/sounds/137981/) | CC0 1.0 |
+| `chuno-petting.m4a` | Caricias de Chuño | [French bulldog vocalizations, felix.blume](https://freesound.org/people/felix.blume/sounds/134820/) | CC0 1.0 |
+| `musubi-purring.m4a` | Caricias de Musubi | [Cat Purring, Joao_Janz](https://freesound.org/people/Joao_Janz/sounds/473696/) | CC0 1.0 |
 
 Los autores identifican schnauzer, caniche y mestizo en sus fichas. No se encontró
 una grabación verificada como perro peruano calado: Chuño conserva la voz real
@@ -53,12 +57,22 @@ seleccionada previamente. Los dos gatos reciben voces individuales; sus fuentes
 no acreditan una raza. Ser atigrado describe el pelaje de Musubi. La asignación
 es de personalidad y no certifica la raza de los animales grabados.
 
-La propuesta de caricia es una vocalización suave recortada a 0,76 s, atenuada
-9 dB y seguida de 3,2 s de silencio para evitar un jadeo o chillido continuo.
-Su interpretación como satisfacción es una decisión artística pendiente de
-aceptación humana; la fuente la describe como un gemido de perro. Los gatos
-conservan el ronroneo anterior. Los recursos previos no sustituidos mantienen
-su procedencia y licencia anteriores.
+Cada mascota tiene una grabación de caricia diferente, compartida por Electron
+y GNOME. Catjang conserva `purring.m4a`, cuyo contenido y licencia anteriores
+no se modifican; Musubi recibe otro ronroneo real. La propuesta anterior para
+los cuatro perros se conserva exclusivamente para Chisi y se renombra sin
+recodificar: vocalización de 0,76 s, atenuada 9 dB y seguida de 3,2 s de silencio.
+Toto, Milo y Chuño usan recortes de otras tres grabaciones, con pausas de
+3,2–3,6 s entre vocalizaciones. No se altera el tono para simular una raza.
+
+Las nuevas fuentes permiten su reutilización gratuita bajo
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/); se conservan
+los créditos por trazabilidad. Las fuentes de caricia no acreditan schnauzer,
+caniche, mestizo o perro peruano: una identifica un bulldog francés. La
+asignación distingue la personalidad de cada mascota; no es una grabación
+certificada de su raza ni una afirmación sobre la emoción del animal grabado.
+La preferencia auditiva sigue pendiente de aceptación del usuario. Los recursos
+previos no sustituidos mantienen su procedencia y licencia anteriores.
 
 La nota anterior sobre uso compartido de `dog-bark.m4a` por todos los perros y
 síntesis adicional describe el estado del 13 de octubre. Desde esta revisión el

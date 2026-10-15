@@ -17,7 +17,7 @@ export async function run(){
   await command(dir,'ui',"if(document.getElementById('mascot').options.length!==6||[...document.getElementById('mascot').options].some(o=>o.disabled))throw new Error('Six choices unavailable');true");
   assert(Object.keys(pet._catalog).length===6,'Six native choices are enabled in the real configuration');
   await command(dir,'configure',{mascot:'cat',name:'Catjang',nameVisible:true,size:200});
-  const silhouettes=new Set(), voices=new Set();
+  const silhouettes=new Set(), voices=new Set(), pettingSounds=new Set();
   for(const [id,info]of Object.entries(pet._catalog)){
    await command(dir,'ui',`document.getElementById('mascot').value='${id}';document.getElementById('mascot').dispatchEvent(new Event('change'));`);
    await waitFor(()=>pet._mascot===id,`${id} did not load`);await Scripting.sleep(200);
@@ -25,6 +25,7 @@ export async function run(){
    assert(Object.values(pet._frames).every(frame=>frame.source.startsWith(`svg/${id}/`)),`${id}: every pose uses this mascot's canonical assets`);
    silhouettes.add(JSON.stringify(pet._frames.idle.rects));
    voices.add(state.state.completionSound);
+   pettingSounds.add(state.state.purringSound);
    const rects=pet._frames.idle.rects, leftEdge=Math.min(...rects.map(r=>r.x)),rightEdge=Math.max(...rects.map(r=>r.x+r.width));
    const [labelX,labelY]=pet._nameLabel.get_transformed_position();
    assert(Math.abs(labelX+pet._size/2-(pet._actor.x+(leftEdge+rightEdge)/2*pet._size/200))<1 && labelY>pet._actor.y+Math.max(...rects.map(r=>r.y+r.height))*pet._size/200,`${id}: the name is centered below the painted body`);
@@ -92,6 +93,7 @@ export async function run(){
 
   }
   assert(voices.size===6,'All six mascots inherit a distinct natural voice from the shared audio catalog');
+  assert(pettingSounds.size===6,'All six mascots play their own petting recording through the shared audio catalog');
   assert(silhouettes.size===6,'All six native idle silhouettes are distinct');
   await command(dir,'ui',"document.getElementById('mascot').value='schnauzer';document.getElementById('mascot').dispatchEvent(new Event('change'));");await Scripting.sleep(200);
   await command(dir,'ui',"document.getElementById('name').value='Toto laboratorio';document.getElementById('settings').requestSubmit();");

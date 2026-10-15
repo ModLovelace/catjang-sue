@@ -40,20 +40,31 @@ app.whenReady().then(async () => {
   await new Promise((r) => setTimeout(r, 600));
 
   const profiles=require(path.join(root,'workspace/assets/sound/pet-audio.js'));
+  const pettingFiles=new Set(), pettingRecordings=new Set();
   for(const [id,profile]of Object.entries(profiles)){
     const result=await win.webContents.executeJavaScript(`(async()=>{
       applyMascot(${JSON.stringify(id)});
       const voice=getAudio(${JSON.stringify(id==='cat'||id==='musubi'?'completion':'dogBark')});
       const petting=getAudio(${JSON.stringify(id==='cat'||id==='musubi'?'purring':'dogPetting')});
       const ctx=new AudioContext();
-      const decode=async audio=>{const bytes=await (await fetch(audio.src)).arrayBuffer();return (await ctx.decodeAudioData(bytes)).duration;};
-      const voiceDuration=await decode(voice),pettingDuration=await decode(petting);await ctx.close();
-      return {voice:voice.src,petting:petting.src,voiceDuration,pettingDuration,loop:petting.loop};
+      const decode=async audio=>{const bytes=await (await fetch(audio.src)).arrayBuffer();return await ctx.decodeAudioData(bytes);};
+      const voiceBuffer=await decode(voice),pettingBuffer=await decode(petting);
+      const samples=pettingBuffer.getChannelData(0);
+      const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',samples))).map(x=>x.toString(16).padStart(2,'0')).join('');
+      let peak=0;for(const sample of samples)peak=Math.max(peak,Math.abs(sample));
+      await ctx.close();
+      return {voice:voice.src,petting:petting.src,voiceDuration:voiceBuffer.duration,pettingDuration:pettingBuffer.duration,loop:petting.loop,fingerprint,peak};
     })()`,true);
     assert(result.voice.endsWith('/'+profile.voice),id+' voice mapping');
     assert(result.petting.endsWith('/'+profile.petting),id+' petting mapping');
     assert(result.voiceDuration>0&&result.voiceDuration<3&&result.pettingDuration>0&&result.loop,id+' real audio decoding');
+    assert(result.peak>.001&&result.peak<1,id+' petting contains real audio without clipping');
+    assert(!pettingFiles.has(profile.petting),id+' must not reuse another petting file');
+    assert(!pettingRecordings.has(result.fingerprint),id+' must not copy another petting recording under a different name');
+    pettingFiles.add(profile.petting);pettingRecordings.add(result.fingerprint);
     console.log('PASS:',id,'shared voice + petting decode');
   }
+  assert(pettingFiles.size===6&&pettingRecordings.size===6,'All six pets have distinct decoded petting audio');
+  console.log('PASS: six different petting recordings, verified from decoded audio');
   app.exit(0);
 }).catch(error=>{console.error(error);app.exit(1)});

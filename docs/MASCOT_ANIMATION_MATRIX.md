@@ -66,8 +66,30 @@ licencias y adaptaciones se detallan en `workspace/assets/sound/README.md` y
 Toto usa una grabación de schnauzer, Chisi una etiquetada como caniche y Milo
 una de mestizo. Chuño conserva el ladrido real elegido anteriormente: la fuente
 no acredita que sea un perro peruano. Las dos voces de gato son distintas, sin
-raza certificada en sus fuentes. La nueva caricia canina es una propuesta de
-vocalización breve, pendiente de aceptación auditiva del usuario.
+raza certificada en sus fuentes.
+
+Las caricias también usan seis grabaciones diferentes, sin compartir muestras
+entre mascotas:
+
+| Mascota | Audio de caricia |
+| --- | --- |
+| Catjang | `purring.m4a`, ronroneo original |
+| Toto | `toto-petting.m4a` |
+| Chisi | `chisi-petting.m4a` |
+| Milo | `milo-petting.m4a` |
+| Musubi | `musubi-purring.m4a`, otro ronroneo |
+| Chuño | `chuno-petting.m4a` |
+
+Los perros alternan vocalizaciones breves con pausas. Las fuentes de estas
+caricias no certifican las razas de las mascotas; su asignación es artística,
+pendiente de aceptación auditiva del usuario. Las grabaciones nuevas son CC0;
+Catjang conserva su recurso original y su licencia previa.
+
+La revisión de caricias del 15 de octubre pasó 134 comprobaciones de GNOME
+aislado. `scripts/test-pet-audio.js` también verificó los seis perfiles en el
+renderer Electron y en el paquete final: decodificación, contenido no silencioso,
+ausencia de saturación y seis huellas de audio diferentes, para evitar copias de
+la misma muestra con nombres distintos.
 
 ## Conexión con IDEs
 
