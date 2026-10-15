@@ -15,7 +15,9 @@ if (!fs.existsSync(path.join(profile, "license.json"))) {
     endpoint.activate("CATJANG-PROTO-DEMO-1234-5678-9ABC-DEF0", {platform: "linux"}).record);
   fs.writeFileSync(path.join(profile, "settings.json"), JSON.stringify({mascot: "cat", petSize: 200,
     catName: "Linux QA", catNamePromptShown: true, agentOnboardingShown: true,
-    agentIntegrationsEnabled: false, stretchIntervalMin: 0, petPosition: {x: 800, y: 400}}));
+    agentIntegrationsEnabled: process.env.CATJANG_GNOME_QA_AUTOCONNECT === '1',
+    ...(process.env.CATJANG_GNOME_QA_AUTOCONNECT === '1' ? {linuxAgentTargets:['antigravity','codex','claude']} : {}),
+    stretchIntervalMin: 0, petPosition: {x: 800, y: 400}}));
 }
 require(path.join(root, "main.js"));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -46,7 +48,24 @@ app.whenReady().then(async () => {
     if (command.id === lastId) return;
     lastId = command.id; busy = true;
     try {
-      if(command.action==='inspect-agent-setup'){
+      if(command.action==='agent-status'){
+        await win.webContents.executeJavaScript("window.catjangNative.feature('agents-setup')",true);
+        let setup;
+        for(let i=0;i<50;i++){
+          setup=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/agents-setup/'));
+          if(setup&&!setup.webContents.isLoading())break;await sleep(100);
+        }
+        if(!setup)throw new Error('Agent setup did not open');
+        const status=await setup.webContents.executeJavaScript('window.electronAPI.agentStatusGet()',true);
+        await sleep(100);
+        const badges=await setup.webContents.executeJavaScript("Object.fromEntries(['gemini','codex','claude','cursor'].map(id=>[id,document.getElementById('badge-'+id).textContent]))",true);
+        setup.close();write('reply.json',{id:command.id,ok:true,status,badges});return;
+      } else if(command.action==='codex-fixture'){
+        const now=new Date(),day=path.join(require('node:os').homedir(),'.codex/sessions',String(now.getFullYear()),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0'));
+        fs.mkdirSync(day,{recursive:true});
+        const file=path.join(day,'rollout-'+now.toISOString().replaceAll(':','-')+'-d740fdc7-1cf1-4b5c-812a-111111111111.jsonl');
+        fs.appendFileSync(file,command.settings.map(item=>JSON.stringify({timestamp:new Date().toISOString(),...item})+'\n').join(''));
+      } else if(command.action==='inspect-agent-setup'){
         const setup=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/agents-setup/'));
         if(!setup || setup.webContents.isLoading())throw new Error('Agent setup was not opened by the context menu');
         const state=await setup.webContents.executeJavaScript('window.electronAPI.agentStatusGet()',true);
@@ -74,9 +93,18 @@ app.whenReady().then(async () => {
           req.on('error',reject);req.end(body);
         });await sleep(120);
       } else if(command.action==='agent-hook'){
-        const script=path.join(profile,'hooks',command.settings.agent==='cursor'?'catjang-cursor-hook.js':'catjang-antigravity-hook.js');
-        const result=cp.spawnSync(process.execPath,[script,command.settings.event],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},input:JSON.stringify(command.settings.payload),encoding:'utf8',timeout:5000});
-        if(result.status!==0)throw new Error(result.stderr||'Hook failed');await sleep(180);
+        const scripts={cursor:'catjang-cursor-hook.js',antigravity:'catjang-antigravity-hook.js',claude:'catjang-claude-hook.js'};
+        const script=path.join(profile,'hooks',scripts[command.settings.agent]);
+        // The hook posts back to this main process. Keep its event loop free
+        // so the real HTTP response can reach the hook before its timeout.
+        await new Promise((resolve,reject)=>{
+          const worker=cp.spawn(process.execPath,[script,command.settings.event],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:['pipe','ignore','pipe']});
+          let diagnostic='';worker.stderr.on('data',bytes=>{diagnostic=(diagnostic+bytes.toString()).slice(-2048);});
+          const timeout=setTimeout(()=>worker.kill('SIGKILL'),5000);
+          worker.once('error',error=>{clearTimeout(timeout);reject(error);});
+          worker.once('close',code=>{clearTimeout(timeout);code===0?resolve():reject(new Error(diagnostic||'Hook failed'));});
+          worker.stdin.end(JSON.stringify(command.settings.payload));
+        });await sleep(180);
       } else if (command.action === "submit-form") {
         await win.webContents.executeJavaScript(`(() => {
           const patch=${JSON.stringify(command.settings)};

@@ -16,6 +16,35 @@ el checkout del proyecto.
 
 ## Actualización v5 — 15 de octubre de 2026
 
+### Conexión automática de agentes en Ubuntu
+
+Al conservar `agentIntegrationsEnabled: true`, Catjang sincroniza los hooks y
+arranca los monitores al abrirse; no hace falta repetir «Sincronizar Hooks».
+El perfil GNOME admite `linuxAgentTargets` para limitar los conectores autorizados
+a `antigravity`, `codex`, `claude`, `cursor` y/o `kiro`. Los perfiles existentes sin
+esta lista conservan su selección anterior de todos los conectores. Un perfil
+desactivado sigue desactivado. La selección se conserva por perfil; las
+instalaciones nuevas requieren autorización inicial.
+
+El panel GNOME verifica los handlers propios y los archivos de sus scripts, muestra
+el monitor real de Codex y distingue una conexión desactivada de una configuración
+pendiente. La mera presencia de `settings.json` no se presenta como conexión.
+Los hooks se fusionan con la configuración existente; una sincronización posterior
+repara handlers faltantes sin duplicarlos. Windows y macOS conservan sus rutas,
+registro de hooks y presentación anteriores.
+
+Pruebas: `node scripts/test-linux-agent-status.js` y
+`native/gnome/run-nested.sh --autoconnect` (HOME y sesión GNOME privados).
+El recorrido usa hooks de Antigravity/Claude reales y el parser real de Codex con
+tareas sintéticas. No sustituye ejecutar una tarea dentro de cada IDE.
+
+Las ubicaciones utilizadas siguen la documentación de
+[Antigravity](https://www.antigravity.google/docs/hooks) y
+[Claude Code](https://code.claude.com/docs/en/hooks), incluidos los hooks de su
+extensión de IDE.
+
+### Mascotas, audio y actividades
+
 El nombre se centra bajo la silueta real. Todas las familias juegan con órbitas
 reales del puntero, duermen y despiertan. El estiramiento especial se ofrece solo
 a Catjang, reservado también para un futuro perro salchicha. Se conservan los
@@ -23,7 +52,7 @@ ocho SVG de cada familia. El inventario y la matriz están en
 [`docs/MASCOT_ANIMATION_MATRIX.md`](../../docs/MASCOT_ANIMATION_MATRIX.md).
 
 Electron y GNOME consumen `workspace/assets/sound/pet-audio.js`: seis voces
-individuales y una propuesta de caricia canina breve y suave, sin síntesis de
+individuales y seis caricias distintas, sin síntesis de
 ladridos/jadeos. El sonido se empaqueta una sola vez dentro de `app.asar`.
 Los créditos y licencias se conservan junto a los archivos.
 

@@ -40,6 +40,7 @@ const AGENT_INTEGRATIONS_OVERRIDE = AGENT_INTEGRATIONS_ENV === "0" || AGENT_INTE
   ? AGENT_INTEGRATIONS_ENV === "1"
   : null;
 let agentIntegrationsEnabled = AGENT_INTEGRATIONS_OVERRIDE === true;
+let linuxAgentTargets = ["antigravity", "codex", "claude", "cursor", "kiro"];
 // Typing and wheel gestures are core pet interactions. Keep them enabled when
 // uiohook is available; CATJANG_ENABLE_GLOBAL_INPUT=0 is the explicit opt-out
 // for installations that do not want a global input hook.
@@ -870,6 +871,10 @@ function loadSettings() {
       if (AGENT_INTEGRATIONS_OVERRIDE === null && typeof data.agentIntegrationsEnabled === "boolean") {
         agentIntegrationsEnabled = data.agentIntegrationsEnabled;
       }
+      if (USE_GNOME_NATIVE && Array.isArray(data.linuxAgentTargets) &&
+          data.linuxAgentTargets.every(id => ["antigravity", "codex", "claude", "cursor", "kiro"].includes(id))) {
+        linuxAgentTargets = [...new Set(data.linuxAgentTargets)];
+      }
       if (typeof data.taskCompleteSoundVolume === "number") {
         taskCompleteSoundVolume = Math.max(0, Math.min(1, data.taskCompleteSoundVolume));
       }
@@ -906,6 +911,7 @@ function saveSettings() {
       catNamePromptShown,
       agentOnboardingShown,
       agentIntegrationsEnabled,
+      ...(USE_GNOME_NATIVE ? {linuxAgentTargets} : {}),
       taskCompleteSoundVolume,
       petSize: currentPetSize,
       petPosition: currentPetPosition,
@@ -2711,6 +2717,15 @@ ipcMain.handle("cat-name-prompt-shown", () => {
   return { ok: true };
 });
 ipcMain.handle("agent-status-get", () => {
+  if (USE_GNOME_NATIVE) {
+    const nativeRoot = app.isPackaged ? path.join(process.resourcesPath, "gnome") : path.join(__dirname, "native/gnome");
+    return require(path.join(nativeRoot, "agent-status")).inspect({
+      home: os.homedir(), hookDir: path.join(app.getPath("userData"), "hooks"),
+      enabled: agentIntegrationsEnabled, targets: linuxAgentTargets,
+      serverActive: !!agentStateServer?.listening, codexActive: !!codexMonitor?._interval,
+      port: AGENT_STATE_PORT, events: require("./hooks/install"),
+    });
+  }
   const geminiHookPath = path.join(os.homedir(), ".gemini", "config", "hooks.json");
   const claudeSettingsPath = path.join(os.homedir(), ".claude", "settings.json");
   const cursorHooksPath = path.join(os.homedir(), ".cursor", "hooks.json");
@@ -3506,15 +3521,15 @@ function startCursorAgentMonitor() {
 function startAgentIntegrations() {
   if (!agentIntegrationsEnabled) return;
   startAgentStateServer();
-  installClaudeCodeHooks();
-  installAntigravityHooks();
-  installCursorHooks();
-  startCodexMonitor();
+  if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("claude")) installClaudeCodeHooks();
+  if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("antigravity")) installAntigravityHooks();
+  if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("cursor")) installCursorHooks();
+  if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("codex")) startCodexMonitor();
   // GNOME uses a Linux adapter for XDG paths; existing macOS paths and Windows
   // hook behavior remain unchanged. Monitoring starts only after consent.
   if (IS_MAC || USE_GNOME_NATIVE) {
-    startKiroMonitor();
-    startCursorAgentMonitor();
+    if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("kiro")) startKiroMonitor();
+    if (!USE_GNOME_NATIVE || linuxAgentTargets.includes("cursor")) startCursorAgentMonitor();
   }
 }
 

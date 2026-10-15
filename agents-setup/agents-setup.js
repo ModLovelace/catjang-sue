@@ -13,6 +13,16 @@ async function refreshStatus() {
   if (!window.electronAPI || !window.electronAPI.agentStatusGet) return;
   try {
     const status = await window.electronAPI.agentStatusGet();
+    if (status.nativeLinux) {
+      for (const [badge, id] of [[badgeGemini,'antigravity'],[badgeCodex,'codex'],[badgeClaude,'claude'],[badgeCursor,'cursor']]) {
+        badge.textContent = status.states[id];
+        badge.classList.toggle('is-active', ['Conectado','Monitoreo activo'].includes(status.states[id]));
+      }
+      document.querySelector('#card-codex .hook-path').textContent = status.states.codex === 'Monitoreo activo'
+        ? 'Monitoreo local activo; se reconecta al abrir Catjang.' : 'La conexión se activa con tu autorización y se conserva para los siguientes inicios.';
+      document.querySelector('#card-gemini .agent-desc').textContent = 'Reacciona mientras Antigravity piensa o trabaja y avisa cuando termina la ejecución. Los hooks se sincronizan automáticamente al abrir Catjang con la conexión habilitada.';
+      return;
+    }
     if (status.antigravityInstalled) {
       badgeGemini.textContent = "Conectado";
       badgeGemini.classList.add("is-active");

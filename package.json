@@ -191,6 +191,7 @@
             "keyboard-counter.py",
             "catalog.json",
             "agent-messages.js",
+            "agent-status.js",
             "ide-monitors.js"
           ]
         },

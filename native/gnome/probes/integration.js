@@ -34,7 +34,7 @@ export async function command(dir, action, settings) {
     if (!reply.ok) throw new Error(reply.error);
     return reply;
 }
-export function startDriver(dir, {agents=false}={}) {
+export function startDriver(dir, {agents=false,autoAgents=false}={}) {
     GLib.mkdir_with_parents(dir, 0o700);
     for (const file of ['ready.json', 'reply.json', 'command.json', 'driver-error.json']) {
         const stale = Gio.File.new_for_path(`${dir}/${file}`);
@@ -45,6 +45,7 @@ export function startDriver(dir, {agents=false}={}) {
     launcher.setenv('CATJANG_LINUX_BACKEND', 'gnome', true);
     launcher.setenv('CATJANG_ENABLE_AGENT_INTEGRATIONS', '0', true);
     if(agents)launcher.unsetenv('CATJANG_ENABLE_AGENT_INTEGRATIONS');
+    if(autoAgents)launcher.setenv('CATJANG_GNOME_QA_AUTOCONNECT','1',true);
     if(agents){
         const home=`${GLib.getenv('XDG_RUNTIME_DIR')}/ide-home`;GLib.mkdir_with_parents(home,0o700);
         launcher.setenv('HOME',home,true);launcher.setenv('CATJANG_IDE_CONFIG_HOME',`${home}/.config`,true);
