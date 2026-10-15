@@ -34,7 +34,7 @@ export async function command(dir, action, settings) {
     if (!reply.ok) throw new Error(reply.error);
     return reply;
 }
-export function startDriver(dir) {
+export function startDriver(dir, {agents=false}={}) {
     GLib.mkdir_with_parents(dir, 0o700);
     for (const file of ['ready.json', 'reply.json', 'command.json', 'driver-error.json']) {
         const stale = Gio.File.new_for_path(`${dir}/${file}`);
@@ -44,6 +44,11 @@ export function startDriver(dir) {
     launcher.setenv('CATJANG_GNOME_INPUT_SOURCE', 'local', true);
     launcher.setenv('CATJANG_LINUX_BACKEND', 'gnome', true);
     launcher.setenv('CATJANG_ENABLE_AGENT_INTEGRATIONS', '0', true);
+    if(agents)launcher.unsetenv('CATJANG_ENABLE_AGENT_INTEGRATIONS');
+    if(agents){
+        const home=`${GLib.getenv('XDG_RUNTIME_DIR')}/ide-home`;GLib.mkdir_with_parents(home,0o700);
+        launcher.setenv('HOME',home,true);launcher.setenv('CATJANG_IDE_CONFIG_HOME',`${home}/.config`,true);
+    }
     launcher.setenv('CATJANG_GNOME_DRIVER_DIR', dir, true);
     launcher.setenv('CATJANG_GNOME_QA_PROFILE', `${GLib.getenv('XDG_RUNTIME_DIR')}/catjang-qa-profile`, true);
     return launcher.spawnv([GLib.getenv('CATJANG_GNOME_ELECTRON'),
@@ -65,11 +70,19 @@ export async function run() {
     await Scripting.sleep(500);
     const pet = Main.extensionManager.lookup('catjang-native@modlovelace.github.io')?.stateObj;
     assert(pet?._actor && !pet._actor.visible && !pet._owner, 'application extension is dormant before licensed Electron starts');
+    // Reproduce slow GNOME startup on the private bus. The owner must connect
+    // without a manual reconnect when its control object becomes available.
+    const readyAt=GLib.get_monotonic_time()+2500000;
+    pet._controlObject.unexport();
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT,2500,()=>{
+        pet._controlObject.export(Gio.DBus.session,'/dev/catjang/GnomePet');return GLib.SOURCE_REMOVE;
+    });
     const firstDir = `${output}/first`;
     let first = startDriver(firstDir);
     let second = null;
     try {
         const initial = await waitFor(() => read(`${firstDir}/ready.json`), 'Actual main.js failed to attach; inspect application logs');
+        assert(GLib.get_monotonic_time()>=readyAt && initial.connected,'startup recovers automatically when GNOME registers its control object after Electron launches');
         assert(initial.connected && pet._owner && pet._actor.visible, 'real licensed main.js attaches through the Python helper');
         const changed = await command(firstDir, 'configure', {mascot: 'cat', name: 'Ubuntu integrado', nameVisible: true, size: 140});
         assert(changed.saved.petSize === 140 && changed.saved.catName === 'Ubuntu integrado' && pet._size === 140 && pet._nameLabel.text === 'Ubuntu integrado',

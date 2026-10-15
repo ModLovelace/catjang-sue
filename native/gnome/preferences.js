@@ -11,8 +11,8 @@ let features, renderedReminders, nativeSettings;
 function renderSettings(settings) {
   nativeSettings=settings;
   const upgrade=field('upgrade');
-  upgrade.hidden=!settings.connected||settings.catalogSupported;
-  upgrade.textContent=`GNOME está usando la extensión v${settings.extensionVersion??'anterior'}. Puedes usar Catjang ahora. Para activar las seis mascotas y las funciones nuevas, guarda tu trabajo, cierra la sesión de Ubuntu y vuelve a entrar; después abre Catjang Laboratorio.`;
+  upgrade.hidden=!settings.connected||settings.paritySupported;
+  upgrade.textContent=`GNOME está usando la extensión v${settings.extensionVersion??'anterior'}. Puedes usar Catjang ahora. Para activar el juego de todas las mascotas, el nombre centrado y los avisos nuevos de tareas, guarda tu trabajo, cierra la sesión de Ubuntu y vuelve a entrar; después abre Catjang Laboratorio.`;
   const selector=field('mascot');
   if(selector.options.length!==Object.keys(settings.catalog).length){
     selector.replaceChildren();for(const [id,info]of Object.entries(settings.catalog)){
@@ -22,8 +22,11 @@ function renderSettings(settings) {
   }
   for(const option of selector.options)option.disabled=option.value!=='cat'&&!settings.catalogSupported;
   selector.value=settings.mascot;
+  const canStretch=settings.catalog[settings.mascot].stretchSupported===true;
+  document.querySelector('[data-animation=stretch]').hidden=!canStretch;
+  field('stretchIntervalMin').disabled=!canStretch;
   field('name').value=settings.name;field('nameVisible').checked=settings.nameVisible;field('size').value=settings.size;
-  purringAudio.pause();purringAudio.src=settings.purringSound;
+  purringAudio.pause();purringAudio.src=settings.purringSound;purringAudio.volume=settings.pettingVolume;
   completionAudio.src=settings.completionSound;reminderAudio.src=settings.reminderSound;
 }
 api.onSettings(renderSettings);
@@ -58,6 +61,7 @@ function showKeyboard(state) {
 }
 function renderFeatures(state) {
   features = state;
+  field('agentsNote').textContent=!state.agentsAvailable?'Los agentes están desactivados por la política de este proceso.':state.agentsEnabled?'Conexión con agentes habilitada. Los avisos muestran el IDE y su tarea.':'Conecta tus IDEs desde Configurar agentes de IA; requiere tu consentimiento.';
   const p = state.pomodoro, seconds = Math.max(0,p.remainingSec);
   field('pomodoroState').textContent = `${p.mode === 'focus' ? 'Enfoque' : 'Descanso'} · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')} · ${p.running ? 'En curso' : 'Pausado'}`;
   field('pomodoroStart').disabled = p.running; field('pomodoroPause').disabled = !p.running;
@@ -115,3 +119,5 @@ field('reminderNew').addEventListener('click',()=>editReminder(null));
 field('reconnect').addEventListener('click',()=>api.reconnect().catch(failure)); field('quit').addEventListener('click',()=>api.quit());
 for(const button of document.querySelectorAll('[data-animation]'))button.addEventListener('click',()=>api.animate(button.dataset.animation).catch(failure));
 panel('settings'); load().catch(failure);
+
+window.addEventListener('focus',()=>api.getFeatures().then(renderFeatures).catch(failure));

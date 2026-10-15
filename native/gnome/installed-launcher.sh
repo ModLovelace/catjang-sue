@@ -17,6 +17,7 @@ if [[ ! "$version" =~ ^[0-9]+$ ]] || (( 10#$version < 2 )); then
   exit 3
 fi
 gnome-extensions enable "$UUID"
+export CATJANG_IDE_CONFIG_HOME="${CATJANG_IDE_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}}"
 if [[ "${1:-}" == --laboratorio ]]; then
   shift
   TRIAL_RUNTIME="${XDG_DATA_HOME:-$HOME/.local/share}/catjang-laboratorio/runtime"
@@ -35,7 +36,7 @@ const settings=path.join(profile,'settings.json');
 if(!fs.existsSync(settings))fs.writeFileSync(settings,JSON.stringify({mascot:'cat',petSize:200,catName:'Catjang',catNamePromptShown:true,agentOnboardingShown:true,agentIntegrationsEnabled:false,stretchIntervalMin:0}));
 JS
   export XDG_CONFIG_HOME="$TRIAL_RUNTIME/config" XDG_CACHE_HOME="$TRIAL_RUNTIME/cache" XDG_DATA_HOME="$TRIAL_RUNTIME/data"
-  export CATJANG_ENABLE_AGENT_INTEGRATIONS=0
+  # The demo starts opted out; users may connect IDEs explicitly in Settings.
 fi
 SANDBOX_ARGS=()
 if command -v unshare >/dev/null && ! unshare -Ur true 2>/dev/null; then SANDBOX_ARGS+=(--no-sandbox); fi

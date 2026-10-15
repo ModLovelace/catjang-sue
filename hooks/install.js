@@ -30,6 +30,7 @@ const ANTIGRAVITY_HOOK_EVENTS = [
 const CURSOR_HOOK_EVENTS = [
   "beforeShellExecution",
   "beforeMCPExecution",
+  ...(process.platform === "linux" ? ["beforeSubmitPrompt", "afterShellExecution", "afterMCPExecution", "stop"] : []),
 ];
 
 function resolveNodeBin() {

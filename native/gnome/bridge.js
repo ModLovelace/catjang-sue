@@ -3,6 +3,7 @@ const { spawn } = require("node:child_process");
 const readline = require("node:readline");
 const path = require("node:path");
 const {pathToFileURL} = require("node:url");
+const {formatAgentEvent}=require("./agent-messages");
 
 // Loaded only by the explicit Linux GNOME branch in main.js.
 function createNativeController({ app, BrowserWindow, ipcMain, getSettings, updateSettings, onPosition, onClosed, features }) {
@@ -19,6 +20,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
   let status = "Conectando con GNOME…";
   let heartbeat = null;
   let connectionAttempt = null;
+  let attachTimer = null;
   let keyboardChild = null;
   let keyboardReader = null;
   let keyboard = {mode: 'local', devices: 0};
@@ -116,10 +118,16 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     } catch (error) { report(error); }
   }
   async function animate(name) {
+    if(name==='stretch' && !catalog[getSettings().mascot].stretchSupported)return;
     if (!connected) return;
     try { await request("Animate", name); } catch (error) { report(error); }
   }
   async function forward(channel, data) {
+    if(channel==='ai-task-state'){
+      if(connected && extensionVersion>=5 && ['thinking','working','idle','error'].includes(data?.state))
+        await request('SetActivity',{state:data.state,text:formatAgentEvent(data)});
+      return;
+    }
     if (['pomodoro-state', 'reminders-changed', 'user-name-changed', 'fixed-message-changed',
       'task-complete-sound-volume', 'language-changed'].includes(channel)) publishFeatures();
     if (["cat-name-changed", "mascot-changed"].includes(channel)) { await synchronize(); publishSettings(); }
@@ -127,12 +135,18 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
       "do-stretch": "stretch", "stretch-started": "stretch", "pomodoro-focus-start": "jump"};
     if (animations[channel]) await animate(animations[channel]);
     if (["reminder-triggered", "ai-task-complete", "ai-task-notification", "pomodoro-complete"].includes(channel) && connected) {
-      const text = channel === 'pomodoro-complete'
+      const ai=channel.startsWith('ai-task-');
+      const state=channel==='ai-task-complete'?'complete':'notification';
+      const text = ai ? formatAgentEvent(data,state) : channel === 'pomodoro-complete'
         ? (data?.completedMode === 'focus' ? 'Terminó el enfoque. Es momento de descansar.' : 'Terminó el descanso. Volvemos al enfoque.')
         : String(data?.text || data?.message || data?.title || "Tarea completada").slice(0, 512);
       if (!win.isDestroyed()) win.webContents.send('gnome:alert', {text,
         sound: channel === 'reminder-triggered' ? 'reminder' : 'completion', volume: featureService.get().taskCompleteSoundVolume});
-      try { await request("Notify", text); } catch (error) { report(error); }
+      try {
+        if(extensionVersion>=5)await request('SetActivity',{state,text});
+        else if(channel==='ai-task-complete')await animate('jump');
+        await request("Notify", text);
+      } catch (error) { report(error); }
     }
   }
   function stopKeyboard() {
@@ -168,6 +182,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     });
   }
   function stopHelper() {
+    if(attachTimer)clearTimeout(attachTimer); attachTimer=null;
     stopKeyboard();
     const old = child;
     child = null;
@@ -214,19 +229,7 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
         if (event.ok) pending.resolve(event.state);
         else pending.reject(new Error(event.error || "Solicitud rechazada por GNOME"));
       } else if (event.event === "ready") {
-        try {
-          const attached = await request("Attach", settings());
-          if (child !== process) return;
-          connected = true;
-          extensionVersion = attached.version;
-          catalogSupported = attached.version >= 4;
-          controlsSupported = attached.version >= 3;
-          await synchronizeControls();
-          startKeyboard();
-          console.log(`[Catjang GNOME] Attached to extension v${extensionVersion}`);
-          publish("Mascota conectada a GNOME"); publishSettings();
-          heartbeat = setInterval(() => request("GetState").catch(error => { if (child === process) report(error); }), 5000);
-        } catch (error) { if (child === process) report(error); }
+        attachWhenReady(process);
       } else if (connected && event.event === "position" && Number.isInteger(event.x) && Number.isInteger(event.y)) {
         onPosition({x: event.x, y: event.y});
       } else if (connected && event.event === "preferences") present();
@@ -242,14 +245,40 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
       if (!stopping) publish("El puente GNOME se cerró. Pulsa Reconectar para volver a abrirlo.");
     });
   }
+  async function attachWhenReady(helper, attempt=0) {
+    if(child!==helper || stopping)return;
+    try {
+      const attached = await request("Attach", settings());
+      if (child !== helper || stopping) return;
+      connected = true;
+      extensionVersion = attached.version;
+      catalogSupported = attached.version >= 4;
+      controlsSupported = attached.version >= 3;
+      await synchronizeControls();
+      startKeyboard();
+      console.log(`[Catjang GNOME] Attached to extension v${extensionVersion}`);
+      publish("Mascota conectada a GNOME"); publishSettings();
+      heartbeat = setInterval(() => request("GetState").catch(error => { if (child === helper) report(error); }), 5000);
+    } catch (error) {
+      if(child!==helper || stopping)return;
+      const pending=/UnknownMethod|UnknownObject|ServiceUnknown|NameHasNoOwner|NoReply|Timeout|timed out|tiempo/i.test(error.message);
+      if(!connected && pending && attempt<8){
+        publish('Esperando a que GNOME termine de cargar la mascota…');
+        console.log('[Catjang GNOME] Waiting for native extension readiness');
+        attachTimer=setTimeout(()=>{attachTimer=null;attachWhenReady(helper,attempt+1);},Math.min(2000,250*2**attempt));
+      }else report(error);
+    }
+  }
   function authorized(event) {
     if (event.sender !== win.webContents) throw new Error("Ventana de configuración no autorizada");
   }
-  const sound = name => pathToFileURL(app.isPackaged ? path.join(root, name) : path.join(root, '../../workspace/assets/sound', name)).href;
+  const audioRoot=path.join(app.isPackaged?app.getAppPath():path.join(root,'../..'),'workspace/assets/sound');
+  const audioProfiles=require(path.join(audioRoot,'pet-audio.js'));
+  const sound = name => pathToFileURL(path.join(audioRoot,name)).href;
   function uiSettings() {
-    const current = getSettings(), dog = catalog[current.mascot]?.soundType === 'bark';
-    return {...current,connected,status,keyboard,catalog,catalogSupported,extensionVersion,
-      purringSound:sound(dog?'dog-panting.m4a':'purring.m4a'),completionSound:sound(dog?'dog-bark.m4a':'meow.m4a'),reminderSound:sound('meow-alert.m4a')};
+    const current = getSettings(), audio=audioProfiles[current.mascot];
+    return {...current,connected,status,keyboard,catalog,catalogSupported,extensionVersion,paritySupported:extensionVersion>=5,
+      purringSound:sound(audio.petting),pettingVolume:audio.pettingVolume,completionSound:sound(audio.voice),reminderSound:sound(audio.voice)};
   }
   function publishSettings() { if (!win.isDestroyed()) win.webContents.send('gnome:settings',uiSettings()); }
   ipcMain.handle("gnome:get-settings", event => { authorized(event); return uiSettings(); });
@@ -303,8 +332,9 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
     app.removeListener("before-quit", beforeQuit);
     onClosed();
   });
-  win.once("ready-to-show", present);
-  win.webContents.once("did-finish-load", connect);
+  // A hidden Wayland surface may not paint, so do not wait for its first
+  // frame before mapping preferences. The fully loaded page shows progress.
+  win.webContents.once("did-finish-load", () => { present(); connect(); });
   win.loadFile(path.join(root, "preferences.html"));
   return {window: win, synchronize, animate, present,
     close() { stopping = true; stopHelper(); win.destroy(); },

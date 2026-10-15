@@ -54,8 +54,8 @@ export async function run(){
   state=await command(dir,'query');assert(invalid&&state.saved.userName==='Laboratorio','Invalid mixed preferences are rejected atomically before mutation');
   await command(dir,'ui',"window.qaAlerts=[];window.catjangNative.onAlert(data=>window.qaAlerts.push(data));true");
   await command(dir,'ui',"const now=new Date();document.getElementById('reminderMessage').value='Aviso local real';document.getElementById('reminderTime').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');document.getElementById('reminderRepeat').value='none';document.getElementById('reminderForm').requestSubmit();");
-  for(let attempt=0;attempt<20;attempt++){state=await command(dir,'query');if(state.features.reminders[0]?.enabled===false)break;await Scripting.sleep(1000);}
-  assert(state.features.reminders[0]?.enabled===false&&state.saved.reminders[0].lastTriggeredDate,'Real reminder scheduler delivers and disables a one-shot reminder');
+  state=await command(dir,'query');
+  assert(state.features.reminders[0]?.enabled===false&&state.saved.reminders[0].lastTriggeredDate,'A reminder due now is delivered and persisted immediately, including a minute boundary');
   await command(dir,'ui',"if(!window.qaAlerts.some(item=>item.text.includes('Aviso local real')))throw new Error('Reminder text lost');if(reminderAudio.played.length===0)throw new Error('Alert audio did not play');true");
   assert(true,'Real notification preserves reminder text and plays the original decoded alert sound');
   await command(dir,'ui',"document.querySelector('[data-panel=pomodoro]').click();");await command(dir,'capture-window','pomodoro-controls.png');

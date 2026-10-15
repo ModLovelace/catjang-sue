@@ -3,11 +3,11 @@ set -euo pipefail
 BASE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 MODE="${1:---manual}"
 case "$MODE" in
-  --manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots) ;;
-  *) printf 'Usage: %s [--manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots]\n' "$0" >&2; exit 2 ;;
+  --manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots|--agents) ;;
+  *) printf 'Usage: %s [--manual|--verify|--application|--integration|--matrix|--performance|--reference|--refine|--isolation|--features|--hunting|--mascots|--agents]\n' "$0" >&2; exit 2 ;;
 esac
 UUID=catjang-prototype@modlovelace.github.io
-if [[ "$MODE" == --application || "$MODE" == --integration || "$MODE" == --matrix || "$MODE" == --performance || "$MODE" == --reference || "$MODE" == --refine || "$MODE" == --isolation || "$MODE" == --features || "$MODE" == --hunting || "$MODE" == --mascots ]]; then
+if [[ "$MODE" == --agents || "$MODE" == --application || "$MODE" == --integration || "$MODE" == --matrix || "$MODE" == --performance || "$MODE" == --reference || "$MODE" == --refine || "$MODE" == --isolation || "$MODE" == --features || "$MODE" == --hunting || "$MODE" == --mascots ]]; then
   python3 "$BASE_DIR/build.py" --application
   UUID=catjang-native@modlovelace.github.io
 else

@@ -18,6 +18,7 @@ const CONTROL_XML = `<node><interface name="${CONTROL_IFACE}">
     <method name="Update"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="SetControls"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Animate"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
+    <method name="SetActivity"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Notify"><arg type="s" direction="in"/><arg type="s" direction="out"/></method>
     <method name="Detach"><arg type="s" direction="out"/></method>
     <method name="GetState"><arg type="s" direction="out"/></method>
@@ -59,6 +60,8 @@ export default class CatjangPrototype extends Extension {
         this._keyTimes = [];
         this._heatTime = GLib.get_monotonic_time();
         this._stretchActor = null;
+        this._activity = null; this._sleeping = false;
+        this._lastActivity = GLib.get_monotonic_time();
         this._size = 200;
         this._owner = null;
         this._mascot = 'cat';
@@ -123,13 +126,24 @@ export default class CatjangPrototype extends Extension {
                 group.add_child(image); group.add_child(heat); this._dragLayer.add_child(group);
                 return {group, image, heat, file: null};
             });
-            this._nameLabel = new St.Label({text: '', reactive: false, style: 'font-size: 12px; color: white;'});
+            this._nameLabel = new St.Label({text: '', reactive: false, style: 'font-size: 12px; color: white; text-align: center;'});
             this._nameLabel.set_position(0, geometry.height + 2);
             this._actor.add_child(this._nameLabel);
             this._messageLabel = new St.Label({text: '', reactive: false, visible: false,
                 style: 'font-size: 12px; color: white; background-color: rgba(25,35,48,.9); padding: 8px; border-radius: 8px;'});
             this._messageLabel.clutter_text.set_line_wrap(true);
             this._actor.add_child(this._messageLabel);
+            this._statusLabel = new St.Label({text: '', reactive: false, visible: false,
+                style: 'font-size: 17px; color: white;'});
+            this._actor.add_child(this._statusLabel);
+            this._confetti = [];
+            const colors = ['#ff6688','#66ccff','#ffcc33','#77dd99','#bb88ff'];
+            for (let i=0;i<20;i++) {
+                const piece = new Clutter.Actor({width: 4, height: 4, reactive: false, visible: false});
+                const color=colors[i%colors.length];
+                piece.set_background_color(new Cogl.Color({red:parseInt(color.slice(1,3),16),green:parseInt(color.slice(3,5),16),blue:parseInt(color.slice(5,7),16),alpha:255}));
+                this._actor.add_child(piece); this._confetti.push(piece);
+            }
             this._hearts = [];
             for (let index = 0; index < 3; index++) {
                 const heart = new St.Label({text: '♥', reactive: false, visible: false,
@@ -174,7 +188,7 @@ export default class CatjangPrototype extends Extension {
                     this._typingPulse();
                 });
             const api = {};
-            for (const method of ['Attach', 'Update', 'SetControls', 'Animate', 'Notify', 'Detach', 'GetState'])
+            for (const method of ['Attach', 'Update', 'SetControls', 'SetActivity', 'Animate', 'Notify', 'Detach', 'GetState'])
                 api[`${method}Async`] = (parameters, invocation) => this._control(method, parameters, invocation);
             this._controlObject = Gio.DBusExportedObject.wrapJSObject(CONTROL_XML, api);
             this._controlObject.export(Gio.DBus.session, CONTROL_PATH);
@@ -192,6 +206,7 @@ export default class CatjangPrototype extends Extension {
 
     _state() {
         return {connected: Boolean(this._owner), visible: Boolean(this._actor?.visible),
+            sleeping: this._sleeping, activity: this._activity?.state ?? 'idle', activityText: this._activity?.text ?? '',
             size: this._size, name: this._nameLabel?.text ?? '',
             x: Math.round(this._actor?.x ?? 0), y: Math.round(this._actor?.y ?? 0),
             frame: this._frame, heat: this._heat, fatigue: this._fatigue, accordion: this._physics?.t ?? 0, stretching: Boolean(this._stretchActor), look: this._look, hunting: Boolean(this._hunting), purring: this._purring, mascot: this._mascot, version: this.metadata.version};
@@ -215,6 +230,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _apply(settings) {
+        this._wake();
         this._cancelHunting();
         this._finishStretch();
         this._endGesture(true);
@@ -236,6 +252,13 @@ export default class CatjangPrototype extends Extension {
         this._nameLabel.set_scale(1 / scale, 1 / scale);
         this._nameLabel.set_width(settings.size);
         this._nameLabel.text = settings.name;
+        const rects = this._frames.idle.rects;
+        const left = Math.min(...rects.map(r=>r.x)), right = Math.max(...rects.map(r=>r.x+r.width));
+        const bottom = Math.max(...rects.map(r=>r.y+r.height));
+        this._bodyCenter = (left+right)/2;
+        this._nameLabel.set_position(this._bodyCenter-100, bottom+8/scale);
+        this._statusLabel.set_scale(1/scale,1/scale);
+        this._statusLabel.set_position(this._bodyCenter+25,30);
         this._nameRequestedVisible = settings.nameVisible;
         this._nameLabel.visible = settings.nameVisible;
         this._updateMessage();
@@ -250,6 +273,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _detachController() {
+        this._activity = null; this._wake();
         this._cancelHunting();
         this._menu?.close();
         this._controls = {pomodoroRunning: false, stretchIntervalMin: 0, nameVisible: true, fixedMessage: ''};
@@ -312,6 +336,16 @@ export default class CatjangPrototype extends Extension {
                         if (parameters[0] === 'stretch') this._startStretch();
                         else { this._finishStretch(); this._play(frames, 700); }
                     }
+                } else if (method === 'SetActivity') {
+                    if (parameters[0].length > 2048) throw new Error('Activity exceeds size limit');
+                    const a=JSON.parse(parameters[0]);
+                    if (!a || !['thinking','working','complete','notification','error','idle'].includes(a.state) ||
+                        typeof a.text!=='string' || a.text.length>512) throw new Error('Invalid activity');
+                    this._wake();
+                    const now=GLib.get_monotonic_time();
+                    this._activity={state:a.state,text:a.text,start:now,until:now+(['thinking','working'].includes(a.state)?15000000:5500000)};
+                    if (a.state==='complete' || a.state==='notification') this._play(['jump-start','jump-ing'],700);
+                    this._updateMessage();
                 } else if (method === 'Notify') {
                     if (parameters[0].length > 512)
                         throw new Error('Notification is too large');
@@ -361,6 +395,8 @@ export default class CatjangPrototype extends Extension {
 
     _trackPointer() {
         const [x, y] = global.get_pointer();
+        if (this._lastPointer && Math.hypot(x-this._lastPointer[0],y-this._lastPointer[1])>=2) this._wake();
+        this._lastPointer=[x,y];
         const nx = (x - this._actor.x) / this._size;
         const ny = (y - this._actor.y) / this._size;
         const direction = value => value > .2 ? 1 : value < -.2 ? -1 : 0;
@@ -369,7 +405,7 @@ export default class CatjangPrototype extends Extension {
         if (look !== this._look) { this._look = look; this._refreshVisual(); }
         const now = GLib.get_monotonic_time() / 1000;
         if (this._catalog[this._mascot].hunting && !this._gesture && !this._effect && !this._menu?.isOpen && (!this._hunting || now < this._hunting.until)) {
-            if (this._huntingMotion.sample(x, y, this._actor.x + this._size*.4, this._actor.y + this._size*.45, this._size, now)) {
+            if (this._huntingMotion.sample(x, y, this._actor.x + this._size*hit.cx, this._actor.y + this._size*hit.cy, this._size, now)) {
                 if (!this._hunting) this._hunting = {start: now, until: now + 1100};
                 else this._hunting.until = now + 1100;
                 this._setPurring(false); this._stroke = null;
@@ -428,7 +464,12 @@ export default class CatjangPrototype extends Extension {
         this._huntingMotion?.reset();
     }
 
+    _wake() {
+        this._lastActivity=GLib.get_monotonic_time(); this._sleeping=false;
+    }
+
     _play(frames, milliseconds) {
+        this._wake();
         this._cancelHunting();
         this._setPurring(false);
         this._stroke = null;
@@ -437,6 +478,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _typingPulse() {
+        this._wake();
         this._recordTyping();
         this._typingLeft = !this._typingLeft;
         if (this._gesture || this._releaseStarted || this._stretchActor || !this._actor?.visible) return;
@@ -477,6 +519,8 @@ export default class CatjangPrototype extends Extension {
     }
 
     _startStretch() {
+        if (!this._catalog[this._mascot].stretchSupported) return;
+        this._wake();
         this._cancelHunting();
         this._finishStretch();
         this._resetAccordion();
@@ -597,6 +641,17 @@ export default class CatjangPrototype extends Extension {
             return;
         if (this._physics) { this._renderAccordion(); return; }
         const clock = GLib.get_monotonic_time();
+        if (this._activity && clock>=this._activity.until) { this._activity=null; this._updateMessage(); }
+        const active=['thinking','working'].includes(this._activity?.state);
+        const alert=['notification','error'].includes(this._activity?.state);
+        this._statusLabel.visible=active || this._sleeping || alert;
+        this._statusLabel.text=this._sleeping?'Z z z':alert?'!':'.'.repeat(1+Math.floor(clock/350000)%3);
+        this._statusLabel.opacity=alert?Math.round(180+75*Math.sin(clock/250000)):255;
+        this._confetti.forEach((piece,i)=>{
+            const t=(clock-(this._activity?.start??0))/1000000;
+            piece.visible=this._activity?.state==='complete' && t>=0 && t<2;
+            if(piece.visible){const a=i*Math.PI*2/20;piece.set_position(this._bodyCenter+Math.cos(a)*t*45,65+Math.sin(a)*t*40+t*t*12);piece.opacity=Math.round(255*(1-t/2));}
+        });
         if (clock - this._lastPointerTick >= 32000) { this._trackPointer(); this._lastPointerTick = clock; }
         this._tick = Math.floor(clock / 140000);
         if (this._gesture) {
@@ -621,6 +676,8 @@ export default class CatjangPrototype extends Extension {
             this._cancelHunting();
         }
         if (this._purring) { this._setFrame(this._tick % 2 ? 'purr' : 'purr-alt'); return; }
+        this._sleeping=!active && clock-this._lastActivity>=60000000;
+        if(this._sleeping){this._setFrame('blink');return;}
         const phase = this._tick % 28;
         const wave = Math.floor(phase / 3) % 8;
         this._setFrame(phase === 26 ? 'blink' : (wave === 0 ? 'idle' : `idle-${wave}`));
@@ -632,7 +689,7 @@ export default class CatjangPrototype extends Extension {
         const width = Math.max(120, Math.min(280, this._size * 1.5));
         this._messageLabel.set_scale(1 / scale, 1 / scale);
         this._messageLabel.set_width(width);
-        this._messageLabel.text = this._controls.fixedMessage ?? '';
+        this._messageLabel.text = this._activity?.text || this._controls.fixedMessage || '';
         const [, height] = this._messageLabel.get_preferred_height(width);
         this._messageLabel.set_position((200 - width / scale) / 2, -height / scale - 8);
         this._messageLabel.visible = Boolean(this._messageLabel.text) && !this._physics;
@@ -671,7 +728,7 @@ export default class CatjangPrototype extends Extension {
         action('pomodoro-reset', 'Reiniciar', pomodoro.menu);
         action('pomodoro-settings', 'Duración y estado…', pomodoro.menu);
         action('reminders', 'Recordatorios…');
-        action('stretch', 'Estirarse ahora');
+        if (this._catalog[this._mascot].stretchSupported) action('stretch', 'Estirarse ahora');
         action('jump', 'Saltar');
         const size = new PopupMenu.PopupSubMenuMenuItem('Tamaño');
         this._menu.addMenuItem(size);
@@ -692,6 +749,7 @@ export default class CatjangPrototype extends Extension {
     }
 
     _onEvent(event) {
+        this._wake();
         switch (event.type()) {
         case Clutter.EventType.BUTTON_PRESS:
             if (event.get_button() === Clutter.BUTTON_PRIMARY && !this._gesture) {

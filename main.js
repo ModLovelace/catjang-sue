@@ -1498,7 +1498,19 @@ function createPetWindow() {
           if (Object.hasOwn(patch, "fixedMessage")) setFixedMessage(patch.fixedMessage);
           if (Object.hasOwn(patch, "taskCompleteSoundVolume")) setTaskCompleteSoundVolume(patch.taskCompleteSoundVolume);
         },
-        startPomodoro, pausePomodoro, resetPomodoro, addReminder, updateReminder,
+        startPomodoro, pausePomodoro, resetPomodoro,
+        // A reminder due in the current minute must not wait for a poll that
+        // could fall in the next minute. Keep this behavior in the GNOME path.
+        addReminder: payload => {
+          const result = addReminder(payload);
+          if (result.ok) checkRemindersNow();
+          return result;
+        },
+        updateReminder: (id, payload) => {
+          const result = updateReminder(id, payload);
+          if (result.ok) checkRemindersNow();
+          return result;
+        },
         deleteReminder, setReminderEnabled, openAgents: openAgentConnectWindow,
       },
     });
@@ -3463,7 +3475,12 @@ function startKiroMonitor() {
   if (kiroMonitor) return;
   try {
     const KiroLogMonitor = require("./agents/kiro-log-monitor");
-    kiroMonitor = new KiroLogMonitor(handleAgentStateEvent);
+    if (USE_GNOME_NATIVE) {
+      const adapterPath = app.isPackaged ? path.join(process.resourcesPath, "gnome", "ide-monitors.js") : path.join(__dirname, "native/gnome/ide-monitors.js");
+      kiroMonitor = require(adapterPath).linuxMonitor(KiroLogMonitor, handleAgentStateEvent, {
+        configHome: process.env.CATJANG_IDE_CONFIG_HOME || process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), product: "Kiro",
+      });
+    } else kiroMonitor = new KiroLogMonitor(handleAgentStateEvent);
     kiroMonitor.start();
   } catch (err) {
     console.warn("[Catjang] Kiro log monitor unavailable:", err && err.message);
@@ -3474,7 +3491,12 @@ function startCursorAgentMonitor() {
   if (cursorAgentMonitor) return;
   try {
     const CursorLogMonitor = require("./agents/cursor-log-monitor");
-    cursorAgentMonitor = new CursorLogMonitor(handleAgentStateEvent);
+    if (USE_GNOME_NATIVE) {
+      const adapterPath = app.isPackaged ? path.join(process.resourcesPath, "gnome", "ide-monitors.js") : path.join(__dirname, "native/gnome/ide-monitors.js");
+      cursorAgentMonitor = require(adapterPath).linuxMonitor(CursorLogMonitor, handleAgentStateEvent, {
+        configHome: process.env.CATJANG_IDE_CONFIG_HOME || process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), product: "Cursor",
+      });
+    } else cursorAgentMonitor = new CursorLogMonitor(handleAgentStateEvent);
     cursorAgentMonitor.start();
   } catch (err) {
     console.warn("[Catjang] Cursor log monitor unavailable:", err && err.message);
@@ -3488,9 +3510,9 @@ function startAgentIntegrations() {
   installAntigravityHooks();
   installCursorHooks();
   startCodexMonitor();
-  // Cursor is covered by its hook on Windows. The current log paths for
-  // Cursor and Kiro are macOS-specific, so do not poll nonexistent trees.
-  if (IS_MAC) {
+  // GNOME uses a Linux adapter for XDG paths; existing macOS paths and Windows
+  // hook behavior remain unchanged. Monitoring starts only after consent.
+  if (IS_MAC || USE_GNOME_NATIVE) {
     startKiroMonitor();
     startCursorAgentMonitor();
   }

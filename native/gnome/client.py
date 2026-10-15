@@ -57,10 +57,10 @@ def handle(line):
             raise ValueError('Bridge request exceeds its size limit')
         request = json.loads(line)
         method = request.get('method')
-        if method not in {'Attach', 'Update', 'SetControls', 'Animate', 'Notify', 'Detach', 'GetState'}:
+        if method not in {'Attach', 'Update', 'SetControls', 'SetActivity', 'Animate', 'Notify', 'Detach', 'GetState'}:
             raise ValueError('Unknown bridge request')
         value = request.get('value')
-        if method in {'Attach', 'Update', 'SetControls'}:
+        if method in {'Attach', 'Update', 'SetControls', 'SetActivity'}:
             value = json.dumps(value, separators=(',', ':'))
         elif method in {'Animate', 'Notify'} and not isinstance(value, str):
             raise ValueError('Request requires text')

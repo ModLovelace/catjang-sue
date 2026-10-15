@@ -43,7 +43,7 @@ export async function run() {
     const app = launchApplication();
     try {
         const pid = await waitFor(() => {
-            const window = global.get_window_actors().map(actor => actor.meta_window).find(item => item.get_title() === 'Catjang — Configuración');
+            const window = global.get_window_actors().map(actor => actor.meta_window).find(item => item.get_pid() === Number(app.get_identifier()));
             return window?.get_pid() > 1 ? window.get_pid() : null;
         }, 'Application window did not map');
         await Scripting.sleep(3000);

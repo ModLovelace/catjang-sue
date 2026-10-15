@@ -96,13 +96,19 @@ const AUDIO_CONFIG = {
 };
 
 function getAudio(name) {
-  if (audioCache.has(name)) return audioCache.get(name);
-  const config = AUDIO_CONFIG[name];
-  if (!config) return null;
-  const audio = new Audio(config.src);
-  audio.preload = "none";
-  audio.loop = !!config.loop;
-  if (typeof config.volume === "number") audio.volume = config.volume;
+  const base = AUDIO_CONFIG[name];
+  if (!base) return null;
+  const profile = globalThis.CatjangAudio?.[currentMascot];
+  const petting = name === 'purring' || name === 'dogPetting';
+  const personal = ['completion','reminder','dogBark','purring','dogPetting'].includes(name);
+  const src = profile && personal ? `../workspace/assets/sound/${petting ? profile.petting : profile.voice}` : base.src;
+  const previous = audioCache.get(name);
+  if (previous?.getAttribute('src') === src) return previous;
+  if (previous) { previous.pause(); previous.currentTime = 0; }
+  const audio = new Audio(src);
+  audio.preload = 'none'; audio.loop = !!base.loop;
+  if (petting && profile) audio.volume = profile.pettingVolume;
+  else if (typeof base.volume === 'number') audio.volume = base.volume;
   audioCache.set(name, audio);
   return audio;
 }
@@ -1913,158 +1919,11 @@ function playReminderMeow(options = {}) {
   if (repeat >= 3) setTimeout(play, 3000);
 }
 
-let puppyAudioCtx = null;
-let dogPettingNodes = null;
-
-function startDogPettingAudio() {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
-    if (puppyAudioCtx.state === "suspended") {
-      puppyAudioCtx.resume().catch(() => {});
-    }
-    if (dogPettingNodes) return; // already active
-
-    const ctx = puppyAudioCtx;
-
-    // Buffer for soft pinkish breath noise (panting)
-    const bufferSize = ctx.sampleRate * 2;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0;
-    for (let i = 0; i < bufferSize; i++) {
-      const white = Math.random() * 2 - 1;
-      b0 = 0.99 * b0 + white * 0.05;
-      b1 = 0.96 * b1 + white * 0.11;
-      b2 = 0.86 * b2 + white * 0.25;
-      output[i] = (b0 + b1 + b2) * 0.45;
-    }
-
-    const whiteNoise = ctx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
-
-    const breathFilter = ctx.createBiquadFilter();
-    breathFilter.type = "bandpass";
-    breathFilter.frequency.value = 850;
-    breathFilter.Q.value = 1.4;
-
-    // LFO for rhythmic panting (3.3 Hz breath rate)
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 3.3;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.30;
-
-    const breathGain = ctx.createGain();
-    breathGain.gain.value = 0.40;
-
-    whiteNoise.connect(breathFilter);
-    breathFilter.connect(breathGain);
-    lfo.connect(lfoGain);
-    lfoGain.connect(breathGain.gain);
-
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-    masterGain.gain.exponentialRampToValueAtTime(0.38, ctx.currentTime + 0.15);
-
-    breathGain.connect(masterGain);
-    masterGain.connect(ctx.destination);
-
-    whiteNoise.start();
-    lfo.start();
-
-    // Occasional gentle contented puppy sigh while continuously petted
-    const sighTimer = setInterval(() => {
-      if (!dogPettingNodes) return;
-      try {
-        const osc = ctx.createOscillator();
-        const sGain = ctx.createGain();
-        osc.type = "sine";
-        const t = ctx.currentTime;
-        osc.frequency.setValueAtTime(460, t);
-        osc.frequency.exponentialRampToValueAtTime(280, t + 0.45);
-
-        sGain.gain.setValueAtTime(0, t);
-        sGain.gain.linearRampToValueAtTime(0.22, t + 0.1);
-        sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-
-        osc.connect(sGain);
-        sGain.connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.55);
-      } catch {}
-    }, 2200);
-
-    dogPettingNodes = { whiteNoise, lfo, masterGain, sighTimer };
-  } catch {}
-}
-
-function stopDogPettingAudio() {
-  if (!dogPettingNodes) return;
-  try {
-    const { whiteNoise, lfo, masterGain, sighTimer } = dogPettingNodes;
-    clearInterval(sighTimer);
-    if (puppyAudioCtx && masterGain) {
-      masterGain.gain.linearRampToValueAtTime(0.001, puppyAudioCtx.currentTime + 0.12);
-    }
-    setTimeout(() => {
-      try {
-        whiteNoise.stop();
-        lfo.stop();
-        whiteNoise.disconnect();
-        lfo.disconnect();
-      } catch {}
-    }, 150);
-  } catch {}
-  dogPettingNodes = null;
-}
-
 function playPuppyBark() {
-  try {
-    const dogBarkSound = getAudio("dogBark");
-    dogBarkSound.volume = Math.max(0.18, completionMeowVolume * 2.5);
-    dogBarkSound.currentTime = 0;
-    dogBarkSound.play().catch(() => {});
-  } catch {}
-
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    if (!puppyAudioCtx) puppyAudioCtx = new AudioContext();
-    if (puppyAudioCtx.state === "suspended") {
-      puppyAudioCtx.resume().catch(() => {});
-    }
-    const ctx = puppyAudioCtx;
-    const now = ctx.currentTime;
-
-    function bark(t, pitch = 1.0) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
-
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(400 * pitch, t);
-      osc.frequency.exponentialRampToValueAtTime(160 * pitch, t + 0.13);
-
-      filter.type = "lowpass";
-      filter.frequency.setValueAtTime(1400, t);
-
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.35, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(t);
-      osc.stop(t + 0.14);
-    }
-
-    bark(now, 1.0);
-    bark(now + 0.15, 1.18);
-  } catch {}
+  if (completionMeowVolume <= 0) return;
+  const sound=getAudio('dogBark');
+  sound.volume=Math.max(0,Math.min(1,completionMeowVolume));
+  sound.currentTime=0; sound.play().catch(()=>{});
 }
 
 function triggerCompletionConfetti() {
@@ -2771,10 +2630,8 @@ function startPurring(clientX, clientY) {
           dogPetPlayPromise = null;
         });
     }
-    startDogPettingAudio();
   } else {
     resetAudio("dogPetting");
-    stopDogPettingAudio();
     const purringSound = getAudio("purring");
     if (purringSound.paused && !purrPlayPromise) {
       purringSound.currentTime = 0;
@@ -2805,7 +2662,6 @@ function stopPurring() {
   purrStopTimer = null;
   resetAudio("purring");
   resetAudio("dogPetting");
-  stopDogPettingAudio();
   resetPettingStroke();
 }
 

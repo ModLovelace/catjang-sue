@@ -5,6 +5,7 @@ import hashlib
 import json
 import shutil
 import tarfile
+import zipfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser();p.add_argument('distribution',type=Path);p.add_argument('output',type=Path);options=p.parse_args()
@@ -20,9 +21,11 @@ with tarfile.open(payload,'w:gz') as archive:
     for file in sorted(distribution.iterdir()): archive.add(file,arcname=file.name)
 digest=hashlib.sha256(payload.read_bytes()).hexdigest()
 version=json.loads((ROOT/'package.json').read_text())['version']
-release=f'{version}-gnome4-{digest[:12]}'
+with zipfile.ZipFile(distribution/'resources/gnome/catjang-native@modlovelace.github.io.shell-extension.zip') as bundle:
+    native_version=json.loads(bundle.read('metadata.json'))['version']
+release=f'{version}-gnome{native_version}-{digest[:12]}'
 header=(ROOT/'native/gnome/manual-installer.sh').read_bytes().replace(b'@PAYLOAD_SHA256@',digest.encode()).replace(b'@RELEASE@',release.encode())
-installer=output/f'Catjang-{version}-GNOME4-linux-x64.run'
+installer=output/f'Catjang-{version}-GNOME{native_version}-linux-x64.run'
 with installer.open('wb') as result:
     result.write(header);result.write(payload.read_bytes())
 installer.chmod(0o755)

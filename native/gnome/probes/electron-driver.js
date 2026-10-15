@@ -46,7 +46,32 @@ app.whenReady().then(async () => {
     if (command.id === lastId) return;
     lastId = command.id; busy = true;
     try {
-      if (command.action === "submit-form") {
+      if(command.action==='agent-consent'){
+        await win.webContents.executeJavaScript("window.catjangNative.feature('agents-setup')",true);
+        let setup;
+        for(let i=0;i<50;i++){
+          setup=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/agents-setup/'));
+          if(setup&&!setup.webContents.isLoading())break;await sleep(100);
+        }
+        if(!setup)throw new Error('Agent onboarding did not open');
+        const before=await setup.webContents.executeJavaScript('window.electronAPI.agentStatusGet()',true);
+        if(before.enabled||before.serverActive)throw new Error('Agents started without consent');
+        await setup.webContents.executeJavaScript("document.getElementById('btn-sync').click()",true);
+        let after;
+        for(let i=0;i<50;i++){after=await setup.webContents.executeJavaScript('window.electronAPI.agentStatusGet()',true);if(after.enabled&&after.serverActive)break;await sleep(100);}
+        if(!after.enabled||!after.serverActive)throw new Error('Agent consent did not start the server');
+        setup.close();await sleep(150);
+      } else if(command.action==='agent-http'){
+        const body=JSON.stringify(command.settings);
+        await new Promise((resolve,reject)=>{
+          const req=require('node:http').request({hostname:'127.0.0.1',port:23456,path:'/agent-state',method:'POST',headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}},res=>{res.resume();res.on('end',()=>res.statusCode===200?resolve():reject(new Error('HTTP status '+res.statusCode)));});
+          req.on('error',reject);req.end(body);
+        });await sleep(120);
+      } else if(command.action==='agent-hook'){
+        const script=path.join(profile,'hooks',command.settings.agent==='cursor'?'catjang-cursor-hook.js':'catjang-antigravity-hook.js');
+        const result=cp.spawnSync(process.execPath,[script,command.settings.event],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},input:JSON.stringify(command.settings.payload),encoding:'utf8',timeout:5000});
+        if(result.status!==0)throw new Error(result.stderr||'Hook failed');await sleep(180);
+      } else if (command.action === "submit-form") {
         await win.webContents.executeJavaScript(`(() => {
           const patch=${JSON.stringify(command.settings)};
           document.getElementById('name').value=patch.name;

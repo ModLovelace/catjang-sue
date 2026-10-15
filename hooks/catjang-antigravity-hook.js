@@ -8,7 +8,7 @@ const { postAgentState } = require("./server-config");
 const EVENT_TO_STATE = {
   PreInvocation: "thinking",
   PostToolUse: "working",
-  PostInvocation: "complete",
+  PostInvocation: process.platform === "linux" ? "working" : "complete",
 };
 
 function readStdinJson() {

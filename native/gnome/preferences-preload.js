@@ -2,7 +2,7 @@
 const {contextBridge, ipcRenderer} = require("electron");
 for (const channel of ["cat-name-changed", "mascot-changed", "key-pressed", "mouse-wheel", "do-jump",
   "do-stretch", "stretch-started", "pomodoro-focus-start", "reminder-triggered", "ai-task-complete",
-  "ai-task-notification", "pomodoro-complete", 'pomodoro-state', 'reminders-changed',
+  "ai-task-notification", "ai-task-state", "pomodoro-complete", 'pomodoro-state', 'reminders-changed',
   'user-name-changed', 'fixed-message-changed', 'task-complete-sound-volume', 'language-changed'])
   ipcRenderer.on(channel, (_event, data) => ipcRenderer.send("gnome:forward", channel, data));
 contextBridge.exposeInMainWorld("catjangNative", {

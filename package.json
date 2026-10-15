@@ -189,32 +189,14 @@
             "preferences.html",
             "preferences.css",
             "keyboard-counter.py",
-            "catalog.json"
+            "catalog.json",
+            "agent-messages.js",
+            "ide-monitors.js"
           ]
         },
         {
           "from": ".tmp/gnome-prototype/catjang-native@modlovelace.github.io.shell-extension.zip",
           "to": "gnome/catjang-native@modlovelace.github.io.shell-extension.zip"
-        },
-        {
-          "from": "workspace/assets/sound/purring.m4a",
-          "to": "gnome/purring.m4a"
-        },
-        {
-          "from": "workspace/assets/sound/meow.m4a",
-          "to": "gnome/meow.m4a"
-        },
-        {
-          "from": "workspace/assets/sound/meow-alert.m4a",
-          "to": "gnome/meow-alert.m4a"
-        },
-        {
-          "from": "workspace/assets/sound/dog-panting.m4a",
-          "to": "gnome/dog-panting.m4a"
-        },
-        {
-          "from": "workspace/assets/sound/dog-bark.m4a",
-          "to": "gnome/dog-bark.m4a"
         },
         {
           "from": "native/gnome/installed-launcher.sh",

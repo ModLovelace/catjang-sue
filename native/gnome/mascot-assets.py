@@ -15,7 +15,7 @@ from gi.repository import GdkPixbuf
 NS = 'http://www.w3.org/2000/svg'
 
 
-def freeze(root, mascot, pose, output, phase=0, look=(0, 0), blink=False, petting=False, heat=False):
+def freeze(root, mascot, pose, output, phase=0, look=(0, 0), blink=False, petting=False, heat=False, hunting_time=None, hunting_return=False):
     source = root / 'svg' / mascot / f'{pose}.svg'
     tree = ET.parse(source, parser=ET.XMLParser(target=ET.TreeBuilder(insert_comments=True)))
     svg = tree.getroot()
@@ -57,6 +57,26 @@ def freeze(root, mascot, pose, output, phase=0, look=(0, 0), blink=False, pettin
             element.set('transform', f'rotate({7*wave} {origin[0]} {origin[1]})')
         if 'stretch-tail' in classes: element.set('transform', f'rotate({10*wave} 48 23)')
         if 'stretch-body-anim' in classes: element.set('transform', f'translate(0 {wave})')
+    if hunting_time is not None:
+        progress = min(1, max(0, hunting_time / .42))
+        amount = 1 - (1-progress)**3
+        if hunting_return: amount = 1-amount
+        wag = math.sin(hunting_time * math.tau / .34) if not hunting_return else 0
+        for element in svg.iter():
+            classes = element.get('class', '').split()
+            if element.get('id') == 'face-js':
+                element.set('transform', f'translate({.8*wag*amount} {3*amount}) rotate({-3*wag*amount} 16 18)')
+            if 'breathe-anim' in classes:
+                element.set('transform', f'translate(16 34) scale({1+.08*amount} {1-.12*amount}) translate(-16 -34)')
+            if 'tail-wag' in classes or 'tail-sway' in classes:
+                element.set('transform', f'rotate({(28*wag-12)*amount} 24 28)')
+            if 'ear-twitch-l' in classes: element.set('transform', f'rotate({-12*amount} 7 6)')
+            if 'ear-twitch-r' in classes: element.set('transform', f'rotate({12*amount} 21 6)')
+            if 'pupil-left' in classes or 'pupil-right' in classes:
+                x,y=float(element.get('x',0)),float(element.get('y',0))
+                cx,cy=x+float(element.get('width',1))/2,y+float(element.get('height',1))/2
+                f=1+.22*amount
+                element.set('transform',f'{element.get("transform", "")} translate({cx} {cy}) scale({f}) translate({-cx} {-cy})')
     if heat:
         # Keep eyes and keyboards out of anatomical heat. Canonical comments
         # delimit the ungrouped keyboard primitives in these standalone poses.
@@ -101,23 +121,27 @@ def build_all(root, assets, regions_from_alpha, heat_mask):
         specs += [('blink','idle',0,True)]
         specs += [(pose,pose,0,False) for pose in ['press-left','press-right','scroll','drag','jump-start','jump-ing']]
         specs += [('scroll-alt','scroll',math.pi/2,False),('drag-alt','drag',math.pi/2,False),('purr','idle',0,False),('purr-alt','idle',math.pi/2,False)]
+        specs += [(f'hunt-{i}','idle',0,False) for i in range(28)]
+        specs += [(f'hunt-return-{i}','idle',0,False) for i in range(12)]
         frames={}
         for name,pose,phase,blink in specs:
+            hunting_time = int(name.rsplit('-',1)[1])*.04 if name.startswith('hunt-') else None
+            hunt_args = {'hunting_time':hunting_time,'hunting_return':name.startswith('hunt-return-')}
             looked_files={}; masks={}; first=None
             for dx,dy in [(0,0),*[(x,y) for x in [-1,0,1] for y in [-1,0,1] if (x,y)!=(0,0)]]:
                 key=f'{dx},{dy}';stem=name if key=='0,0' else f'{name}-look-{dx}-{dy}'
                 svg=folder/f'{stem}.svg'
-                source=freeze(root,mascot,pose,svg,phase,look=(dx,dy),blink=blink,petting=name.startswith('purr'))
+                source=freeze(root,mascot,pose,svg,phase,look=(dx,dy),blink=blink,petting=name.startswith('purr'),**hunt_args)
                 cold=GdkPixbuf.Pixbuf.new_from_file(str(svg));cold.savev(str(folder/f'{stem}.png'),'png',[],[])
                 if first is None:
                     first=cold
                     frames[name]={'file':f'{mascot}/{stem}.png','width':200,'height':200,'source':str(source.relative_to(root)),
                         'sourceSha256':hashlib.sha256(source.read_bytes()).hexdigest(),'rects':regions_from_alpha(cold)}
                 else:
-                    if regions_from_alpha(cold)!=frames[name]['rects']: raise ValueError(f'Look changes silhouette: {mascot}/{stem}')
+                    if not name.startswith('hunt-') and regions_from_alpha(cold)!=frames[name]['rects']: raise ValueError(f'Look changes silhouette: {mascot}/{stem}')
                     looked_files[key]=f'{mascot}/{stem}.png'
                 hot_svg=folder/f'{stem}-hot.svg'
-                freeze(root,mascot,pose,hot_svg,phase,look=(dx,dy),blink=blink,petting=name.startswith('purr'),heat=True)
+                freeze(root,mascot,pose,hot_svg,phase,look=(dx,dy),blink=blink,petting=name.startswith('purr'),heat=True,**hunt_args)
                 hot=GdkPixbuf.Pixbuf.new_from_file(str(hot_svg))
                 mask=f'{stem}-mask.png';heat_mask(cold,hot).savev(str(folder/mask),'png',[],[])
                 masks[key]=f'{mascot}/{mask}'

@@ -14,6 +14,30 @@ proyecto y sus guardas de Windows/macOS. La evidencia de esta integración está
 en `docs/QA_2026-10-12-gnome-integration.md`; las sondas se repitieron desde
 el checkout del proyecto.
 
+## Actualización v5 — 15 de octubre de 2026
+
+El nombre se centra bajo la silueta real. Todas las familias juegan con órbitas
+reales del puntero, duermen y despiertan. El estiramiento especial se ofrece solo
+a Catjang, reservado también para un futuro perro salchicha. Se conservan los
+ocho SVG de cada familia. El inventario y la matriz están en
+[`docs/MASCOT_ANIMATION_MATRIX.md`](../../docs/MASCOT_ANIMATION_MATRIX.md).
+
+Electron y GNOME consumen `workspace/assets/sound/pet-audio.js`: seis voces
+individuales y una propuesta de caricia canina breve y suave, sin síntesis de
+ladridos/jadeos. El sonido se empaqueta una sola vez dentro de `app.asar`.
+Los créditos y licencias se conservan junto a los archivos.
+
+Laboratorio permite abrir el consentimiento de agentes. Los eventos de tareas
+incluyen IDE, conversación y tarea; el backend muestra pensamiento, trabajo,
+atención y finalización con salto/confeti. Los monitores Linux de Kiro/Cursor
+usan un adaptador XDG. Los hooks nuevos de ciclo de vida se limitan a Linux.
+La prueba `native/gnome/run-nested.sh --agents` utiliza HOME y perfiles privados;
+no instala hooks ni lee sesiones en el HOME habitual.
+
+Los cambios de la extensión necesitan cerrar y volver a iniciar sesión para
+cargar v5. Actualizar los archivos no sustituye el módulo v4 ya cargado. El
+puente negocia capacidades y explica la actualización pendiente.
+
 ## Estado de la prueba en el escritorio habitual
 
 La última revisión física del visor fue aprobada por el usuario: «Funciona bien».
