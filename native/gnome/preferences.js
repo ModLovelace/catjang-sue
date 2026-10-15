@@ -12,7 +12,7 @@ function renderSettings(settings) {
   nativeSettings=settings;
   const upgrade=field('upgrade');
   upgrade.hidden=!settings.connected||settings.paritySupported;
-  upgrade.textContent=`GNOME está usando la extensión v${settings.extensionVersion??'anterior'}. Puedes usar Catjang ahora. Para activar el juego de todas las mascotas, el nombre centrado y los avisos nuevos de tareas, guarda tu trabajo, cierra la sesión de Ubuntu y vuelve a entrar; después abre Catjang Laboratorio.`;
+  upgrade.textContent=`GNOME está usando la extensión v${settings.extensionVersion??'anterior'}. Puedes seguir usando Catjang. El menú actualizado, el juego de todas las mascotas, el nombre centrado y los avisos nuevos de tareas se activarán en tu próximo inicio de sesión de Ubuntu. El menú antiguo puede mostrar «Estirarse» para otras mascotas: ese estiramiento especial está disponible solo para Catjang.`;
   const selector=field('mascot');
   if(selector.options.length!==Object.keys(settings.catalog).length){
     selector.replaceChildren();for(const [id,info]of Object.entries(settings.catalog)){

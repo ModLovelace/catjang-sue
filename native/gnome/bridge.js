@@ -67,6 +67,13 @@ function createNativeController({ app, BrowserWindow, ipcMain, getSettings, upda
       updateSettings({...getSettings(),mascot}); await synchronize(); await synchronizeControls(); publishSettings(); return;
     }
     if (action === 'quit') { app.quit(); return; }
+    // A session still running v4 offers stretch for every pet. Keep the
+    // Catjang-only policy, but explain that stale menu entry to the user.
+    if (action === 'stretch' && !catalog[getSettings().mascot].stretchSupported) {
+      openPanel('settings');
+      publish('El estiramiento especial está disponible solo para Catjang. Selecciona Catjang en Mascotas para probarlo.');
+      return;
+    }
     if (['jump', 'stretch'].includes(action)) { await animate(action); return; }
     if (['size-smaller', 'size-larger', 'name-toggle'].includes(action)) {
       const current = getSettings();

@@ -435,6 +435,7 @@ y [Mutter Development Kit](https://raw.githubusercontent.com/GNOME/mutter/50.1/s
 ```bash
 native/gnome/run-nested.sh --features
 native/gnome/run-nested.sh --hunting
+native/gnome/run-nested.sh --context
 ```
 
 `--features` recorre menú y formularios reales, pomodoro hasta el descanso,
@@ -442,6 +443,14 @@ recordatorio de una sola ejecución y audio decodificado en un servidor privado.
 `--hunting` mueve un puntero virtual real en círculos en ambos sentidos y verifica
 retorno, mirada, prioridades y limpieza. Son sondas del compositor GNOME 50; no
 sustituyen la revisión humana. El usuario aprobó el gesto circular en el visor.
+
+`--context` pulsa cada opción del menú con un puntero virtual: estiramiento,
+salto, paneles, inicio/pausa/continuación/reinicio del Pomodoro, límites de tamaño,
+nombre, las seis mascotas, configuración de agentes sin consentimiento automático
+y salida. Comprueba además la persistencia y la liberación de la captura del menú.
+Para repetirlo con una versión anterior, `CATJANG_GNOME_TEST_BUNDLE` permite elegir
+un ZIP de extensión que se carga únicamente en el compositor aislado. Véase
+[`docs/QA_2026-10-15-context-menu.md`](../../docs/QA_2026-10-15-context-menu.md).
 
 ## Instalador manual con las seis mascotas (v4)
 

@@ -46,7 +46,13 @@ app.whenReady().then(async () => {
     if (command.id === lastId) return;
     lastId = command.id; busy = true;
     try {
-      if(command.action==='agent-consent'){
+      if(command.action==='inspect-agent-setup'){
+        const setup=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/agents-setup/'));
+        if(!setup || setup.webContents.isLoading())throw new Error('Agent setup was not opened by the context menu');
+        const state=await setup.webContents.executeJavaScript('window.electronAPI.agentStatusGet()',true);
+        if(state.enabled||state.serverActive)throw new Error('Opening setup enabled agents without consent');
+        setup.close();
+      } else if(command.action==='agent-consent'){
         await win.webContents.executeJavaScript("window.catjangNative.feature('agents-setup')",true);
         let setup;
         for(let i=0;i<50;i++){
