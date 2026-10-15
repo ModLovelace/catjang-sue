@@ -173,6 +173,10 @@ async function main() {
         state,
         task,
         conversationName,
+        ...(process.platform === 'linux' ? {
+          conversationTitle: payload.conversationTitle || payload.conversationName || payload.title || payload.topic || '',
+          conversationNameIsFallback: !(payload.conversationTitle || payload.conversationName || payload.title || payload.topic),
+        } : {}),
         sessionId: payload.conversationId || "antigravity",
         cwd: cwdFromPayload(payload),
       });

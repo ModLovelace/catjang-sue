@@ -49,6 +49,8 @@ export function startDriver(dir, {agents=false,autoAgents=false}={}) {
     if(agents){
         const home=`${GLib.getenv('XDG_RUNTIME_DIR')}/ide-home`;GLib.mkdir_with_parents(home,0o700);
         launcher.setenv('HOME',home,true);launcher.setenv('CATJANG_IDE_CONFIG_HOME',`${home}/.config`,true);
+        launcher.setenv('CODEX_HOME',`${home}/.codex`,true);
+        launcher.setenv('CLAUDE_CONFIG_DIR',`${home}/.claude`,true);
     }
     launcher.setenv('CATJANG_GNOME_DRIVER_DIR', dir, true);
     launcher.setenv('CATJANG_GNOME_QA_PROFILE', `${GLib.getenv('XDG_RUNTIME_DIR')}/catjang-qa-profile`, true);

@@ -192,6 +192,7 @@
             "catalog.json",
             "agent-messages.js",
             "agent-status.js",
+            "conversation-context.js",
             "ide-monitors.js"
           ]
         },

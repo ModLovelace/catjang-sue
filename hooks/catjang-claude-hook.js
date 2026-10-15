@@ -46,6 +46,11 @@ async function main() {
     state,
     task,
     conversationName,
+    ...(process.platform === 'linux' ? {
+      conversationTitle: payload.conversation_title || payload.conversation_name || payload.title || payload.topic || '',
+      conversationNameIsFallback: !(payload.conversation_title || payload.conversation_name || payload.title || payload.topic),
+      transcriptPath: payload.transcript_path || '',
+    } : {}),
     sessionId: payload.session_id || "claude-code",
     cwd: payload.cwd || "",
   }, () => process.exit(0));

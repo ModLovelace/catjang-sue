@@ -43,6 +43,31 @@ Las ubicaciones utilizadas siguen la documentación de
 [Claude Code](https://code.claude.com/docs/en/hooks), incluidos los hooks de su
 extensión de IDE.
 
+### Notificaciones con plataforma y título de chat
+
+La finalización muestra `Plataforma · «Título del chat» — tarea completada.`
+El mismo texto se entrega a la notificación GNOME, al bocadillo y al aviso de
+preferencias. La tarea concreta se conserva como detalle secundario cuando cabe.
+
+El backend consulta los metadatos locales de la sesión en modo de lectura:
+nombre visible de Codex en `state_*.sqlite`, índice de sesiones como alternativa,
+resumen de conversación de Antigravity y registros `custom-title` de Claude Code.
+La asociación usa plataforma e ID de sesión; no el nombre de la carpeta. Conserva
+el título entre eventos y vuelve a consultarlo al completar para captar renombres.
+Los hooks Linux incluyen el título explícito y, para Claude, la ruta del transcript.
+Las rutas del transcript se limitan al directorio de proyectos de Claude.
+
+Si la plataforma no ofrece un título accesible, el aviso dice «Chat sin título»
+y añade el identificador corto disponible. No presenta la carpeta como título.
+Las lecturas JSONL están acotadas a ventanas de metadatos; si un formato cambia o
+una base no está disponible se conserva el contexto conocido de esa sesión.
+Esta implementación se limita a GNOME; los mensajes clásicos y los contratos de
+Windows/macOS permanecen sin cambios.
+
+Pruebas: `node scripts/test-linux-chat-titles.js` y
+`native/gnome/run-nested.sh --titles`; véase
+[`docs/QA_2026-10-15-chat-titles.md`](../../docs/QA_2026-10-15-chat-titles.md).
+
 ### Mascotas, audio y actividades
 
 El nombre se centra bajo la silueta real. Todas las familias juegan con órbitas

@@ -48,7 +48,18 @@ app.whenReady().then(async () => {
     if (command.id === lastId) return;
     lastId = command.id; busy = true;
     try {
-      if(command.action==='agent-status'){
+      if(command.action==='title-fixtures'){
+        const {DatabaseSync}=require('node:sqlite'),home=require('node:os').homedir();
+        const codex=path.join(home,'.codex');fs.mkdirSync(codex,{recursive:true});
+        let db=new DatabaseSync(path.join(codex,'state_5.sqlite'));db.exec('CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY,title TEXT,name TEXT)');
+        for(const entry of command.settings.codex)db.prepare('INSERT OR REPLACE INTO threads VALUES(?,?,?)').run(entry.id,'same original prompt',entry.title);db.close();
+        const ag=path.join(home,'.gemini/antigravity');fs.mkdirSync(ag,{recursive:true});
+        db=new DatabaseSync(path.join(ag,'conversation_summaries.db'));db.exec('CREATE TABLE IF NOT EXISTS conversation_summaries(conversation_id TEXT PRIMARY KEY,title TEXT)');
+        db.prepare('INSERT OR REPLACE INTO conversation_summaries VALUES(?,?)').run(command.settings.antigravity.id,command.settings.antigravity.title);db.close();
+        const file=path.join(home,'.claude/projects/one-workspace',command.settings.claude.id+'.jsonl');fs.mkdirSync(path.dirname(file),{recursive:true});
+        fs.writeFileSync(file,JSON.stringify({type:'custom-title',sessionId:command.settings.claude.id,customTitle:command.settings.claude.title})+'\n');
+        write('reply.json',{id:command.id,ok:true,transcriptPath:file});return;
+      } else if(command.action==='agent-status'){
         await win.webContents.executeJavaScript("window.catjangNative.feature('agents-setup')",true);
         let setup;
         for(let i=0;i<50;i++){
@@ -63,8 +74,9 @@ app.whenReady().then(async () => {
       } else if(command.action==='codex-fixture'){
         const now=new Date(),day=path.join(require('node:os').homedir(),'.codex/sessions',String(now.getFullYear()),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0'));
         fs.mkdirSync(day,{recursive:true});
-        const file=path.join(day,'rollout-'+now.toISOString().replaceAll(':','-')+'-d740fdc7-1cf1-4b5c-812a-111111111111.jsonl');
-        fs.appendFileSync(file,command.settings.map(item=>JSON.stringify({timestamp:new Date().toISOString(),...item})+'\n').join(''));
+        const file=path.join(day,'rollout-'+now.toISOString().replaceAll(':','-')+'-'+(command.settings.sessionId||'d740fdc7-1cf1-4b5c-812a-111111111111')+'.jsonl');
+        const events=Array.isArray(command.settings)?command.settings:command.settings.events;
+        fs.appendFileSync(file,events.map(item=>JSON.stringify({timestamp:new Date().toISOString(),...item})+'\n').join(''));
       } else if(command.action==='inspect-agent-setup'){
         const setup=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/agents-setup/'));
         if(!setup || setup.webContents.isLoading())throw new Error('Agent setup was not opened by the context menu');

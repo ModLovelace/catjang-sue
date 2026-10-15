@@ -54,14 +54,16 @@ async function main() {
     let cache={};try{cache=JSON.parse(fs.readFileSync(file,'utf8'));}catch{}
     const now=Date.now();
     const task=String(payload.task||payload.prompt||cache[id]?.task||'').replace(/\s+/g,' ').trim().slice(0,180);
-    const topic=String(payload.conversation_title||payload.chat_title||payload.title||cache[id]?.topic||path.basename(cwdFromPayload(payload))).slice(0,80);
+    const title=String(payload.conversation_title||payload.chat_title||payload.title||cache[id]?.title||'');
+    const topic=String(title||cache[id]?.topic||path.basename(cwdFromPayload(payload))).slice(0,80);
     if(event==='beforeSubmitPrompt'){
-      cache[id]={task,topic,at:now};
+      cache[id]={task,topic,title,at:now};
       cache=Object.fromEntries(Object.entries(cache).filter(([,v])=>now-v.at<86400000).sort((a,b)=>b[1].at-a[1].at).slice(0,32));
       try{fs.writeFileSync(`${file}.${process.pid}.tmp`,JSON.stringify(cache),{mode:0o600});fs.renameSync(`${file}.${process.pid}.tmp`,file);}catch{}
     }
     await postAgentState({agentId:'cursor',agentName:'Cursor',sessionId:id,event,
-      state:event==='stop'&&payload.status==='aborted'?'idle':event==='stop'&&payload.status==='error'?'error':lifecycle[event],task,conversationName:topic});
+      state:event==='stop'&&payload.status==='aborted'?'idle':event==='stop'&&payload.status==='error'?'error':lifecycle[event],task,conversationName:topic,
+      conversationTitle:title,conversationNameIsFallback:!title});
     process.stdout.write('{}\n');return;
   }
   if (event === "beforeShellExecution" || event === "beforeMCPExecution") {
@@ -75,6 +77,8 @@ async function main() {
       state: "notification",
       task,
       conversationName,
+      ...(process.platform==='linux'?{conversationTitle:payload.conversation_title||payload.chat_title||payload.title||payload.topic||'',
+        conversationNameIsFallback:!(payload.conversation_title||payload.chat_title||payload.title||payload.topic)}:{}),
       sessionId: payload.conversation_id || payload.session_id || "cursor",
       cwd: cwd,
     }, () => {

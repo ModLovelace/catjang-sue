@@ -129,6 +129,7 @@ let codexMonitor = null;
 let kiroMonitor = null;
 let cursorAgentMonitor = null;
 const activeAgentSessions = new Map();
+let linuxConversationContext = null;
 let regularCheckTimer = null;
 let regularCheckRunning = false;
 let updateInstallPending = false;
@@ -3297,6 +3298,15 @@ function buildAppMenu() {
 
 function handleAgentStateEvent(event) {
   if (!event || typeof event !== "object") return;
+  if (USE_GNOME_NATIVE) {
+    if (!linuxConversationContext) {
+      const nativeRoot = app.isPackaged ? path.join(process.resourcesPath, "gnome") : path.join(__dirname, "native/gnome");
+      linuxConversationContext = require(path.join(nativeRoot, "conversation-context")).createConversationContext({
+        codexHome: process.env.CODEX_HOME || undefined, claudeHome: process.env.CLAUDE_CONFIG_DIR || undefined,
+      });
+    }
+    event = linuxConversationContext.enrich(event);
+  }
   const state = typeof event.state === "string" ? event.state : "";
   if (!state) return;
   const agentId = event.agentId || "agent";
@@ -3327,6 +3337,7 @@ function handleAgentStateEvent(event) {
       agentName,
       sessionId,
       conversationName,
+      ...(USE_GNOME_NATIVE ? {conversationId:event.conversationId,conversationTitleSource:event.conversationTitleSource} : {}),
       event: event.event || "",
       state,
       task,
@@ -3340,6 +3351,7 @@ function handleAgentStateEvent(event) {
         agentName,
         sessionId,
         conversationName,
+        ...(USE_GNOME_NATIVE ? {conversationId:event.conversationId,conversationTitleSource:event.conversationTitleSource} : {}),
         event: event.event || "",
         task,
         text,
@@ -3352,6 +3364,7 @@ function handleAgentStateEvent(event) {
         agentName,
         sessionId,
         conversationName,
+        ...(USE_GNOME_NATIVE ? {conversationId:event.conversationId,conversationTitleSource:event.conversationTitleSource} : {}),
         event: event.event || "",
         task,
         text,
@@ -3535,6 +3548,7 @@ function startAgentIntegrations() {
 
 function stopAgentIntegrations() {
   activeAgentSessions.clear();
+  linuxConversationContext?.clear();
   if (codexMonitor) {
     codexMonitor.stop();
     codexMonitor = null;
